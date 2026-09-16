@@ -33,7 +33,6 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
         }
 
-        /* Banner Topo */
         .banner {
             width: 100%;
             height: auto;
@@ -68,7 +67,6 @@
             margin-top: 2px;
         }
 
-        /* Form Controls */
         .form-group {
             margin-bottom: 18px;
         }
@@ -103,7 +101,6 @@
             box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
         }
 
-        /* Legenda de Horários */
         .legend-box {
             background-color: #1a1a1a;
             border: 1px solid #262626;
@@ -132,7 +129,6 @@
         .dot-selected { background-color: #d4af37; }
         .dot-busy { background-color: #8b0000; }
 
-        /* Area de seleção de horário */
         .slots-container {
             background-color: #181818;
             border: 1px dashed #2e2e2e;
@@ -213,20 +209,17 @@
 <body>
 
     <div class="card-container">
-        <!-- Banner Superior -->
         <img src="banner-barbearia.jpeg" alt="BarberFlow SaaS" class="banner" onerror="this.style.display='none'">
 
         <div class="content">
-            <!-- Título Barbearia -->
             <div class="header-title">
-                <h1>✂ BARBEARIA ESTILO</h1>
+                <h1>BARBEARIA ESTILO</h1>
                 <p>Seu estilo. Seu momento.</p>
             </div>
 
             <form id="formAgendamento">
-                <!-- 1. ESCOLHA O SERVIÇO -->
                 <div class="form-group">
-                    <div class="label-icon">✨ 1. ESCOLHA O SERVIÇO</div>
+                    <div class="label-icon">1. ESCOLHA O SERVIÇO</div>
                     <select id="servico" required>
                         <option value="" disabled selected>Selecione um serviço...</option>
                         <option value="Corte de Cabelo" data-preco="35">Corte de Cabelo - R$ 35,00</option>
@@ -236,9 +229,8 @@
                     </select>
                 </div>
 
-                <!-- 2. ESCOLHA O BARBEIRO -->
                 <div class="form-group">
-                    <div class="label-icon">👤 2. ESCOLHA O BARBEIRO</div>
+                    <div class="label-icon">2. ESCOLHA O BARBEIRO</div>
                     <select id="barbeiro" required>
                         <option value="" disabled selected>Selecione um barbeiro...</option>
                         <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
@@ -247,15 +239,13 @@
                     </select>
                 </div>
 
-                <!-- 3. SELECIONE A DATA -->
                 <div class="form-group">
-                    <div class="label-icon">📅 3. SELECIONE A DATA</div>
+                    <div class="label-icon">3. SELECIONE A DATA</div>
                     <input type="date" id="data" required>
                 </div>
 
-                <!-- 4. SELECIONE O HORÁRIO -->
                 <div class="form-group">
-                    <div class="label-icon">🕒 4. SELECIONE O HORÁRIO</div>
+                    <div class="label-icon">4. SELECIONE O HORÁRIO</div>
                     
                     <div class="legend-box">
                         <div class="legend-item"><div class="dot dot-free"></div><span style="color:#888;">Livre</span></div>
@@ -270,19 +260,16 @@
 
                 <hr>
 
-                <!-- SEU NOME -->
                 <div class="form-group">
-                    <div class="label-icon">👤 SEU NOME</div>
+                    <div class="label-icon">SEU NOME</div>
                     <input type="text" id="nome" placeholder="Ex: João Silva" required>
                 </div>
 
-                <!-- SEU WHATSAPP -->
                 <div class="form-group">
-                    <div class="label-icon">📞 SEU WHATSAPP</div>
+                    <div class="label-icon">SEU WHATSAPP</div>
                     <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" minlength="10" maxlength="15" required>
                 </div>
 
-                <!-- BOTÃO CONFIRMAR -->
                 <button type="submit" class="btn-confirm" id="btnConfirmar" disabled>CONFIRMAR AGENDAMENTO</button>
             </form>
 
@@ -384,24 +371,25 @@
                 console.warn('Servidor indisponível para gravação direta, redirecionando para WhatsApp:', err);
             }
 
-            // Emojis codificados em Unicode nativo (100% seguros)
-            const emojiCheck    = "\u{2705}"; // ✅
-            const emojiCliente  = "\u{1F464}"; // 👤
-            const emojiWhats    = "\u{1F4F1}"; // 📱
-            const emojiTesoura  = "\u{2702}\u{FE0F}"; // ✂️
-            const emojiBarbeiro = "\u{1F488}"; // 💈
-            const emojiData     = "\u{1F4C5}"; // 📅
-            const emojiHora     = "\u{23F0}"; // ⏰
+            // Geração de emojis via CodePoints numéricos seguros
+            const emojiCheck = String.fromCodePoint(0x2705);
+            const emojiCliente = String.fromCodePoint(0x1F464);
+            const emojiWhats = String.fromCodePoint(0x1F4F1);
+            const emojiTesoura = String.fromCodePoint(0x2702);
+            const emojiBarbeiro = String.fromCodePoint(0x1F488);
+            const emojiData = String.fromCodePoint(0x1F4C5);
+            const emojiHora = String.fromCodePoint(0x23F0);
 
-            const mensagemTexto = `${emojiCheck} *NOVO AGENDAMENTO*\n` +
-                                  `-----------------------------\n` +
-                                  `${emojiCliente} *Cliente:* ${cliente}\n` +
-                                  `${emojiWhats} *WhatsApp:* ${whatsapp}\n` +
-                                  `${emojiTesoura} *Serviço:* ${servico} (R$ ${preco.toFixed(2)})\n` +
-                                  `${emojiBarbeiro} *Barbeiro:* ${barbeiro}\n` +
-                                  `${emojiData} *Data:* ${dataFormatada}\n` +
-                                  `${emojiHora} *Horário:* ${horarioSelecionado}\n` +
-                                  `-----------------------------`;
+            const mensagemTexto = 
+                emojiCheck + " *NOVO AGENDAMENTO*\n" +
+                "-----------------------------\n" +
+                emojiCliente + " *Cliente:* " + cliente + "\n" +
+                emojiWhats + " *WhatsApp:* " + whatsapp + "\n" +
+                emojiTesoura + " *Serviço:* " + servico + " (R$ " + preco.toFixed(2) + ")\n" +
+                emojiBarbeiro + " *Barbeiro:* " + barbeiro + "\n" +
+                emojiData + " *Data:* " + dataFormatada + "\n" +
+                emojiHora + " *Horário:* " + horarioSelecionado + "\n" +
+                "-----------------------------";
 
             const urlWhatsapp = "https://wa.me/5549988727098?text=" + encodeURIComponent(mensagemTexto);
 
