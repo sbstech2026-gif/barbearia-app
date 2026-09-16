@@ -227,8 +227,9 @@ app.get('/api/admin/relatorios', (req, res) => {
     const stmtHoje = db.prepare("SELECT SUM(preco) as total FROM agendamentos WHERE data = ? AND status = 'atendido'");
     const resHoje = stmtHoje.get(hoje);
 
-    const stmtMes = db.prepare("SELECT SUM(preco) as total FROM agendamentos WHERE data LIKE ? AND status = 'atendido'");
-    const resMes = stmtMes.get(`${mesAtual}%`);
+    // Consulta do mês corrigida utilizando SUBSTR para precisão exata
+    const stmtMes = db.prepare("SELECT SUM(preco) as total FROM agendamentos WHERE SUBSTR(data, 1, 7) = ? AND status = 'atendido'");
+    const resMes = stmtMes.get(mesAtual);
 
     const stmtBarbeiro = db.prepare(`
       SELECT barbeiroNome, SUM(preco) as receita, COUNT(*) as totalAtendimentos 
