@@ -56,14 +56,20 @@
 <body class="bg-brandBg text-brandText min-h-screen flex justify-center items-center p-4">
 
   <!-- Card Estilizado Premium -->
-  <div class="w-full max-w-md bg-brandCard rounded-2xl shadow-2xl p-6 md:p-8 border border-brandBorder flex flex-col justify-between my-auto relative overflow-hidden">
+  <div class="w-full max-w-md bg-brandCard rounded-2xl shadow-2xl overflow-hidden border border-brandBorder flex flex-col justify-between my-auto relative">
     
-    <!-- Detalhe decorativo no topo do Card -->
-    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brandGold to-transparent opacity-80"></div>
+    <!-- Banner Horizontal no Topo do Card -->
+    <div class="w-full h-40 md:h-48 overflow-hidden relative border-b border-brandBorder">
+      <img src="banner-barbearia.jpeg" alt="Banner Barbearia Estilo" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-brandCard via-transparent to-transparent opacity-80"></div>
+    </div>
 
-    <div>
+    <!-- Detalhe decorativo sutil -->
+    <div class="absolute top-40 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brandGold to-transparent opacity-80 pointer-events-none"></div>
+
+    <div class="p-6 md:p-8 pt-4">
       <!-- Topo / Cabeçalho -->
-      <div class="text-center mb-8">
+      <div class="text-center mb-6">
         <h1 class="text-xl font-bold text-brandGold tracking-widest uppercase flex items-center justify-center gap-2">
           <i data-lucide="scissors" class="w-5 h-5 text-brandGold"></i> BARBEARIA ESTILO
         </h1>
@@ -107,14 +113,14 @@
             </label>
           </div>
 
-          <!-- Legenda Visual Ajustada (Estilo Cinema) -->
-          <div class="flex items-center justify-around bg-brandInput/60 border border-brandBorder/50 rounded-lg p-2.5 mb-3 text-[10px] text-brandSecondary">
+          <!-- Legenda Visual Ajustada (Estilo Cinema Premium) -->
+          <div class="flex items-center justify-around bg-brandInput/60 border border-brandBorder/50 rounded-lg p-2.5 mb-3 text-[10px] text-brandSecondary shadow-inner">
             <div class="flex items-center gap-1.5">
-              <div class="w-3 h-3 rounded bg-[#1C1C1C] border border-[#333333]"></div>
+              <div class="w-3 h-3 rounded bg-[#1C1C1C] border border-[#333333] shadow-sm"></div>
               <span>Livre</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <div class="w-3 h-3 rounded bg-brandGold"></div>
+              <div class="w-3 h-3 rounded bg-brandGold shadow-sm shadow-brandGold/30"></div>
               <span class="text-brandGold font-bold">Selecionado</span>
             </div>
             <div class="flex items-center gap-1.5">
@@ -181,7 +187,7 @@
       </div>
     </div>
 
-    <p class="text-center text-[10px] text-brandSecondary/60 mt-6 tracking-wider flex items-center justify-center gap-1">
+    <p class="text-center text-[10px] text-brandSecondary/60 pb-6 tracking-wider flex items-center justify-center gap-1">
       <i data-lucide="code-2" class="w-3 h-3"></i> Desenvolvido com Node.js e React/Web Techs
     </p>
   </div>
@@ -321,34 +327,32 @@
           return;
         }
 
-        // Renderiza botões da grade
+        // Renderiza botões da grade com visual refinado e texturizado
         listaHorarios.forEach(item => {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.textContent = item.horario;
 
           if (item.disponivel) {
-            // Estilo LIVRE
-            btn.className = 'py-2 border border-brandBorder bg-brandInput rounded-lg text-xs font-medium hover:border-brandGold hover:text-brandGold text-brandText smooth-transition cursor-pointer';
+            btn.className = 'py-2.5 border border-brandBorder bg-brandInput rounded-lg text-xs font-medium hover:border-brandGold hover:text-brandGold text-brandText smooth-transition cursor-pointer shadow-sm';
 
             btn.onclick = (e) => {
               e.preventDefault();
               
               document.querySelectorAll('#horariosContainer button[data-disponivel="true"]').forEach(b => {
-                b.className = 'py-2 border border-brandBorder bg-brandInput rounded-lg text-xs font-medium hover:border-brandGold hover:text-brandGold text-brandText smooth-transition cursor-pointer';
+                b.className = 'py-2.5 border border-brandBorder bg-brandInput rounded-lg text-xs font-medium hover:border-brandGold hover:text-brandGold text-brandText smooth-transition cursor-pointer shadow-sm';
               });
 
-              btn.className = 'py-2 bg-brandGold text-brandBg font-bold rounded-lg text-xs border border-brandGold smooth-transition shadow-md shadow-brandGold/20 scale-[1.03]';
+              btn.className = 'py-2.5 bg-brandGold text-brandBg font-bold rounded-lg text-xs border border-brandGold smooth-transition shadow-md shadow-brandGold/30 scale-[1.03]';
               
               selectedHorario = item.horario;
               validarFormulario();
             };
             btn.setAttribute('data-disponivel', 'true');
           } else {
-            // Estilo OCUPADO Ajustado (Melhor Legibilidade)
             btn.disabled = true;
             btn.title = 'Horário Ocupado';
-            btn.className = 'py-2 border border-red-900/40 bg-red-950/30 rounded-lg text-xs font-medium text-red-400/60 line-through cursor-not-allowed select-none';
+            btn.className = 'py-2.5 border border-red-900/30 bg-red-950/20 rounded-lg text-xs font-medium text-red-400/50 line-through cursor-not-allowed select-none';
             btn.setAttribute('data-disponivel', 'false');
           }
 
