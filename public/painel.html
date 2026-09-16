@@ -391,10 +391,23 @@
             const dataFiltro = inputFilterData.value;
             try {
                 const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
-                const data = await res.json();
+                const responseData = await res.json();
 
-                renderizarTabela(data.agendamentos || []);
-                atualizarKPIs(data.kpis || {});
+                // Trata se o backend respondeu com Array direto ou dentro de objeto
+                let lista = [];
+                if (Array.isArray(responseData)) {
+                    lista = responseData;
+                } else if (Array.isArray(responseData.agendamentos)) {
+                    lista = responseData.agendamentos;
+                } else if (Array.isArray(responseData.dados)) {
+                    lista = responseData.dados;
+                }
+
+                renderizarTabela(lista);
+
+                if (responseData.kpis) {
+                    atualizarKPIs(responseData.kpis);
+                }
             } catch (err) {
                 console.error('Erro ao carregar agendamentos:', err);
             }
@@ -403,7 +416,7 @@
         function renderizarTabela(lista) {
             tbody.innerHTML = '';
             
-            if (lista.length === 0) {
+            if (!lista || lista.length === 0) {
                 emptyState.style.display = 'block';
                 return;
             }
@@ -413,23 +426,36 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                const dataFmt = item.data.split('-').reverse().join('/');
+                // Trata nomes de propriedades variadas vindas do backend
+                const dataOriginal = item.data || inputFilterData.value;
+                const dataFmt = dataOriginal.includes('-') ? dataOriginal.split('-').reverse().join('/') : dataOriginal;
                 
+                const cliente = item.clienteNome || item.cliente || item.nome || 'Cliente';
+                const whats = item.clienteWhatsapp || item.whatsapp || item.telefone || '';
+                const servico = item.servicoNome || item.servico || 'Serviço';
+                const barbeiro = item.barbeiroNome || item.barbeiro || 'Barbeiro';
+                const horario = item.horario || item.hora || '--:--';
+                const status = item.status || 'Confirmado';
+
                 let badgeClass = 'badge-confirmado';
-                if (item.status === 'Concluído') badgeClass = 'badge-concluido';
-                if (item.status === 'Cancelado') badgeClass = 'badge-cancelado';
+                if (status === 'Concluído') badgeClass = 'badge-concluido';
+                if (status === 'Cancelado') badgeClass = 'badge-cancelado';
+
+                const whatsApenasNumeros = whats.replace(/\D/g, '');
 
                 tr.innerHTML = `
-                    <td><strong>${item.horario}</strong></td>
+                    <td><strong>${horario}</strong></td>
                     <td>${dataFmt}</td>
-                    <td>${item.clienteNome}</td>
-                    <td><a href="https://wa.me/55${item.clienteWhatsapp.replace(/\D/g,'')}" target="_blank" style="color: #25d366; text-decoration: none;">${item.clienteWhatsapp}</a></td>
-                    <td>${item.servicoNome}</td>
-                    <td>${item.barbeiroNome}</td>
-                    <td><span class="badge ${badgeClass}">${item.status || 'Confirmado'}</span></td>
+                    <td>${cliente}</td>
+                    <td>
+                        ${whats ? `<a href="https://wa.me/55${whatsApenasNumeros}" target="_blank" style="color: #25d366; text-decoration: none;">${whats}</a>` : '-'}
+                    </td>
+                    <td>${servico}</td>
+                    <td>${barbeiro}</td>
+                    <td><span class="badge ${badgeClass}">${status}</span></td>
                     <td class="actions-cell">
-                        <button class="btn-action" onclick="alterarStatus('${item.id}', 'Concluído')">✓</button>
-                        <button class="btn-action cancel" onclick="alterarStatus('${item.id}', 'Cancelado')">✕</button>
+                        <button class="btn-action" title="Concluir" onclick="alterarStatus('${item.id}', 'Concluído')">✓</button>
+                        <button class="btn-action cancel" title="Cancelar" onclick="alterarStatus('${item.id}', 'Cancelado')">✕</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -437,6 +463,7 @@
         }
 
         function atualizarKPIs(kpis) {
+            if (!kpis) return;
             document.getElementById('kpiFatHoje').innerText = `R$ ${kpis.faturamentoHoje || '0,00'}`;
             document.getElementById('kpiFatMes').innerText = `R$ ${kpis.faturamentoMes || '0,00'}`;
             document.getElementById('kpiBarbeiroDestaque').innerText = kpis.barbeiroDestaque || 'Nenhum ainda';
@@ -445,6 +472,10 @@
         }
 
         async function alterarStatus(id, novoStatus) {
+            if (!id || id === 'undefined') {
+                alert('ID do agendamento inválido.');
+                return;
+            }
             try {
                 const res = await fetch(`/api/agendamentos/${id}/status`, {
                     method: 'PATCH',
@@ -463,8 +494,8 @@
         }
 
         async function limparAgenda() {
-            if (confirm('Tem certeza de que deseja limpar os agendamentos do dia selecionado?')) {
-                const dataFiltro = inputFilterData.value;
+            const dataFiltro = inputFilterData.value;
+            if (confirm(`Tem certeza de que deseja limpar os agendamentos do dia ${dataFiltro.split('-').reverse().join('/')}?`)) {
                 try {
                     const res = await fetch(`/api/agendamentos/limpar?data=${dataFiltro}`, { method: 'DELETE' });
                     if (res.ok) {
@@ -476,7 +507,7 @@
             }
         }
 
-        // Carrega os dados na abertura
+        // Carrega os dados na abertura da tela
         carregarAgendamentos();
     </script>
 </body>
