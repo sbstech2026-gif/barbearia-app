@@ -49,8 +49,8 @@
         }
 
         .logo-img {
-            width: 90px;
-            height: 90px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-color);
@@ -259,8 +259,8 @@
     <div class="container">
         <!-- Topo da Barbearia -->
         <div class="brand-header">
-            <!-- Caso sua imagem tenha outro nome (ex: logo.jpg), basta alterar o src abaixo -->
-            <img src="BarberFLOW.jpeg" alt="Logo BarberFlow" class="logo-img" onerror="this.style.display='none'">
+            <!-- Imagem da logo tratada com queda graciosa caso não encontre o arquivo -->
+            <img src="logo.jpeg" alt="Logo Barbearia" class="logo-img" onerror="this.onerror=null; this.src='BarberFLOW.jpeg';">
             <h1>BARBEARIA ESTILO</h1>
             <p>Seu estilo. Seu momento.</p>
         </div>
@@ -269,53 +269,53 @@
             <!-- Formulário de Agendamento -->
             <form id="formAgendamento">
                 <div class="form-group">
-                    <label for="servico">1. Escolha o Serviço</label>
+                    <label for="servico">1. ESCOLHA O SERVIÇO</label>
                     <select id="servico" class="form-control" required>
-                        <option value="Corte Social / Degradê" data-preco="45">Corte Social / Degradê - R$ 45,00</option>
-                        <option value="Barba Completa" data-preco="35">Barba Completa - R$ 35,00</option>
-                        <option value="Corte + Barba" data-preco="75">Corte + Barba - R$ 75,00</option>
-                        <option value="Pezinho / Acabamento" data-preco="20">Pezinho / Acabamento - R$ 20,00</option>
+                        <option value="1">Corte Social / Degradê - R$ 45,00</option>
+                        <option value="2">Barba Completa - R$ 35,00</option>
+                        <option value="3">Combo (Corte + Barba) - R$ 70,00</option>
+                        <option value="4">Sobrancelha - R$ 15,00</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="barbeiro">2. Escolha o Barbeiro</label>
+                    <label for="barbeiro">2. ESCOLHA O BARBEIRO</label>
                     <select id="barbeiro" class="form-control" required>
-                        <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
-                        <option value="João (Estilista)">João (Estilista)</option>
-                        <option value="Marcos (Fade Specialist)">Marcos (Fade Specialist)</option>
+                        <option value="1">Carlos (Mestre Barbeiro)</option>
+                        <option value="2">Lucas Barber</option>
+                        <option value="3">Mateus Silva</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="data">3. Selecione a Data</label>
+                    <label for="data">3. SELECIONE A DATA</label>
                     <input type="date" id="data" class="form-control" required>
                 </div>
 
                 <div class="form-group">
-                    <label>4. Selecione o Horário</label>
+                    <label>4. SELECIONE O HORÁRIO</label>
                     <div class="legend-grid">
                         <div class="legend-item"><div class="legend-dot dot-livre"></div> Livre</div>
                         <div class="legend-item"><div class="legend-dot dot-selecionado"></div> Selecionado</div>
                         <div class="legend-item"><div class="legend-dot dot-ocupado"></div> Ocupado</div>
                     </div>
                     <div class="slots-grid" id="slotsGrid">
-                        <!-- Horários inseridos via JS -->
+                        <!-- Horários gerados via JS -->
                     </div>
                     <input type="hidden" id="horarioSelecionado" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="clienteNome">Seu Nome</label>
-                    <input type="text" id="clienteNome" class="form-control" placeholder="Ex: João Silva" required>
+                    <label for="clienteNome">SEU NOME</label>
+                    <input type="text" id="clienteNome" class="form-control" placeholder="Ex: Sanderson" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="clienteWhatsapp">Seu WhatsApp</label>
-                    <input type="tel" id="clienteWhatsapp" class="form-control" placeholder="(00) 00000-0000" required>
+                    <label for="clienteWhatsapp">SEU WHATSAPP</label>
+                    <input type="tel" id="clienteWhatsapp" class="form-control" placeholder="(49) 98872-7098" required>
                 </div>
 
-                <button type="submit" class="btn-submit">Confirmar Agendamento</button>
+                <button type="submit" class="btn-submit">CONFIRMAR AGENDAMENTO</button>
             </form>
 
             <!-- Tela de Sucesso -->
@@ -347,53 +347,33 @@
         inputData.value = dataHojeStr;
         inputData.min = dataHojeStr;
 
-        const horariosPadrao = [
-            '08:00', '09:00', '10:00', '11:00',
-            '12:00', '13:00', '14:00', '15:00',
-            '16:00', '17:00', '18:00', '19:00', '20:00'
-        ];
-
         async function carregarHorariosOcupados() {
             const dataSelecionada = inputData.value;
-            const barbeiroSelecionado = document.getElementById('barbeiro').value;
+            const barbeiroId = document.getElementById('barbeiro').value;
 
             try {
-                const res = await fetch(`/api/agendamentos/ocupados?data=${dataSelecionada}&barbeiro=${encodeURIComponent(barbeiroSelecionado)}`);
+                const res = await fetch(`/api/horarios-disponiveis?barbeiroId=${barbeiroId}&data=${dataSelecionada}`);
                 const data = await res.json();
-                const horariosOcupados = data.ocupados || [];
-                renderizarSlots(horariosOcupados, dataSelecionada);
+                
+                if (data.horarios) {
+                    renderizarSlots(data.horarios);
+                }
             } catch (e) {
-                console.error('Erro ao buscar horários ocupados:', e);
-                renderizarSlots([], dataSelecionada);
+                console.error('Erro ao buscar horários:', e);
             }
         }
 
-        function renderizarSlots(ocupados, dataSelecionada) {
+        function renderizarSlots(listaHorarios) {
             slotsGrid.innerHTML = '';
             inputHorario.value = '';
 
-            const horaAtualRelogio = new Date().getHours();
-            const minutosAtuaisRelogio = new Date().getMinutes();
-            const ehHoje = (dataSelecionada === dataHojeStr);
-
-            horariosPadrao.forEach(hora => {
+            listaHorarios.forEach(item => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'slot-btn';
-                btn.innerText = hora;
+                btn.innerText = item.horario;
 
-                const [hStr, mStr] = hora.split(':');
-                const horaInt = parseInt(hStr);
-                const minInt = parseInt(mStr);
-
-                let jaPassou = false;
-                if (ehHoje) {
-                    if (horaInt < horaAtualRelogio || (horaInt === horaAtualRelogio && minInt <= minutosAtuaisRelogio)) {
-                        jaPassou = true;
-                    }
-                }
-
-                if (ocupados.includes(hora) || jaPassou) {
+                if (!item.disponivel) {
                     btn.classList.add('occupied');
                     btn.disabled = true;
                 } else {
@@ -402,7 +382,7 @@
                             if (!b.classList.contains('occupied')) b.classList.remove('selected');
                         });
                         btn.classList.add('selected');
-                        inputHorario.value = hora;
+                        inputHorario.value = item.horario;
                     });
                 }
 
@@ -420,7 +400,7 @@
 
         document.getElementById('barbeiro').addEventListener('change', carregarHorariosOcupados);
 
-        // Envio do formulário ajustado para corresponder ao backend
+        // Envio do formulário apontando para a rota correta do backend (/api/agendar)
         document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -430,43 +410,42 @@
                 return;
             }
 
-            const servicoSelect = document.getElementById('servico');
-            const servicoNome = servicoSelect.value;
-            const preco = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].dataset.preco);
-            const barbeiroNome = document.getElementById('barbeiro').value;
+            const servicoId = document.getElementById('servico').value;
+            const barbeiroId = document.getElementById('barbeiro').value;
             const data = inputData.value;
             const clienteNome = document.getElementById('clienteNome').value;
             const clienteWhatsapp = document.getElementById('clienteWhatsapp').value;
 
             const payload = {
-                servico: servicoNome,
-                preco: preco,
-                barbeiro: barbeiroNome,
-                data: data,
-                horario: horario,
-                cliente: clienteNome,
-                telefone: clienteWhatsapp
+                servicoId,
+                barbeiroId,
+                data,
+                horario,
+                clienteNome,
+                clienteWhatsapp
             };
 
             try {
-                const res = await fetch('/api/agendamentos', {
+                const res = await fetch('/api/agendar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 const resultado = await res.json();
-                if (res.ok && (resultado.sucesso !== false)) {
+                
+                if (res.ok && resultado.sucesso) {
                     document.getElementById('formAgendamento').style.display = 'none';
                     document.getElementById('successScreen').style.display = 'block';
 
                     const dataFormatada = data.split('-').reverse().join('/');
-                    document.getElementById('successMessage').innerText = 
-                        `Olá ${clienteNome}, seu agendamento de ${servicoNome} com ${barbeiroNome} para o dia ${dataFormatada} às ${horario} foi confirmado!`;
+                    const selectServico = document.getElementById('servico');
+                    const nomeServicoText = selectServico.options[selectServico.selectedIndex].text.split(' - ')[0];
 
-                    const msgWhats = `Olá, acabei de agendar ${servicoNome} para o dia ${dataFormatada} às ${horario} pelo sistema!`;
-                    const numeroBarbeiro = '5549999999999'; 
-                    document.getElementById('btnWhatsappLink').href = `https://wa.me/${numeroBarbeiro}?text=${encodeURIComponent(msgWhats)}`;
+                    document.getElementById('successMessage').innerText = 
+                        `Olá ${clienteNome}, seu agendamento de ${nomeServicoText} para o dia ${dataFormatada} às ${horario} foi confirmado!`;
+
+                    document.getElementById('btnWhatsappLink').href = resultado.whatsappUrl;
 
                 } else {
                     alert('Erro ao agendar: ' + (resultado.erro || 'Horário já ocupado.'));
