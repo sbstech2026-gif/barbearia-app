@@ -227,7 +227,6 @@ app.get('/api/admin/relatorios', (req, res) => {
     const stmtHoje = db.prepare("SELECT SUM(preco) as total FROM agendamentos WHERE data = ? AND status = 'atendido'");
     const resHoje = stmtHoje.get(hoje);
 
-    // Consulta do mês corrigida utilizando SUBSTR para precisão exata
     const stmtMes = db.prepare("SELECT SUM(preco) as total FROM agendamentos WHERE SUBSTR(data, 1, 7) = ? AND status = 'atendido'");
     const resMes = stmtMes.get(mesAtual);
 
@@ -294,7 +293,7 @@ app.patch('/api/admin/agendamentos/:id/status', (req, res) => {
   }
 });
 
-// Admin - Deletar registro
+// Admin - Deletar registro individual
 app.delete('/api/admin/agendamentos/:id', (req, res) => {
   try {
     const { id } = req.params;
@@ -310,6 +309,17 @@ app.delete('/api/admin/agendamentos/:id', (req, res) => {
   } catch (error) {
     console.error('Erro ao deletar agendamento:', error);
     res.status(500).json({ erro: 'Erro ao deletar do banco de dados.' });
+  }
+});
+
+// Admin - Limpar todo o banco de dados (Zerar Agenda e Relatórios)
+app.delete('/api/admin/limpar-banco', (req, res) => {
+  try {
+    db.prepare('DELETE FROM agendamentos').run();
+    res.json({ sucesso: true, mensagem: 'Banco de dados limpo com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao limpar banco de dados:', error);
+    res.status(500).json({ sucesso: false, erro: 'Erro ao limpar banco de dados.' });
   }
 });
 
