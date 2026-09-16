@@ -3,239 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarberFlow - Agendamento Online</title>
+    <title>Agendamento - Barbearia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0f1015;
-            --card-bg: #181a20;
-            --accent-color: #d4af37;
-            --accent-hover: #c5a028;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af;
-            --border-color: #2d3139;
-            --success: #22c55e;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 16px; min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; }
-
-        header { text-align: center; padding: 20px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; }
-        header img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent-color); object-fit: cover; margin-bottom: 12px; }
-        header h1 { font-size: 24px; margin-bottom: 4px; }
-        header p { font-size: 14px; color: var(--text-muted); }
-
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .card-title { font-size: 16px; font-weight: 700; color: var(--accent-color); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-
-        .grid-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
-        .option-item {
-            background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;
-            cursor: pointer; text-align: center; transition: 0.2s;
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
-        .option-item:hover, .option-item.selected { border-color: var(--accent-color); background: rgba(212, 175, 55, 0.1); }
-        .option-item .name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-        .option-item .price { font-size: 12px; color: var(--accent-color); font-weight: 700; }
 
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-        .form-control {
-            width: 100%; background: var(--bg-color); border: 1px solid var(--border-color);
-            color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; color-scheme: dark;
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #1e1e1e;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2a2a2a;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-bottom: 12px;
+            border: 2px solid #d4af37;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: #888888;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #cccccc;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2a2a2a;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #d4af37;
+        }
+
+        .barber-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .barber-card {
+            background-color: #2a2a2a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .barber-card:hover, .barber-card.selected {
+            border-color: #d4af37;
+            background-color: #322d1b;
+        }
+
+        .barber-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .barber-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #d4af37;
+            color: #121212;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .barber-name {
+            font-size: 14px;
+            font-weight: 600;
         }
 
         .btn-submit {
-            width: 100%; background: var(--accent-color); color: #121212; border: none;
-            padding: 16px; border-radius: 8px; font-size: 16px; font-weight: 700;
-            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            border: none;
+            border-radius: 8px;
+            color: #121212;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
         }
-        .btn-submit:hover { background: var(--accent-hover); }
 
-        #mensagemStatus { margin-top: 12px; text-align: center; font-size: 13px; font-weight: 600; display: none; }
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <img src="logo-barbearia.jpeg" alt="Logo Barbearia" onerror="this.style.display='none'">
-            <h1>Barbearia Agendamento</h1>
-            <p>Escolha o serviço, barbeiro e horário para agendar</p>
-        </header>
+        <div class="header">
+            <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200" alt="Logo Barbearia" class="logo">
+            <h1 class="title">Agende seu Horário</h1>
+            <p class="subtitle">Escolha o serviço, barbeiro e horário de sua preferência</p>
+        </div>
 
-        <form id="agendamentoForm" onsubmit="finalizarAgendamento(event)">
-            <!-- Seleção de Serviço -->
-            <div class="card">
-                <div class="card-title">1. Escolha o Serviço</div>
-                <div class="grid-options" id="servicosContainer">
-                    <div class="option-item selected" onclick="selecionarOpcao(this, 'servico', 'Corte de Cabelo', 35)">
-                        <div class="name">Corte de Cabelo</div>
-                        <div class="price">R$ 35,00</div>
+        <form id="formAgendamento">
+            <div class="form-group">
+                <label for="cliente">Seu Nome Completo</label>
+                <input type="text" id="cliente" required placeholder="Digite seu nome">
+            </div>
+
+            <div class="form-group">
+                <label for="whatsapp">Seu WhatsApp</label>
+                <input type="tel" id="whatsapp" required placeholder="(00) 00000-0000">
+            </div>
+
+            <div class="form-group">
+                <label for="servico">Selecione o Serviço</label>
+                <select id="servico" required>
+                    <option value="" disabled selected>Escolha um serviço...</option>
+                    <option value="Corte de Cabelo" data-preco="35">Corte de Cabelo (R$ 35,00)</option>
+                    <option value="Barba Completa" data-preco="30">Barba Completa (R$ 30,00)</option>
+                    <option value="Combo (Corte + Barba)" data-preco="60">Combo (Corte + Barba) (R$ 60,00)</option>
+                    <option value="Sobrancelha" data-preco="15">Sobrancelha (R$ 15,00)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Escolha o Barbeiro</label>
+                <div class="barber-grid">
+                    <div class="barber-card selected" onclick="selectBarber('Carlos (Mestre Barbeiro)', this)">
+                        <div class="barber-info">
+                            <div class="barber-avatar">C</div>
+                            <span class="barber-name">Carlos (Mestre Barbeiro)</span>
+                        </div>
                     </div>
-                    <div class="option-item" onclick="selecionarOpcao(this, 'servico', 'Barba Completa', 25)">
-                        <div class="name">Barba Completa</div>
-                        <div class="price">R$ 25,00</div>
+                    <div class="barber-card" onclick="selectBarber('Mateus Silva', this)">
+                        <div class="barber-info">
+                            <div class="barber-avatar">M</div>
+                            <span class="barber-name">Mateus Silva</span>
+                        </div>
                     </div>
-                    <div class="option-item" onclick="selecionarOpcao(this, 'servico', 'Cabelo + Barba', 55)">
-                        <div class="name">Cabelo + Barba</div>
-                        <div class="price">R$ 55,00</div>
+                    <div class="barber-card" onclick="selectBarber('Sandro', this)">
+                        <div class="barber-info">
+                            <div class="barber-avatar">S</div>
+                            <span class="barber-name">Sandro</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Seleção de Barbeiro -->
-            <div class="card">
-                <div class="card-title">2. Escolha o Barbeiro</div>
-                <div class="grid-options" id="barbeirosContainer">
-                    <div class="option-item selected" onclick="selecionarOpcao(this, 'barbeiro', 'Carlos')">
-                        <div class="name">Carlos</div>
-                    </div>
-                    <div class="option-item" onclick="selecionarOpcao(this, 'barbeiro', 'Sandro')">
-                        <div class="name">Sandro</div>
-                    </div>
+            <div class="form-group" style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label for="data">Data</label>
+                    <input type="date" id="data" required>
+                </div>
+                <div style="flex: 1;">
+                    <label for="horario">Horário</label>
+                    <input type="time" id="horario" required>
                 </div>
             </div>
 
-            <!-- Data e Horário -->
-            <div class="card">
-                <div class="card-title">3. Data e Horário</div>
-                <div class="form-group">
-                    <label for="dataAgendamento">Data:</label>
-                    <input type="date" id="dataAgendamento" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="horaAgendamento">Horário:</label>
-                    <select id="horaAgendamento" class="form-control" required>
-                        <option value="">Selecione um horário</option>
-                        <option value="09:00">09:00</option>
-                        <option value="10:00">10:00</option>
-                        <option value="11:00">11:00</option>
-                        <option value="13:30">13:30</option>
-                        <option value="14:30">14:30</option>
-                        <option value="15:30">15:30</option>
-                        <option value="16:30">16:30</option>
-                        <option value="17:30">17:30</option>
-                        <option value="18:30">18:30</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Dados do Cliente -->
-            <div class="card">
-                <div class="card-title">4. Seus Dados</div>
-                <div class="form-group">
-                    <label for="clienteNome">Seu Nome:</label>
-                    <input type="text" id="clienteNome" class="form-control" placeholder="Digite seu nome completo" required>
-                </div>
-                <div class="form-group">
-                    <label for="clienteWhatsapp">Seu WhatsApp (com DDD):</label>
-                    <input type="tel" id="clienteWhatsapp" class="form-control" placeholder="(49) 99999-9999" required>
-                </div>
-            </div>
-
-            <button type="submit" class="btn-submit" id="btnAgendar">
-                📲 Agendar pelo WhatsApp
-            </button>
-            <div id="mensagemStatus"></div>
+            <button type="submit" class="btn-submit">Confirmar pelo WhatsApp</button>
         </form>
     </div>
 
     <script>
-        // Configuração Padrão Selecionada
-        let servicoSelecionado = { nome: 'Corte de Cabelo', preco: 35 };
-        let barbeiroSelecionado = 'Carlos';
+        let barbeiroSelecionado = 'Carlos (Mestre Barbeiro)';
 
-        // Define a data mínima como HOJE no campo de data
-        const inputData = document.getElementById('dataAgendamento');
-        const hoje = new Date().toISOString().split('T')[0];
-        inputData.min = hoje;
-        inputData.value = hoje;
-
-        function selecionarOpcao(elemento, tipo, valor, preco = 0) {
-            const container = elemento.parentElement;
-            const itens = container.querySelectorAll('.option-item');
-            itens.forEach(item => item.classList.remove('selected'));
-            elemento.classList.add('selected');
-
-            if (tipo === 'servico') {
-                servicoSelecionado = { nome: valor, preco: preco };
-            } else if (tipo === 'barbeiro') {
-                barbeiroSelecionado = valor;
-            }
+        function selectBarber(nome, el) {
+            barbeiroSelecionado = nome;
+            document.querySelectorAll('.barber-card').forEach(card => card.classList.remove('selected'));
+            el.classList.add('selected');
         }
 
-        async function finalizarAgendamento(event) {
-            event.preventDefault();
+        document.getElementById('formAgendamento').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-            const btn = document.getElementById('btnAgendar');
-            const statusDiv = document.getElementById('mensagemStatus');
+            const cliente = document.getElementById('cliente').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+            const selectServico = document.getElementById('servico');
+            const servico = selectServico.value;
+            const preco = selectServico.options[selectServico.selectedIndex].getAttribute('data-preco') || 0;
+            const data = document.getElementById('data').value;
+            const horario = document.getElementById('horario').value;
 
-            const nome = document.getElementById('clienteNome').value.trim();
-            const whatsapp = document.getElementById('clienteWhatsapp').value.trim();
-            const data = document.getElementById('dataAgendamento').value;
-            const horario = document.getElementById('horaAgendamento').value;
+            // Formata data de YYYY-MM-DD para DD/MM/YYYY
+            const dataFormatada = data.split('-').reverse().join('/');
 
-            if (!nome || !whatsapp || !data || !horario) {
-                alert('Por favor, preencha todos os campos!');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'Salvando agendamento...';
-            statusDiv.style.display = 'block';
-            statusDiv.style.color = '#d4af37';
-            statusDiv.innerText = 'Registrando agendamento no sistema...';
-
-            const payload = {
-                clienteNome: nome,
-                clienteWhatsapp: whatsapp,
-                servicoNome: servicoSelecionado.nome,
-                barbeiroNome: barbeiroSelecionado,
-                data: data,
-                horario: horario,
-                preco: servicoSelecionado.preco
-            };
-
-            // 1. Envia os dados para salvar no Backend do Render
+            // 1. Salva no banco de dados via API do Backend
             try {
-                const res = await fetch('/api/agendamentos', {
+                await fetch('/api/agendamentos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        cliente,
+                        whatsapp,
+                        servico: `${servico} (R$ ${preco}.00)`,
+                        barbeiro: barbeiroSelecionado,
+                        data: dataFormatada,
+                        horario,
+                        preco: parseFloat(preco)
+                    })
                 });
-
-                if (!res.ok) {
-                    console.warn('Servidor retornou erro, mas abrindo WhatsApp mesmo assim...');
-                }
             } catch (err) {
-                console.error('Erro na requisição ao servidor:', err);
+                console.error("Erro ao salvar agendamento:", err);
             }
 
-            // Formatação da data para o WhatsApp
-            const dataFmt = data.split('-').reverse().join('/');
+            // 2. Abre o WhatsApp com a mensagem formatada
+            const numeroBarbearia = '5549988727098'; // Seu número
+            const mensagem = `Olá! Gostaria de agendar um horário:%0A%0A` +
+                             `👤 *Cliente:* ${cliente}%0A` +
+                             `📱 *WhatsApp:* ${whatsapp}%0A` +
+                             `✂️ *Serviço:* ${servico} (R$ ${preco}.00)%0A` +
+                             `💈 *Barbeiro:* ${barbeiroSelecionado}%0A` +
+                             `📅 *Data:* ${dataFormatada}%0A` +
+                             `⏰ *Horário:* ${horario}`;
 
-            // Mensagem pré-formatada para o WhatsApp da Barbearia
-            const mensagemWhats = `Olá! Gostaria de agendar um horário:\n\n` +
-                `👤 *Cliente:* ${nome}\n` +
-                `💈 *Serviço:* ${servicoSelecionado.nome} (R$ ${servicoSelecionado.preco},00)\n` +
-                `✂️ *Barbeiro:* ${barbeiroSelecionado}\n` +
-                `📅 *Data:* ${dataFmt}\n` +
-                `⏰ *Horário:* ${horario}`;
-
-            // Número da Barbearia (Ajuste se necessário)
-            const numeroBarbearia = '5549988727098';
-
-            statusDiv.style.color = '#22c55e';
-            statusDiv.innerText = 'Redirecionando para o WhatsApp...';
-
-            // 2. Abre o WhatsApp em nova aba
-            setTimeout(() => {
-                window.open(`https://wa.me/${numeroBarbearia}?text=${encodeURIComponent(mensagemWhats)}`, '_blank');
-                btn.disabled = false;
-                btn.innerText = '📲 Agendar pelo WhatsApp';
-                statusDiv.style.display = 'none';
-            }, 600);
-        }
+            window.open(`https://wa.me/${numeroBarbearia}?text=${mensagem}`, '_blank');
+        });
     </script>
 </body>
 </html>
