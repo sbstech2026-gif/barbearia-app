@@ -7,7 +7,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+// Servir arquivos estáticos da pasta 'public'
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Inicialização e Conexão com o Banco de Dados SQLite
 const db = new sqlite3.Database('./database.sqlite', (err) => {
@@ -212,16 +213,17 @@ app.delete('/api/agendamentos/limpar', (req, res) => {
     });
 });
 
-// Rotas de Páginas
+// ROTAS DE PÁGINAS (Apontando corretamente para a pasta 'public')
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/painel', (req, res) => {
-    res.sendFile(path.join(__dirname, 'painel.html'));
+// Aceita tanto /admin quanto /painel
+app.get(['/admin', '/painel'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'painel.html'));
 });
 
 // Inicialização do Servidor Express
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
