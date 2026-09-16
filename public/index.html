@@ -293,7 +293,6 @@
     </div>
 
     <script>
-        // Define a data atual como padrão
         const hojeIso = new Date().toISOString().split('T')[0];
         document.getElementById('data').value = hojeIso;
 
@@ -375,7 +374,7 @@
                 });
 
                 if (!res.ok) {
-                    res = await fetch('/agendamentos', {
+                    await fetch('/agendamentos', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -385,16 +384,26 @@
                 console.warn('Servidor indisponível para gravação direta, redirecionando para WhatsApp:', err);
             }
 
-            // Monta a mensagem limpa com suporte perfeito a emojis nativos
-            const mensagemTexto = `Olá! Gostaria de agendar um horário:\n\n` +
-                                  `👤 *Cliente:* ${cliente}\n` +
-                                  `📱 *WhatsApp:* ${whatsapp}\n` +
-                                  `✂️ *Serviço:* ${servico} (R$ ${preco.toFixed(2)})\n` +
-                                  `💈 *Barbeiro:* ${barbeiro}\n` +
-                                  `📅 *Data:* ${dataFormatada}\n` +
-                                  `⏰ *Horário:* ${horarioSelecionado}`;
+            // Emojis codificados em Unicode nativo (100% seguros)
+            const emojiCheck    = "\u{2705}"; // ✅
+            const emojiCliente  = "\u{1F464}"; // 👤
+            const emojiWhats    = "\u{1F4F1}"; // 📱
+            const emojiTesoura  = "\u{2702}\u{FE0F}"; // ✂️
+            const emojiBarbeiro = "\u{1F488}"; // 💈
+            const emojiData     = "\u{1F4C5}"; // 📅
+            const emojiHora     = "\u{23F0}"; // ⏰
 
-            const urlWhatsapp = `https://wa.me/5549988727098?text=${encodeURIComponent(mensagemTexto)}`;
+            const mensagemTexto = `${emojiCheck} *NOVO AGENDAMENTO*\n` +
+                                  `-----------------------------\n` +
+                                  `${emojiCliente} *Cliente:* ${cliente}\n` +
+                                  `${emojiWhats} *WhatsApp:* ${whatsapp}\n` +
+                                  `${emojiTesoura} *Serviço:* ${servico} (R$ ${preco.toFixed(2)})\n` +
+                                  `${emojiBarbeiro} *Barbeiro:* ${barbeiro}\n` +
+                                  `${emojiData} *Data:* ${dataFormatada}\n` +
+                                  `${emojiHora} *Horário:* ${horarioSelecionado}\n` +
+                                  `-----------------------------`;
+
+            const urlWhatsapp = "https://wa.me/5549988727098?text=" + encodeURIComponent(mensagemTexto);
 
             window.open(urlWhatsapp, '_blank');
             window.location.reload();
