@@ -26,7 +26,7 @@ app.use(geralLimiter);
 
 const db = new Database(path.join(__dirname, 'barbearia.db'));
 
-// Cria a tabela com a nova coluna status
+// Cria a tabela com a coluna status
 db.exec(`
   CREATE TABLE IF NOT EXISTS agendamentos (
     id TEXT PRIMARY KEY,
@@ -148,13 +148,14 @@ app.post('/api/agendar', agendamentoLimiter, (req, res) => {
       return res.status(400).json({ sucesso: false, erro: 'Serviço ou Barbeiro inválido.' });
     }
 
+    // Validação rígida anti-conflito no servidor
     const checkStmt = db.prepare("SELECT id FROM agendamentos WHERE barbeiroId = ? AND data = ? AND horario = ? AND status != 'cancelado'");
     const conflito = checkStmt.get(barbeiroId, data, horario);
 
     if (conflito) {
       return res.status(409).json({ 
         sucesso: false, 
-        erro: 'Este horário acabou de ser reservado por outro cliente.' 
+        erro: 'Este horário acabou de ser reservado por outro cliente!' 
       });
     }
 
@@ -216,7 +217,7 @@ app.get('/api/admin/agendamentos', (req, res) => {
   }
 });
 
-// Admin - Atualizar Status (Atendido / Cancelado)
+// Admin - Atualizar Status (Atendido / Cancelado / Agendado)
 app.patch('/api/admin/agendamentos/:id/status', (req, res) => {
   try {
     const { id } = req.params;
