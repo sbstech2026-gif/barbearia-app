@@ -217,20 +217,20 @@ app.get('/api/admin/agendamentos', (req, res) => {
   }
 });
 
-// Admin - Limpar Agendamentos de Teste
+// Admin - Limpar TODOS os Agendamentos
 app.post('/api/limpar-testes', (req, res) => {
   try {
-    const query = "DELETE FROM agendamentos WHERE clienteNome LIKE '%Teste%' OR clienteWhatsapp LIKE '%12345%'";
+    const query = "DELETE FROM agendamentos";
     const stmt = db.prepare(query);
     const resultado = stmt.run();
 
     res.json({ 
       sucesso: true, 
-      mensagem: `Agendamentos de teste removidos com sucesso! (${resultado.changes} apagados)` 
+      mensagem: `Agenda limpa com sucesso! (${resultado.changes} agendamentos removidos)` 
     });
   } catch (error) {
-    console.error('Erro ao limpar testes:', error);
-    res.status(500).json({ sucesso: false, erro: 'Erro ao limpar dados de teste.' });
+    console.error('Erro ao limpar agenda:', error);
+    res.status(500).json({ sucesso: false, erro: 'Erro ao limpar dados da agenda.' });
   }
 });
 
