@@ -37,32 +37,32 @@
             max-width: 500px;
         }
 
-        /* Topo / Logo */
+        /* Topo / Banner Imagem */
         .brand-header {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 24px;
+            padding: 16px;
             text-align: center;
             margin-bottom: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        .logo-img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
+        .banner-img {
+            width: 100%;
+            max-height: 180px;
             object-fit: cover;
-            border: 2px solid var(--accent-color);
-            margin: 0 auto 12px auto;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
             display: block;
         }
 
         .brand-header h1 {
             font-size: 20px;
             color: var(--accent-color);
-            margin-bottom: 4px;
+            margin-top: 12px;
+            margin-bottom: 2px;
             letter-spacing: 0.5px;
         }
 
@@ -71,7 +71,7 @@
             color: var(--text-muted);
         }
 
-        /* Formulário Card */
+        /* Card Formulário */
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -175,7 +175,6 @@
             opacity: 0.6;
         }
 
-        /* Botão de Envio */
         .btn-submit {
             width: 100%;
             background-color: var(--accent-color);
@@ -195,7 +194,6 @@
             background-color: var(--accent-hover);
         }
 
-        /* Tela de Sucesso */
         .success-screen {
             display: none;
             text-align: center;
@@ -257,16 +255,14 @@
 <body>
 
     <div class="container">
-        <!-- Topo da Barbearia -->
+        <!-- Topo com Banner da Barbearia -->
         <div class="brand-header">
-            <!-- Imagem da logo tratada com queda graciosa caso não encontre o arquivo -->
-            <img src="logo.jpeg" alt="Logo Barbearia" class="logo-img" onerror="this.onerror=null; this.src='BarberFLOW.jpeg';">
+            <img src="banner-barbearia.jpeg" alt="Banner BarberFlow" class="banner-img">
             <h1>BARBEARIA ESTILO</h1>
             <p>Seu estilo. Seu momento.</p>
         </div>
 
         <div class="card">
-            <!-- Formulário de Agendamento -->
             <form id="formAgendamento">
                 <div class="form-group">
                     <label for="servico">1. ESCOLHA O SERVIÇO</label>
@@ -299,9 +295,7 @@
                         <div class="legend-item"><div class="legend-dot dot-selecionado"></div> Selecionado</div>
                         <div class="legend-item"><div class="legend-dot dot-ocupado"></div> Ocupado</div>
                     </div>
-                    <div class="slots-grid" id="slotsGrid">
-                        <!-- Horários gerados via JS -->
-                    </div>
+                    <div class="slots-grid" id="slotsGrid"></div>
                     <input type="hidden" id="horarioSelecionado" required>
                 </div>
 
@@ -318,16 +312,11 @@
                 <button type="submit" class="btn-submit">CONFIRMAR AGENDAMENTO</button>
             </form>
 
-            <!-- Tela de Sucesso -->
             <div id="successScreen" class="success-screen">
                 <div class="success-icon">🎉</div>
                 <h2>Agendamento Confirmado!</h2>
                 <p id="successMessage">Seu horário foi reservado com sucesso. Te esperamos na barbearia!</p>
-                
-                <a id="btnWhatsappLink" href="#" target="_blank" class="btn-whatsapp">
-                    📱 Enviar Confirmação no WhatsApp
-                </a>
-                
+                <a id="btnWhatsappLink" href="#" target="_blank" class="btn-whatsapp">📱 Enviar Confirmação no WhatsApp</a>
                 <button type="button" class="btn-new" onclick="resetarFormulario()">Fazer Novo Agendamento</button>
             </div>
         </div>
@@ -400,7 +389,6 @@
 
         document.getElementById('barbeiro').addEventListener('change', carregarHorariosOcupados);
 
-        // Envio do formulário apontando para a rota correta do backend (/api/agendar)
         document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -416,14 +404,7 @@
             const clienteNome = document.getElementById('clienteNome').value;
             const clienteWhatsapp = document.getElementById('clienteWhatsapp').value;
 
-            const payload = {
-                servicoId,
-                barbeiroId,
-                data,
-                horario,
-                clienteNome,
-                clienteWhatsapp
-            };
+            const payload = { servicoId, barbeiroId, data, horario, clienteNome, clienteWhatsapp };
 
             try {
                 const res = await fetch('/api/agendar', {
