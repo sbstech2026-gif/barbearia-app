@@ -37,11 +37,17 @@
           <p class="text-gray-400 text-sm">Gerencie os horários e o status dos atendimentos</p>
         </div>
       </div>
-      <div class="flex items-center gap-3">
-        <label for="filtroData" class="text-sm font-medium text-gray-300">Data:</label>
-        <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
-        <button onclick="carregarAgendamentos()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition cursor-pointer">
-          Filtrar
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2">
+          <label for="filtroData" class="text-sm font-medium text-gray-300">Data:</label>
+          <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+          <button onclick="carregarAgendamentos()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition cursor-pointer">
+            Filtrar
+          </button>
+        </div>
+        <!-- Botão Limpar Testes Integrado -->
+        <button onclick="limparAgendamentosTeste()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-sm transition cursor-pointer flex items-center gap-1.5">
+          🗑️ Limpar Testes
         </button>
       </div>
     </header>
@@ -125,7 +131,6 @@
 
         tbody.innerHTML = result.agendamentos.map(a => {
           const numeroLimpo = a.clienteWhatsapp.replace(/\D/g, '');
-          // Garante DDI 58/55 se o usuário salvou sem código de país
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
 
           return `
@@ -177,12 +182,31 @@
         if (result.sucesso) {
           const textoAcao = novoStatus === 'atendido' ? 'Agendamento concluído com sucesso!' : 'Agendamento cancelado.';
           mostrarToast(textoAcao, 'sucesso');
-          carregarAgendamentos(); // Atualiza a tabela na mesma hora
+          carregarAgendamentos();
         } else {
           mostrarToast(result.erro || 'Erro ao atualizar status.', 'erro');
         }
       } catch (err) {
         mostrarToast('Erro de conexão ao alterar status.', 'erro');
+      }
+    }
+
+    // Função para limpar os agendamentos de teste
+    async function limparAgendamentosTeste() {
+      if (confirm("Deseja realmente limpar todos os agendamentos de teste da agenda?")) {
+        try {
+          const res = await fetch('/api/limpar-testes', { method: 'POST' });
+          const data = await res.json();
+          
+          if (data.sucesso) {
+            mostrarToast(data.mensagem, 'sucesso');
+            carregarAgendamentos();
+          } else {
+            mostrarToast(data.erro || 'Erro ao limpar dados de teste.', 'erro');
+          }
+        } catch (err) {
+          mostrarToast('Erro de conexão com o servidor.', 'erro');
+        }
       }
     }
 
