@@ -1,179 +1,101 @@
 const express = require('express');
-const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const Database = require('better-sqlite3');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
-app.use(helmet({ contentSecurityPolicy: false }));
-
-const geralLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { erro: 'Muitas requisições. Tente novamente mais tarde.' }
-});
-
-app.use(geralLimiter);
-
-const db = new Database(path.join(__dirname, 'barbearia.db'));
-
-// Criação da Tabela de Agendamentos
-db.exec(`
-  CREATE TABLE IF NOT EXISTS agendamentos (
-    id TEXT PRIMARY KEY,
-    cliente TEXT,
-    whatsapp TEXT,
-    servico TEXT,
-    barbeiro TEXT,
-    data TEXT,
-    horario TEXT,
-    preco REAL,
-    status TEXT DEFAULT 'agendado',
-    criadoEm TEXT
-  )
-`);
-
-app.use(cors());
+// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota para abrir o Painel Admin
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'painel.html'));
+// Inicialização do Banco de Dados SQLite
+const db = new sqlite3.Database('./barbearia.db', (err) => {
+    if (err) {
+        console.error('Erro ao conectar ao banco de dados:', err.message);
+    } else {
+        console.log('Conectado ao banco de dados SQLite.');
+    }
 });
 
-// Salvar Agendamento (Vindo do index.html)
+// Criação da tabela com a estrutura compatível
+db.run(`
+    CREATE TABLE IF NOT EXISTS agendamentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cliente TEXT NOT NULL,
+        whatsapp TEXT NOT NULL,
+        servico TEXT NOT NULL,
+        barbeiro TEXT NOT NULL,
+        data TEXT NOT NULL,
+        horario TEXT NOT NULL,
+        preco REAL,
+        status TEXT DEFAULT 'Pendente',
+        criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+`);
+
+// ROTA 1: Criar novo agendamento (Cliente)
 app.post('/api/agendamentos', (req, res) => {
-  try {
-    const { cliente, whatsapp, servico, barbeiro, data, horario, preco } = req.body;
+    const { cliente, whatsapp, servico, barbeiro, data, horario, preco, status } = req.body;
 
-    const id = Date.now().toString();
-    const criadoEm = new Date().toISOString();
+    const sql = `
+        INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, preco, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    const params = [
+        cliente, 
+        whatsapp, 
+        servico, 
+        barbeiro, 
+        data, 
+        horario, 
+        preco || 0, 
+        status || 'Pendente'
+    ];
 
-    const stmt = db.prepare(`
-      INSERT INTO agendamentos (id, cliente, whatsapp, servico, barbeiro, data, horario, preco, status, criadoEm)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmado', ?)
-    `);
-
-    stmt.run(id, cliente, whatsapp, servico, barbeiro, data, horario, preco, criadoEm);
-
-    res.status(201).json({ sucesso: true, mensagem: 'Agendamento registrado com sucesso!' });
-  } catch (error) {
-    console.error('Erro ao salvar agendamento:', error);
-    res.status(500).json({ sucesso: false, erro: 'Erro ao salvar no banco de dados.' });
-  }
+    db.run(sql, params, function (err) {
+        if (err) {
+            console.error('Erro ao inserir agendamento:', err.message);
+            return res.status(500).json({ sucesso: false, erro: err.message });
+        }
+        res.json({ sucesso: true, id: this.lastID });
+    });
 });
 
-// Admin - Listar Agendamentos
-app.get('/api/admin/agendamentos', (req, res) => {
-  try {
+// ROTA 2: Listar agendamentos para o Painel Admin
+app.get('/api/agendamentos', (req, res) => {
     const { data } = req.query;
-    let query = 'SELECT * FROM agendamentos';
-    const params = [];
+    let sql = `SELECT * FROM agendamentos ORDER BY horario ASC`;
+    let params = [];
 
     if (data) {
-      query += ' WHERE data = ? ORDER BY horario ASC';
-      params.push(data);
-    } else {
-      query += ' ORDER BY id DESC';
+        sql = `SELECT * FROM agendamentos WHERE data = ? ORDER BY horario ASC`;
+        params = [data];
     }
 
-    const stmt = db.prepare(query);
-    const agendamentos = stmt.all(...params);
-
-    res.json({ sucesso: true, agendamentos });
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos:', error);
-    res.status(500).json({ erro: 'Erro ao consultar o banco de dados.' });
-  }
-});
-
-// Admin - Relatórios e Métricas Financeiras (ATUALIZADO E COMPLETO)
-app.get('/api/admin/relatorios', (req, res) => {
-  try {
-    const hoje = new Date().toLocaleDateString('pt-BR');
-
-    // Soma faturamento do dia (incluindo confirmados, atendidos e agendados)
-    const totalHoje = db.prepare(`
-      SELECT COALESCE(SUM(preco), 0) as total 
-      FROM agendamentos 
-      WHERE data = ? AND status IN ('atendido', 'confirmado', 'agendado')
-    `).get(hoje);
-
-    // Soma faturamento acumulado geral
-    const totalMes = db.prepare(`
-      SELECT COALESCE(SUM(preco), 0) as total 
-      FROM agendamentos 
-      WHERE status IN ('atendido', 'confirmado', 'agendado')
-    `).get();
-
-    // Busca o barbeiro destaque
-    const destaque = db.prepare(`
-      SELECT barbeiro, COALESCE(SUM(preco), 0) as total_vendas 
-      FROM agendamentos 
-      WHERE status IN ('atendido', 'confirmado', 'agendado')
-      GROUP BY barbeiro 
-      ORDER BY total_vendas DESC 
-      LIMIT 1
-    `).get();
-
-    // Busca o serviço mais popular
-    const servicoPopular = db.prepare(`
-      SELECT servico, COUNT(*) as qtd 
-      FROM agendamentos 
-      WHERE status IN ('atendido', 'confirmado', 'agendado')
-      GROUP BY servico 
-      ORDER BY qtd DESC 
-      LIMIT 1
-    `).get();
-
-    res.json({
-      faturamentoHoje: totalHoje ? totalHoje.total : 0,
-      faturamentoMes: totalMes ? totalMes.total : 0,
-      barbeiroDestaque: destaque ? destaque.barbeiro : 'Nenhum',
-      vendasDestaque: destaque ? destaque.total_vendas : 0,
-      servicoPopular: servicoPopular ? servicoPopular.servico.split(' (R$')[0] : 'Nenhum'
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            console.error('Erro ao buscar agendamentos:', err.message);
+            return res.status(500).json({ erro: err.message });
+        }
+        res.json(rows);
     });
-  } catch (error) {
-    console.error('Erro ao carregar relatórios:', error);
-    res.status(500).json({ error: 'Erro ao carregar relatórios' });
-  }
 });
 
-// Admin - Atualizar Status
-app.patch('/api/admin/agendamentos/:id/status', (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const stmt = db.prepare('UPDATE agendamentos SET status = ? WHERE id = ?');
-    stmt.run(status, id);
-
-    res.json({ sucesso: true, mensagem: `Status alterado para ${status}.` });
-  } catch (error) {
-    console.error('Erro ao atualizar status:', error);
-    res.status(500).json({ erro: 'Erro ao atualizar no banco de dados.' });
-  }
+// ROTA 3: Limpar agendamentos de teste
+app.post('/api/limpar-testes', (req, res) => {
+    const sql = `DELETE FROM agendamentos WHERE cliente LIKE '%Teste%' OR cliente LIKE '%SANDRO%' OR whatsapp LIKE '%12345%'`;
+    
+    db.run(sql, [], function (err) {
+        if (err) {
+            return res.status(500).json({ erro: err.message });
+        }
+        res.json({ mensagem: 'Agendamentos de teste removidos com sucesso!', removidos: this.changes });
+    });
 });
 
-// Admin - Deletar registro
-app.delete('/api/admin/agendamentos/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    const stmt = db.prepare('DELETE FROM agendamentos WHERE id = ?');
-    stmt.run(id);
-
-    res.json({ sucesso: true, mensagem: 'Agendamento removido!' });
-  } catch (error) {
-    console.error('Erro ao deletar agendamento:', error);
-    res.status(500).json({ erro: 'Erro ao deletar do banco de dados.' });
-  }
-});
-
+// Inicialização do Servidor
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor BarberFlow rodando na porta ${PORT}`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
