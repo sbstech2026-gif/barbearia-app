@@ -1,269 +1,453 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel do Barbeiro | Gestão de Agendamentos</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            gold: '#D4AF37',
-            darkBg: '#111111',
-            darkCard: '#1a1a1a'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Barbearia - BarberFlow</title>
+    <style>
+        :root {
+            --bg-color: #0f1015;
+            --card-bg: #181a20;
+            --accent-color: #d4af37;
+            --accent-hover: #c5a028;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+            --border-color: #2d3139;
+            --danger: #ef4444;
+            --success: #22c55e;
         }
-      }
-    }
-  </script>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Cabeçalho */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-logo {
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #121212;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.2);
+        }
+
+        .brand-title span {
+            font-size: 11px;
+            color: var(--accent-color);
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-title h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .brand-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Cards de Métricas */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-card h3 {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+        }
+
+        .metric-card .sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Filtros e Seção de Atendimentos */
+        .section-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .filter-group input {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            color-scheme: dark;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: #121212;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Tabela */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        tr:hover td {
+            background-color: rgba(255,255,255,0.01);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-agendado { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-atendido { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-cancelado { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .actions-cell {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn-action {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-atendido { background-color: #166534; color: #dcfce7; }
+        .btn-atendido:hover { background-color: #15803d; }
+        
+        .btn-cancelar { background-color: #991b1b; color: #fee2e2; }
+        .btn-cancelar:hover { background-color: #b91c1c; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+    </style>
 </head>
-<body class="bg-darkBg text-gray-100 min-h-screen p-6 relative">
+<body>
 
-  <!-- Container de Notificações Toast -->
-  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Container Principal -->
-  <div class="max-w-7xl mx-auto">
-    
-    <!-- Header com a Logo -->
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4 gap-4">
-      <div class="flex items-center gap-4">
-        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 60px; height: 60px; object-fit: cover;" class="rounded-xl border border-gray-800">
-        <div>
-          <span class="text-xs font-bold text-gold uppercase tracking-wider">BarberFlow SaaS</span>
-          <h1 class="text-3xl font-bold text-gold">Painel da Barbearia</h1>
-          <p class="text-gray-400 text-sm">Gerencie os horários e o status dos atendimentos</p>
+    <div class="container">
+        <!-- Cabeçalho -->
+        <div class="header">
+            <div class="brand-box">
+                <div class="brand-logo">BF</div>
+                <div class="brand-title">
+                    <span>BarberFlow SaaS</span>
+                    <h1>Painel da Barbearia</h1>
+                    <p>Gerencie os horários e o status dos atendimentos</p>
+                </div>
+            </div>
+            <button class="btn-danger" id="btnLimparAgenda">🗑️ Limpar Agenda</button>
         </div>
-      </div>
-      
-      <!-- Ações do Topo -->
-      <div class="flex items-center gap-3 flex-wrap">
-        <button onclick="limparAgendamentosTeste()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-sm transition cursor-pointer flex items-center gap-1.5">
-          🗑️ Limpar Agenda
-        </button>
-      </div>
-    </header>
 
-    <!-- DASHBOARD FINANCEIRO (RELATÓRIOS) -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <!-- Card Faturamento Hoje -->
-      <div class="bg-darkCard border border-gray-800 p-5 rounded-xl shadow-lg relative overflow-hidden">
-        <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Faturamento Hoje</div>
-        <div class="text-2xl font-extrabold text-gold mt-2" id="dashFatHoje">R$ 0,00</div>
-        <div class="text-xs text-gray-500 mt-1">Baseado em serviços concluídos</div>
-      </div>
+        <!-- Cards de Métricas -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Faturamento Hoje</h3>
+                <div class="value" id="fatHoje">R$ 0,00</div>
+                <div class="sub">Baseado em serviços concluídos</div>
+            </div>
+            <div class="metric-card">
+                <h3>Faturamento do Mês</h3>
+                <div class="value" id="fatMes">R$ 0,00</div>
+                <div class="sub">Acumulado mensal</div>
+            </div>
+            <div class="metric-card">
+                <h3>Barbeiro Destaque</h3>
+                <div class="value" id="barbeiroDestaque" style="font-size: 20px;">Nenhum ainda</div>
+                <div class="sub" id="recBarbeiroDestaque">R$ 0,00 em vendas</div>
+            </div>
+            <div class="metric-card">
+                <h3>Serviço Mais Popular</h3>
+                <div class="value" id="servicoPopular" style="font-size: 20px;">Nenhum ainda</div>
+                <div class="sub">Mais realizado no mês</div>
+            </div>
+        </div>
 
-      <!-- Card Faturamento Mês -->
-      <div class="bg-darkCard border border-gray-800 p-5 rounded-xl shadow-lg relative overflow-hidden">
-        <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Faturamento do Mês</div>
-        <div class="text-2xl font-extrabold text-emerald-400 mt-2" id="dashFatMes">R$ 0,00</div>
-        <div class="text-xs text-gray-500 mt-1">Acumulado mensal</div>
-      </div>
+        <!-- Seção da Lista de Atendimentos -->
+        <div class="section-box">
+            <div class="section-header">
+                <h2>📅 Lista de Atendimentos</h2>
+                <div class="filter-group">
+                    <label for="dataFiltro">Data:</label>
+                    <input type="date" id="dataFiltro">
+                    <button class="btn-primary" id="btnFiltrar">Filtrar</button>
+                </div>
+            </div>
 
-      <!-- Card Barbeiro Destaque -->
-      <div class="bg-darkCard border border-gray-800 p-5 rounded-xl shadow-lg relative overflow-hidden">
-        <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Barbeiro Destaque</div>
-        <div class="text-lg font-bold text-white mt-2 truncate" id="dashBarbeiro">-</div>
-        <div class="text-xs text-gold mt-1" id="dashBarbeiroReceita">R$ 0,00 em vendas</div>
-      </div>
-
-      <!-- Card Serviço Mais Popular -->
-      <div class="bg-darkCard border border-gray-800 p-5 rounded-xl shadow-lg relative overflow-hidden">
-        <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider">Serviço Mais Popular</div>
-        <div class="text-base font-bold text-white mt-2 truncate" id="dashServico">-</div>
-        <div class="text-xs text-gray-500 mt-1">Mais realizado no mês</div>
-      </div>
-    </section>
-
-    <!-- Filtro de Data e Tabela -->
-    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 bg-darkCard p-4 rounded-xl border border-gray-800">
-      <h2 class="text-lg font-bold text-white flex items-center gap-2">📅 Lista de Atendimentos</h2>
-      <div class="flex items-center gap-3">
-        <label for="filtroData" class="text-sm font-medium text-gray-300">Data:</label>
-        <input type="date" id="filtroData" class="bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
-        <button onclick="carregarTudo()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition cursor-pointer">
-          Filtrar
-        </button>
-      </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horário</th>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>WhatsApp</th>
+                            <th>Serviço</th>
+                            <th>Barbeiro</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaAgendamentos">
+                        <tr>
+                            <td colspan="8" class="empty-state">Carregando agendamentos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Tabela de Agendamentos -->
-    <main>
-      <div class="bg-darkCard rounded-xl border border-gray-800 overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-gray-300">
-            <thead class="bg-gray-900 text-gold uppercase text-xs border-b border-gray-800">
-              <tr>
-                <th class="p-4 whitespace-nowrap">Horário</th>
-                <th class="p-4 whitespace-nowrap">Data</th>
-                <th class="p-4 whitespace-nowrap">Cliente</th>
-                <th class="p-4 whitespace-nowrap">WhatsApp</th>
-                <th class="p-4 whitespace-nowrap">Serviço</th>
-                <th class="p-4 whitespace-nowrap">Barbeiro</th>
-                <th class="p-4 text-center whitespace-nowrap">Status</th>
-                <th class="p-4 text-center whitespace-nowrap">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaAgendamentos" class="divide-y divide-gray-800">
-              <!-- Dados inseridos via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-  </div>
+    <script>
+        // Define a data de hoje no input de filtro ao carregar
+        const hojeIso = new Date().toISOString().split('T')[0];
+        document.getElementById('dataFiltro').value = hojeIso;
 
-  <script>
-    document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+        async function carregarDados() {
+            try {
+                // Carrega Relatórios
+                const resRel = await fetch('/api/admin/relatorios');
+                const dataRel = await resRel.json();
+                if (dataRel.sucesso) {
+                    const e = dataRel.estatisticas;
+                    document.getElementById('fatHoje').innerText = `R$ ${e.faturamentoHoje.toFixed(2).replace('.', ',')}`;
+                    document.getElementById('fatMes').innerText = `R$ ${e.faturamentoMes.toFixed(2).replace('.', ',')}`;
+                    document.getElementById('barbeiroDestaque').innerText = e.barbeiroDestaque;
+                    document.getElementById('recBarbeiroDestaque').innerText = `R$ ${e.receitaBarbeiroDestaque.toFixed(2).replace('.', ',')} em vendas`;
+                    document.getElementById('servicoPopular').innerText = e.servicoPopular;
+                }
 
-    function mostrarToast(mensagem, tipo = 'sucesso') {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      const corFundo = tipo === 'sucesso' ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-300' : 'bg-red-950/90 border-red-500/50 text-red-300';
-      
-      toast.className = `pointer-events-auto px-4 py-3 rounded-lg border shadow-xl text-xs font-medium backdrop-blur-md transition-all duration-300 translate-y-2 opacity-0 flex items-center gap-2 ${corFundo}`;
-      toast.innerHTML = `<span>${mensagem}</span>`;
-      container.appendChild(toast);
+                // Carrega Agendamentos filtrados por data
+                const dataSelecionada = document.getElementById('dataFiltro').value;
+                const url = dataSelecionada ? `/api/admin/agendamentos?data=${dataSelecionada}` : '/api/admin/agendamentos';
+                
+                const resAg = await fetch(url);
+                const dataAg = await resAg.json();
+                
+                const tbody = document.getElementById('tabelaAgendamentos');
+                tbody.innerHTML = '';
 
-      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-      setTimeout(() => {
-        toast.classList.add('translate-y-2', 'opacity-0');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
+                if (!dataAg.sucesso || dataAg.agendamentos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Nenhum agendamento encontrado para esta data.</td></tr>`;
+                    return;
+                }
 
-    function renderStatusBadge(status) {
-      if (status === 'atendido') {
-        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✓ Atendido</span>`;
-      }
-      if (status === 'cancelado') {
-        return `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✕ Cancelado</span>`;
-      }
-      return `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">⏱ Agendado</span>`;
-    }
+                dataAg.agendamentos.forEach(item => {
+                    const tr = document.createElement('tr');
+                    
+                    const dataFormatada = item.data.split('-').reverse().join('/');
+                    
+                    let badgeClass = 'badge-agendado';
+                    if (item.status === 'atendido') badgeClass = 'badge-atendido';
+                    if (item.status === 'cancelado') badgeClass = 'badge-cancelado';
 
-    // Carregar Métricas do Dashboard Financeiro
-    async function carregarRelatorios() {
-      try {
-        const res = await fetch('/api/admin/relatorios');
-        const data = await res.json();
+                    tr.innerHTML = `
+                        <td><strong>${item.horario}</strong></td>
+                        <td>${dataFormatada}</td>
+                        <td>${item.clienteNome}</td>
+                        <td><a href="https://wa.me/55${item.clienteWhatsapp.replace(/\D/g,'')}" target="_blank" style="color: #4ade80; text-decoration: none;">📱 ${item.clienteWhatsapp}</a></td>
+                        <td>${item.servicoNome} (R$ ${item.preco.toFixed(2)})</td>
+                        <td>${item.barbeiroNome}</td>
+                        <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-action btn-atendido" onclick="mudarStatus('${item.id}', 'atendido')">✓ Atendido</button>
+                                <button class="btn-action btn-cancelar" onclick="mudarStatus('${item.id}', 'cancelado')">Cancelar</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
 
-        if (data.sucesso) {
-          const stats = data.estatisticas;
-          document.getElementById('dashFatHoje').innerText = `R$ ${stats.faturamentoHoje.toFixed(2).replace('.', ',')}`;
-          document.getElementById('dashFatMes').innerText = `R$ ${stats.faturamentoMes.toFixed(2).replace('.', ',')}`;
-          document.getElementById('dashBarbeiro').innerText = stats.barbeiroDestaque;
-          document.getElementById('dashBarbeiroReceita').innerText = `R$ ${stats.receitaBarbeiroDestaque.toFixed(2).replace('.', ',')} em vendas`;
-          document.getElementById('dashServico').innerText = stats.servicoPopular;
-        }
-      } catch (err) {
-        console.error('Erro ao carregar relatórios:', err);
-      }
-    }
-
-    async function carregarAgendamentos() {
-      const data = document.getElementById('filtroData').value;
-      const tbody = document.getElementById('tabelaAgendamentos');
-      tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
-
-      try {
-        const res = await fetch(`/api/admin/agendamentos?data=${data}`);
-        const result = await res.json();
-
-        if (!result.agendamentos || result.agendamentos.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
-          return;
+            } catch (error) {
+                console.error('Erro ao carregar dados do painel:', error);
+            }
         }
 
-        tbody.innerHTML = result.agendamentos.map(a => {
-          const numeroLimpo = a.clienteWhatsapp.replace(/\D/g, '');
-          const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
+        async function mudarStatus(id, novoStatus) {
+            try {
+                const res = await fetch(`/api/admin/agendamentos/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                const data = await res.json();
+                if (data.sucesso) {
+                    carregarDados(); // Atualiza a tela e os relatórios na hora
+                } else {
+                    alert('Erro ao atualizar: ' + data.erro);
+                }
+            } catch (e) {
+                console.error('Erro de conexão:', e);
+            }
+        }
 
-          return `
-            <tr class="hover:bg-gray-800/50 transition">
-              <td class="p-4 font-bold text-gold whitespace-nowrap">${a.horario}</td>
-              <td class="p-4 whitespace-nowrap">${a.data.split('-').reverse().join('/')}</td>
-              <td class="p-4 font-semibold text-white whitespace-nowrap">${a.clienteNome}</td>
-              <td class="p-4 whitespace-nowrap">
-                <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1 font-medium">
-                  📱 ${a.clienteWhatsapp}
-                </a>
-              </td>
-              <td class="p-4 whitespace-nowrap">${a.servicoNome} (R$ ${a.preco.toFixed(2)})</td>
-              <td class="p-4 whitespace-nowrap">${a.barbeiroNome}</td>
-              <td class="p-4 text-center whitespace-nowrap">${renderStatusBadge(a.status || 'agendado')}</td>
-              <td class="p-4 text-center whitespace-nowrap">
-                <div class="flex items-center justify-center gap-2">
-                  ${(a.status || 'agendado') !== 'atendido' ? `
-                    <button onclick="alterarStatus('${a.id}', 'atendido')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer">
-                      Concluir
-                    </button>
-                  ` : ''}
-                  ${(a.status || 'agendado') !== 'cancelado' ? `
-                    <button onclick="alterarStatus('${a.id}', 'cancelado')" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer">
-                      Cancelar
-                    </button>
-                  ` : ''}
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        document.getElementById('btnFiltrar').addEventListener('click', carregarDados);
 
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-red-400">Erro ao carregar dados.</td></tr>';
-      }
-    }
-
-    function carregarTudo() {
-      carregarAgendamentos();
-      carregarRelatorios();
-    }
-
-    async function alterarStatus(id, novoStatus) {
-      try {
-        const res = await fetch(`/api/admin/agendamentos/${id}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: novoStatus })
+        // Botão Limpar Agenda (Com tratamento de erro seguro)
+        document.getElementById('btnLimparAgenda').addEventListener('click', async () => {
+            if (confirm('Atenção: Deseja realmente zerar todos os agendamentos e limpar o banco de dados?')) {
+                try {
+                    const res = await fetch('/api/admin/limpar-banco', { 
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await res.json();
+                    if (data.sucesso) {
+                        alert('Banco de dados limpo com sucesso!');
+                        carregarDados();
+                    } else {
+                        alert('Erro ao limpar banco: ' + (data.erro || 'Desconhecido'));
+                    }
+                } catch (e) {
+                    console.error('Erro de conexão:', e);
+                    alert('Erro de conexão ao tentar limpar a agenda. Verifique se o servidor está online.');
+                }
+            }
         });
-        const result = await res.json();
 
-        if (result.sucesso) {
-          const textoAcao = novoStatus === 'atendido' ? 'Atendimento concluído e faturado!' : 'Agendamento cancelado.';
-          mostrarToast(textoAcao, 'sucesso');
-          carregarTudo(); // Atualiza a tabela e reconta os valores do dashboard instantaneamente
-        } else {
-          mostrarToast(result.erro || 'Erro ao atualizar status.', 'erro');
-        }
-      } catch (err) {
-        mostrarToast('Erro de conexão ao alterar status.', 'erro');
-      }
-    }
-
-    async function limparAgendamentosTeste() {
-      if (confirm("Deseja realmente limpar toda a agenda?")) {
-        try {
-          const res = await fetch('/api/limpar-testes', { method: 'POST' });
-          const data = await res.json();
-          
-          if (data.sucesso) {
-            mostrarToast(data.mensagem, 'sucesso');
-            carregarTudo();
-          } else {
-            mostrarToast(data.erro || 'Erro ao limpar dados.', 'erro');
-          }
-        } catch (err) {
-          mostrarToast('Erro de conexão com o servidor.', 'erro');
-        }
-      }
-    }
-
-    // Inicialização ao carregar a página
-    carregarTudo();
-  </script>
+        // Carrega ao iniciar a página
+        carregarDados();
+    </script>
 </body>
 </html>
