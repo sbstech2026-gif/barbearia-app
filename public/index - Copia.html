@@ -214,7 +214,7 @@
 
     <div class="card-container">
         <!-- Banner Superior -->
-        <img src="BarberFLOW.jpeg" alt="BarberFlow SaaS" class="banner" onerror="this.style.display='none'">
+        <img src="banner-barbearia.jpeg" alt="BarberFlow SaaS" class="banner" onerror="this.style.display='none'">
 
         <div class="content">
             <!-- Título Barbearia -->
@@ -228,7 +228,7 @@
                 <div class="form-group">
                     <div class="label-icon">✨ 1. ESCOLHA O SERVIÇO</div>
                     <select id="servico" required>
-                        <option value="" disabled selected>Selecione um serviço...</option>
+                        <option value="" disabled selected>Carregando serviços...</option>
                         <option value="Corte de Cabelo" data-preco="35">Corte de Cabelo - R$ 35,00</option>
                         <option value="Barba Completa" data-preco="30">Barba Completa - R$ 30,00</option>
                         <option value="Combo (Corte + Barba)" data-preco="60">Combo (Corte + Barba) - R$ 60,00</option>
@@ -240,7 +240,7 @@
                 <div class="form-group">
                     <div class="label-icon">👤 2. ESCOLHA O BARBEIRO</div>
                     <select id="barbeiro" required>
-                        <option value="" disabled selected>Selecione um barbeiro...</option>
+                        <option value="" disabled selected>Carregando barbeiros...</option>
                         <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
                         <option value="Mateus Silva">Mateus Silva</option>
                         <option value="Sandro">Sandro</option>
@@ -279,7 +279,7 @@
                 <!-- SEU WHATSAPP -->
                 <div class="form-group">
                     <div class="label-icon">📞 SEU WHATSAPP</div>
-                    <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" minlength="10" maxlength="15" required>
+                    <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" required>
                 </div>
 
                 <!-- BOTÃO CONFIRMAR -->
@@ -293,7 +293,6 @@
     </div>
 
     <script>
-        // Define a data atual como padrão
         const hojeIso = new Date().toISOString().split('T')[0];
         document.getElementById('data').value = hojeIso;
 
@@ -328,85 +327,55 @@
         }
 
         function validarFormulario() {
-            const nomeValido = document.getElementById('nome').value.trim() !== '';
-            const whatsValido = document.getElementById('whatsapp').value.trim().length >= 10;
-            const servicoValido = document.getElementById('servico').value !== '';
-            const barbeiroValido = selectBarbeiro.value !== '';
-            
-            if (horarioSelecionado && nomeValido && whatsValido && servicoValido && barbeiroValido) {
+            if (horarioSelecionado && document.getElementById('nome').value.trim() !== '') {
                 btnConfirmar.classList.add('active');
                 btnConfirmar.disabled = false;
-            } else {
-                btnConfirmar.classList.remove('active');
-                btnConfirmar.disabled = true;
             }
         }
 
         document.getElementById('nome').addEventListener('input', validarFormulario);
-        document.getElementById('whatsapp').addEventListener('input', validarFormulario);
-        document.getElementById('servico').addEventListener('change', validarFormulario);
 
-        // Envio corrigido do formulário para salvar no Banco de Dados
+        // Envio do formulário
         document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            if (!horarioSelecionado) {
-                alert('Por favor, selecione um horário antes de confirmar.');
-                return;
-            }
-
-            btnConfirmar.disabled = true;
-            btnConfirmar.innerText = 'SALVANDO AGENDAMENTO...';
-
-            const cliente = document.getElementById('nome').value.trim();
-            const whatsapp = document.getElementById('whatsapp').value.trim();
+            const cliente = document.getElementById('nome').value;
+            const whatsapp = document.getElementById('whatsapp').value;
             const selectServico = document.getElementById('servico');
             const servico = selectServico.value;
-            const preco = parseFloat(selectServico.options[selectServico.selectedIndex].getAttribute('data-preco')) || 0;
+            const preco = selectServico.options[selectServico.selectedIndex].getAttribute('data-preco') || 0;
             const barbeiro = selectBarbeiro.value;
             const data = document.getElementById('data').value;
+
             const dataFormatada = data.split('-').reverse().join('/');
 
-            const dadosAgendamento = {
-                cliente,
-                whatsapp,
-                servico,
-                barbeiro,
-                data,
-                horario: horarioSelecionado,
-                preco,
-                status: 'Pendente'
-            };
-
             try {
-                const res = await fetch('/api/agendamentos', {
+                await fetch('/api/agendamentos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosAgendamento)
+                    body: JSON.stringify({
+                        cliente,
+                        whatsapp,
+                        servico: `${servico} (R$ ${preco}.00)`,
+                        barbeiro,
+                        data,
+                        horario: horarioSelecionado,
+                        preco: parseFloat(preco)
+                    })
                 });
-
-                if (!res.ok) {
-                    throw new Error('Falha ao salvar no servidor.');
-                }
-
-                // Mensagem do WhatsApp pronta
-                const mensagem = `Olá! Gostaria de agendar um horário:%0A%0A` +
-                                 `👤 *Cliente:* ${cliente}%0A` +
-                                 `📱 *WhatsApp:* ${whatsapp}%0A` +
-                                 `✂️ *Serviço:* ${servico} (R$ ${preco}.00)%0A` +
-                                 `💈 *Barbeiro:* ${barbeiro}%0A` +
-                                 `📅 *Data:* ${dataFormatada}%0A` +
-                                 `⏰ *Horário:* ${horarioSelecionado}`;
-
-                window.open(`https://wa.me/5549988727098?text=${mensagem}`, '_blank');
-                window.location.reload();
-
             } catch (err) {
-                console.error('Erro ao salvar no banco:', err);
-                alert('Ocorreu um erro ao registrar o agendamento. Tente novamente.');
-                btnConfirmar.disabled = false;
-                btnConfirmar.innerText = 'CONFIRMAR AGENDAMENTO';
+                console.error('Erro ao salvar:', err);
             }
+
+            const mensagem = `Olá! Gostaria de agendar um horário:%0A%0A` +
+                             `👤 *Cliente:* ${cliente}%0A` +
+                             `📱 *WhatsApp:* ${whatsapp}%0A` +
+                             `✂️ *Serviço:* ${servico} (R$ ${preco}.00)%0A` +
+                             `💈 *Barbeiro:* ${barbeiro}%0A` +
+                             `📅 *Data:* ${dataFormatada}%0A` +
+                             `⏰ *Horário:* ${horarioSelecionado}`;
+
+            window.open(`https://wa.me/5549988727098?text=${mensagem}`, '_blank');
         });
     </script>
 </body>
