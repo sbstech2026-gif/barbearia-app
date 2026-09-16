@@ -3,251 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Administrativo - BarberFlow</title>
+    <title>Painel da Barbearia - Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0f1015;
-            --card-bg: #181a20;
-            --accent-color: #d4af37;
-            --accent-hover: #c5a028;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af;
-            --border-color: #2d3139;
-            --danger: #ef4444;
-            --success: #22c55e;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-
-        .header-panel {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);
+        body {
+            background-color: #0d0e12;
+            color: #ffffff;
+            padding: 30px 20px;
         }
-        .brand-logo-container { display: flex; align-items: center; gap: 16px; }
-        .logo-img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent-color); object-fit: cover; }
-        .brand-info .tagline { font-size: 11px; color: var(--accent-color); font-weight: 700; }
-        .brand-info h1 { font-size: 22px; margin: 2px 0; }
-        .brand-info p { font-size: 13px; color: var(--text-muted); }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Topo */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand h1 {
+            color: #d4af37;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .brand p {
+            color: #71717a;
+            font-size: 13px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .controls label {
+            font-size: 13px;
+            color: #a1a1aa;
+        }
+
+        input[type="date"] {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            color-scheme: dark;
+        }
+
+        .btn-filter {
+            background-color: #d4af37;
+            color: #000000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
         .btn-clear {
-            background: transparent; border: 1px solid var(--danger); color: var(--danger);
-            padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            background-color: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .btn-clear:hover { background: var(--danger); color: #fff; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
-        .kpi-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
-        .kpi-value { font-size: 24px; font-weight: 700; color: var(--accent-color); margin-bottom: 4px; }
-        .kpi-subtitle { font-size: 12px; color: var(--text-muted); }
+        .btn-clear:hover {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
 
-        .section-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-        .filter-group { display: flex; align-items: center; gap: 10px; }
-        .form-control { background: var(--bg-color); border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; color-scheme: dark; }
-        .btn-filter { background: var(--accent-color); color: #121212; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        /* Tabela */
+        .table-container {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
 
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { padding: 12px 16px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; }
-        td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
 
-        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-        .badge-confirmado { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-concluido { background: rgba(212, 175, 55, 0.15); color: var(--accent-color); border: 1px solid rgba(212, 175, 55, 0.3); }
-        .badge-cancelado { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        thead {
+            background-color: #0f1015;
+            border-bottom: 1px solid #27272a;
+        }
 
-        .actions-cell { display: flex; gap: 8px; }
-        .btn-action { background: var(--bg-color); border: 1px solid var(--border-color); color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
-        .btn-action:hover { border-color: var(--accent-color); color: var(--accent-color); }
-        .btn-action.cancel:hover { border-color: var(--danger); color: var(--danger); }
+        th {
+            padding: 14px 16px;
+            color: #d4af37;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
 
-        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); }
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #27272a;
+            color: #e4e4e7;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            background-color: rgba(212, 175, 55, 0.15);
+            color: #d4af37;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #71717a;
+        }
+
+        .btn-whats-app {
+            color: #22c55e;
+            text-decoration: none;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header class="header-panel">
-            <div class="brand-logo-container">
-                <img src="logo-barbearia.jpeg" alt="Logo" class="logo-img" onerror="this.style.display='none'">
-                <div class="brand-info">
-                    <span class="tagline">BARBERFLOW SAAS</span>
-                    <h1>Painel da Barbearia</h1>
-                    <p>Gerencie os horários e o status dos atendimentos</p>
-                </div>
-            </div>
-            <button class="btn-clear" onclick="limparAgenda()">🗑️ Limpar Agenda</button>
-        </header>
-
-        <section class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Faturamento Hoje</div>
-                <div class="kpi-value" id="kpiFatHoje">R$ 0,00</div>
-                <div class="kpi-subtitle">Serviços concluídos</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Faturamento do Mês</div>
-                <div class="kpi-value" id="kpiFatMes">R$ 0,00</div>
-                <div class="kpi-subtitle">Acumulado mensal</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Barbeiro Destaque</div>
-                <div class="kpi-value" id="kpiBarbeiroDestaque" style="font-size: 18px;">Nenhum ainda</div>
-                <div class="kpi-subtitle" id="kpiBarbeiroSub">R$ 0,00 em vendas</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Serviço Mais Popular</div>
-                <div class="kpi-value" id="kpiServicoPopular" style="font-size: 18px;">Nenhum ainda</div>
-                <div class="kpi-subtitle">Mais realizado</div>
-            </div>
-        </section>
-
-        <section class="section-card">
-            <div class="table-header">
-                <h2>📅 Lista de Atendimentos</h2>
-                <div class="filter-group">
-                    <label for="filterData">Data:</label>
-                    <input type="date" id="filterData" class="form-control">
-                    <button class="btn-filter" onclick="carregarAgendamentos()">Filtrar</button>
-                </div>
+        <div class="header">
+            <div class="brand">
+                <h1>Painel da Barbearia</h1>
+                <p>Gerencie os horários e o status dos atendimentos</p>
             </div>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Horário</th>
-                            <th>Data</th>
-                            <th>Cliente</th>
-                            <th>WhatsApp</th>
-                            <th>Serviço</th>
-                            <th>Barbeiro</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="agendamentosTbody"></tbody>
-                </table>
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    Nenhum agendamento encontrado para esta data.
-                </div>
+            <div class="controls">
+                <label for="filtroData">Data:</label>
+                <input type="date" id="filtroData">
+                <button class="btn-filter" onclick="carregarAgendamentos()">Filtrar</button>
+                <button class="btn-clear" onclick="limparTestes()">🗑️ Limpar Testes</button>
             </div>
-        </section>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Horário</th>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>WhatsApp</th>
+                        <th>Serviço</th>
+                        <th>Barbeiro</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo">
+                    <tr>
+                        <td colspan="7" class="empty-state">Carregando agendamentos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        const inputFilterData = document.getElementById('filterData');
-        const tbody = document.getElementById('agendamentosTbody');
-        const emptyState = document.getElementById('emptyState');
-
-        // Configura a data inicial no filtro para HOJE
-        const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        inputFilterData.value = `${ano}-${mes}-${dia}`;
+        // Configura a data de hoje por padrão no input
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('filtroData').value = hoje;
 
         async function carregarAgendamentos() {
-            const dataFiltro = inputFilterData.value;
+            const dataSelecionada = document.getElementById('filtroData').value;
+            const tabelaCorpo = document.getElementById('tabelaCorpo');
+
             try {
-                const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
-                const data = await res.json();
+                const res = await fetch(`/api/agendamentos?data=${dataSelecionada}`);
+                const agendamentos = await res.json();
 
-                let lista = [];
-                if (Array.isArray(data)) lista = data;
-                else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
-                else if (Array.isArray(data.dados)) lista = data.dados;
+                tabelaCorpo.innerHTML = '';
 
-                renderizarTabela(lista);
-
-                if (data.kpis) {
-                    document.getElementById('kpiFatHoje').innerText = `R$ ${data.kpis.faturamentoHoje || '0,00'}`;
-                    document.getElementById('kpiFatMes').innerText = `R$ ${data.kpis.faturamentoMes || '0,00'}`;
-                    document.getElementById('kpiBarbeiroDestaque').innerText = data.kpis.barbeiroDestaque || 'Nenhum ainda';
-                    document.getElementById('kpiBarbeiroSub').innerText = `R$ ${data.kpis.vendasBarbeiro || '0,00'} em vendas`;
-                    document.getElementById('kpiServicoPopular').innerText = data.kpis.servicoPopular || 'Nenhum ainda';
+                if (agendamentos.length === 0) {
+                    tabelaCorpo.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-state">Nenhum agendamento encontrado para esta data.</td>
+                        </tr>
+                    `;
+                    return;
                 }
-            } catch (err) {
-                console.error('Erro ao buscar agendamentos:', err);
-            }
-        }
 
-        function renderizarTabela(lista) {
-            tbody.innerHTML = '';
+                agendamentos.forEach(item => {
+                    const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : '-';
+                    const tr = document.createElement('tr');
 
-            if (!lista || lista.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
+                    tr.innerHTML = `
+                        <td><strong>${item.horario || '-'}</strong></td>
+                        <td>${dataFormatada}</td>
+                        <td>${item.cliente || '-'}</td>
+                        <td>
+                            <a class="btn-whats-app" href="https://wa.me/55${item.whatsapp}" target="_blank">
+                                📱 ${item.whatsapp || '-'}
+                            </a>
+                        </td>
+                        <td>${item.servico || '-'}</td>
+                        <td>${item.barbeiro || '-'}</td>
+                        <td><span class="status-badge">${item.status || 'Pendente'}</span></td>
+                    `;
 
-            emptyState.style.display = 'none';
-
-            lista.forEach(item => {
-                const tr = document.createElement('tr');
-
-                const dataOriginal = item.data || inputFilterData.value;
-                const dataFmt = dataOriginal.includes('-') ? dataOriginal.split('-').reverse().join('/') : dataOriginal;
-
-                const cliente = item.clienteNome || item.cliente || item.nome || 'Cliente';
-                const whats = item.clienteWhatsapp || item.whatsapp || item.telefone || '';
-                const servico = item.servicoNome || item.servico || 'Serviço';
-                const barbeiro = item.barbeiroNome || item.barbeiro || 'Barbeiro';
-                const horario = item.horario || item.hora || '--:--';
-                const status = item.status || 'Confirmado';
-
-                let badgeClass = 'badge-confirmado';
-                if (status === 'Concluído') badgeClass = 'badge-concluido';
-                if (status === 'Cancelado') badgeClass = 'badge-cancelado';
-
-                const whatsNum = whats.replace(/\D/g, '');
-
-                tr.innerHTML = `
-                    <td><strong>${horario}</strong></td>
-                    <td>${dataFmt}</td>
-                    <td>${cliente}</td>
-                    <td>${whatsNum ? `<a href="https://wa.me/55${whatsNum}" target="_blank" style="color:#25d366;text-decoration:none;">${whats}</a>` : '-'}</td>
-                    <td>${servico}</td>
-                    <td>${barbeiro}</td>
-                    <td><span class="badge ${badgeClass}">${status}</span></td>
-                    <td class="actions-cell">
-                        <button class="btn-action" title="Concluir" onclick="alterarStatus('${item.id}', 'Concluído')">✓</button>
-                        <button class="btn-action cancel" title="Cancelar" onclick="alterarStatus('${item.id}', 'Cancelado')">✕</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function alterarStatus(id, novoStatus) {
-            if (!id || id === 'undefined') return;
-            try {
-                const res = await fetch(`/api/agendamentos/${id}/status`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: novoStatus })
+                    tabelaCorpo.appendChild(tr);
                 });
 
-                if (res.ok) carregarAgendamentos();
             } catch (err) {
-                console.error(err);
+                console.error('Erro ao carregar dados:', err);
+                tabelaCorpo.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state" style="color: #ef4444;">Erro ao carregar agendamentos do servidor.</td>
+                    </tr>
+                `;
             }
         }
 
-        async function limparAgenda() {
-            const dataFiltro = inputFilterData.value;
-            if (confirm(`Limpar os agendamentos do dia ${dataFiltro.split('-').reverse().join('/')}?`)) {
+        async function limparTestes() {
+            if (confirm("Deseja realmente apagar os agendamentos de teste?")) {
                 try {
-                    const res = await fetch(`/api/agendamentos/limpar?data=${dataFiltro}`, { method: 'DELETE' });
-                    if (res.ok) carregarAgendamentos();
+                    const res = await fetch('/api/limpar-testes', { method: 'POST' });
+                    const result = await res.json();
+                    alert(result.mensagem || "Concluído!");
+                    carregarAgendamentos();
                 } catch (err) {
-                    console.error(err);
+                    alert("Erro ao conectar com o servidor para limpar registros.");
                 }
             }
         }
 
+        // Carrega os dados ao abrir a página
         carregarAgendamentos();
     </script>
 </body>
