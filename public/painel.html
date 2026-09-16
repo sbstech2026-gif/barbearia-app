@@ -1,70 +1,137 @@
-<!-- CABEÇALHO BARBERFLOW PREMIUM (VERSÃO FINAL COM .JPEG) -->
-<div style="
-    background-color: #121212; /* Fundo escuro */
-    padding: 20px 30px;
-    border-radius: 12px;
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 30px; 
-    flex-wrap: wrap; 
-    gap: 20px; 
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-">
-    
-    <!-- Lado Esquerdo: Logo + Título -->
-    <div style="display: flex; align-items: center; gap: 18px;">
-        <!-- Logo Oficial com extensão .jpeg corrigida -->
-        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="
-            width: 60px; 
-            height: 60px; 
-            object-fit: cover; 
-            border-radius: 12px; 
-            border: 2px solid #d4af37; 
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-            display: block;
-            background-color: #222;
-        ">
-        
-        <!-- Textos do Cabeçalho -->
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Barbeiro | Gestão de Agendamentos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            gold: '#D4AF37',
+            darkBg: '#111111',
+            darkCard: '#1a1a1a'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-darkBg text-gray-100 min-h-screen p-6">
+  <!-- Container Principal -->
+  <div class="max-w-7xl mx-auto">
+    <!-- Header com a Logo e Filtro -->
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4 gap-4">
+      <div class="flex items-center gap-4">
+        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 60px; height: 60px; object-fit: cover;" class="rounded-xl border border-gray-800">
         <div>
-            <div style="
-                font-size: 12px; 
-                color: #d4af37; 
-                font-weight: 700; 
-                letter-spacing: 2px; 
-                text-transform: uppercase; 
-                margin-bottom: 4px;
-            ">
-                BarberFlow SaaS
-            </div>
-            <h1 style="
-                color: #ffffff; 
-                font-size: 28px; 
-                margin: 0; 
-                font-weight: 800; 
-                line-height: 1;
-                letter-spacing: -0.5px;
-            ">
-                Painel da Barbearia
-            </h1>
-            <p style="
-                color: #bbbbbb; 
-                font-size: 15px; 
-                margin: 6px 0 0 0; 
-                font-weight: 400;
-            ">
-                Gerencie os horarios e o status dos atendimentos
-            </p>
+          <span class="text-xs font-bold text-gold uppercase tracking-wider">BarberFlow SaaS</span>
+          <h1 class="text-3xl font-bold text-gold">Painel da Barbearia</h1>
+          <p class="text-gray-400 text-sm">Gerencie os horários e o status dos atendimentos</p>
         </div>
-    </div>
-
-    <!-- Lado Direito: Filtro de Data -->
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <input type="date" style="padding: 10px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff;">
-        <button style="padding: 10px 16px; border-radius: 8px; background: #d4af37; color: #121212; border: none; font-weight: bold; cursor: pointer;">
-            Filtrar
+      </div>
+      <div class="flex items-center gap-3">
+        <label for="filtroData" class="text-sm font-medium text-gray-300">Data:</label>
+        <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+        <button onclick="carregarAgendamentos()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition">
+          Filtrar
         </button>
-    </div>
+      </div>
+    </header>
 
-</div>
+    <!-- Tabela de Agendamentos -->
+    <main>
+      <div class="bg-darkCard rounded-xl border border-gray-800 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300">
+            <thead class="bg-gray-900 text-gold uppercase text-xs border-b border-gray-800">
+              <tr>
+                <th class="p-4 whitespace-nowrap">Horário</th>
+                <th class="p-4 whitespace-nowrap">Data</th>
+                <th class="p-4 whitespace-nowrap">Cliente</th>
+                <th class="p-4 whitespace-nowrap">WhatsApp</th>
+                <th class="p-4 whitespace-nowrap">Serviço</th>
+                <th class="p-4 whitespace-nowrap">Barbeiro</th>
+                <th class="p-4 text-center whitespace-nowrap">Status</th>
+                <th class="p-4 text-center whitespace-nowrap">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaAgendamentos" class="divide-y divide-gray-800">
+              <!-- Dados inseridos via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+
+    function renderStatusBadge(status) {
+      if (status === 'atendido') {
+        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✓ Atendido</span>`;
+      }
+      if (status === 'cancelado') {
+        return `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✕ Cancelado</span>`;
+      }
+      return `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">⏱ Agendado</span>`;
+    }
+
+    async function carregarAgendamentos() {
+      const data = document.getElementById('filtroData').value;
+      const tbody = document.getElementById('tabelaAgendamentos');
+      tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
+
+      try {
+        const res = await fetch(`/api/admin/agendamentos?data=${data}`);
+        const result = await res.json();
+
+        if (!result.agendamentos || result.agendamentos.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = result.agendamentos.map(a => `
+          <tr class="hover:bg-gray-800/50 transition">
+            <td class="p-4 font-bold text-gold whitespace-nowrap">${a.horario}</td>
+            <td class="p-4 whitespace-nowrap">${a.data.split('-').reverse().join('/')}</td>
+            <td class="p-4 font-semibold text-white whitespace-nowrap">${a.clienteNome}</td>
+            <td class="p-4 whitespace-nowrap">
+              <a href="https://wa.me/${a.clienteWhatsapp.replace(/\D/g, '')}" target="_blank" class="text-green-400 hover:underline inline-block">
+                ${a.clienteWhatsapp}
+              </a>
+            </td>
+            <td class="p-4 whitespace-nowrap">${a.servicoNome} (R$ ${a.preco.toFixed(2)})</td>
+            <td class="p-4 whitespace-nowrap">${a.barbeiroNome}</td>
+            <td class="p-4 text-center whitespace-nowrap">${renderStatusBadge(a.status || 'agendado')}</td>
+            <td class="p-4 text-center whitespace-nowrap">
+              <div class="flex items-center justify-center gap-2">
+                ${(a.status || 'agendado') !== 'atendido' ? `
+                  <button onclick="alterarStatus('${a.id}', 'atendido')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap">
+                    Concluir
+                  </button>
+                ` : ''}
+                ${(a.status || 'agendado') !== 'cancelado' ? `
+                  <button onclick="alterarStatus('${a.id}', 'cancelado')" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap">
+                    Cancelar
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-red-400">Erro ao carregar dados.</td></tr>';
+      }
+    }
+
+    // Carrega os agendamentos assim que a página abre
+    carregarAgendamentos();
+  </script>
+</body>
+</html>
