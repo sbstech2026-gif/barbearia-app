@@ -243,7 +243,7 @@
                         <option value="" disabled selected>Selecione um barbeiro...</option>
                         <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
                         <option value="Mateus Silva">Mateus Silva</option>
-                        <option value="Sandro">Sandro</option>
+                        <option value="João">João</option>
                     </select>
                 </div>
 
@@ -385,16 +385,18 @@
                 console.warn('Servidor indisponível para gravação direta, redirecionando para WhatsApp:', err);
             }
 
-            // Redireciona para o WhatsApp
-            const mensagem = `Olá! Gostaria de agendar um horário:%0A%0A` +
-                             `👤 *Cliente:* ${cliente}%0A` +
-                             `📱 *WhatsApp:* ${whatsapp}%0A` +
-                             `✂️ *Serviço:* ${servico} (R$ ${preco}.00)%0A` +
-                             `💈 *Barbeiro:* ${barbeiro}%0A` +
-                             `📅 *Data:* ${dataFormatada}%0A` +
-                             `⏰ *Horário:* ${horarioSelecionado}`;
+            // Monta a mensagem limpa com suporte perfeito a emojis nativos
+            const mensagemTexto = `Olá! Gostaria de agendar um horário:\n\n` +
+                                  `👤 *Cliente:* ${cliente}\n` +
+                                  `📱 *WhatsApp:* ${whatsapp}\n` +
+                                  `✂️ *Serviço:* ${servico} (R$ ${preco.toFixed(2)})\n` +
+                                  `💈 *Barbeiro:* ${barbeiro}\n` +
+                                  `📅 *Data:* ${dataFormatada}\n` +
+                                  `⏰ *Horário:* ${horarioSelecionado}`;
 
-            window.open(`https://wa.me/5549988727098?text=${mensagem}`, '_blank');
+            const urlWhatsapp = `https://wa.me/5549988727098?text=${encodeURIComponent(mensagemTexto)}`;
+
+            window.open(urlWhatsapp, '_blank');
             window.location.reload();
         });
     </script>
