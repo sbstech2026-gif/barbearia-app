@@ -371,27 +371,19 @@
                 console.warn('Servidor indisponível para gravação direta, redirecionando para WhatsApp:', err);
             }
 
-            // Geração de emojis via CodePoints numéricos seguros
-            const emojiCheck = String.fromCodePoint(0x2705);
-            const emojiCliente = String.fromCodePoint(0x1F464);
-            const emojiWhats = String.fromCodePoint(0x1F4F1);
-            const emojiTesoura = String.fromCodePoint(0x2702);
-            const emojiBarbeiro = String.fromCodePoint(0x1F488);
-            const emojiData = String.fromCodePoint(0x1F4C5);
-            const emojiHora = String.fromCodePoint(0x23F0);
-
-            const mensagemTexto = 
-                emojiCheck + " *NOVO AGENDAMENTO*\n" +
+            // Mensagem formatada visualmente com ícones originais
+            const textoMensagem = 
+                "✅ *NOVO AGENDAMENTO*\n" +
                 "-----------------------------\n" +
-                emojiCliente + " *Cliente:* " + cliente + "\n" +
-                emojiWhats + " *WhatsApp:* " + whatsapp + "\n" +
-                emojiTesoura + " *Serviço:* " + servico + " (R$ " + preco.toFixed(2) + ")\n" +
-                emojiBarbeiro + " *Barbeiro:* " + barbeiro + "\n" +
-                emojiData + " *Data:* " + dataFormatada + "\n" +
-                emojiHora + " *Horário:* " + horarioSelecionado + "\n" +
+                "👤 *Cliente:* " + cliente + "\n" +
+                "📱 *WhatsApp:* " + whatsapp + "\n" +
+                "✂️ *Serviço:* " + servico + " (R$ " + preco.toFixed(2) + ")\n" +
+                "💈 *Barbeiro:* " + barbeiro + "\n" +
+                "📅 *Data:* " + dataFormatada + "\n" +
+                "⏰ *Horário:* " + horarioSelecionado + "\n" +
                 "-----------------------------";
 
-            const urlWhatsapp = "https://wa.me/5549988727098?text=" + encodeURIComponent(mensagemTexto);
+            const urlWhatsapp = "https://wa.me/5549988727098?text=" + encodeURIComponent(textoMensagem);
 
             window.open(urlWhatsapp, '_blank');
             window.location.reload();
