@@ -15,310 +15,78 @@
             --border-color: #2d3139;
             --danger: #ef4444;
             --success: #22c55e;
-            --warning: #f59e0b;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 24px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Topo do Painel com Logo */
         .header-panel {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);
         }
-
-        .brand-logo-container {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logo-img {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--accent-color);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-        }
-
-        .brand-info .tagline {
-            font-size: 11px;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-        }
-
-        .brand-info h1 {
-            font-size: 22px;
-            color: var(--text-main);
-            margin: 2px 0;
-            font-weight: 700;
-        }
-
-        .brand-info p {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
+        .brand-logo-container { display: flex; align-items: center; gap: 16px; }
+        .logo-img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent-color); object-fit: cover; }
+        .brand-info .tagline { font-size: 11px; color: var(--accent-color); font-weight: 700; }
+        .brand-info h1 { font-size: 22px; margin: 2px 0; }
+        .brand-info p { font-size: 13px; color: var(--text-muted); }
 
         .btn-clear {
-            background-color: transparent;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            background: transparent; border: 1px solid var(--danger); color: var(--danger);
+            padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
+        .btn-clear:hover { background: var(--danger); color: #fff; }
 
-        .btn-clear:hover {
-            background-color: var(--danger);
-            color: #ffffff;
-        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .kpi-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+        .kpi-value { font-size: 24px; font-weight: 700; color: var(--accent-color); margin-bottom: 4px; }
+        .kpi-subtitle { font-size: 12px; color: var(--text-muted); }
 
-        /* Indicadores (KPIs) */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
+        .section-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .form-control { background: var(--bg-color); border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; color-scheme: dark; }
+        .btn-filter { background: var(--accent-color); color: #121212; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
 
-        .kpi-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-        }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { padding: 12px 16px; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
 
-        .kpi-title {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-confirmado { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-concluido { background: rgba(212, 175, 55, 0.15); color: var(--accent-color); border: 1px solid rgba(212, 175, 55, 0.3); }
+        .badge-cancelado { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        .kpi-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent-color);
-            margin-bottom: 4px;
-        }
+        .actions-cell { display: flex; gap: 8px; }
+        .btn-action { background: var(--bg-color); border: 1px solid var(--border-color); color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+        .btn-action:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .btn-action.cancel:hover { border-color: var(--danger); color: var(--danger); }
 
-        .kpi-subtitle {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Tabela de Atendimentos */
-        .section-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .table-title {
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-group label {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .form-control {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            outline: none;
-            color-scheme: dark;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-color);
-        }
-
-        .btn-filter {
-            background-color: var(--accent-color);
-            color: #121212;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-filter:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        th {
-            padding: 12px 16px;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 600;
-            border-bottom: 1px solid var(--border-color);
-            text-transform: uppercase;
-        }
-
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Status Badges */
-        .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .badge-confirmado {
-            background-color: rgba(34, 197, 94, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .badge-concluido {
-            background-color: rgba(212, 175, 55, 0.15);
-            color: var(--accent-color);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-
-        .badge-cancelado {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .actions-cell {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-action {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-action:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-
-        .btn-action.cancel:hover {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
+        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Header com Logo no Canto Esquerdo -->
         <header class="header-panel">
             <div class="brand-logo-container">
-                <img src="logo-barbearia.jpeg" alt="Logo BarberFlow" class="logo-img">
+                <img src="logo-barbearia.jpeg" alt="Logo" class="logo-img" onerror="this.style.display='none'">
                 <div class="brand-info">
                     <span class="tagline">BARBERFLOW SAAS</span>
                     <h1>Painel da Barbearia</h1>
                     <p>Gerencie os horários e o status dos atendimentos</p>
                 </div>
             </div>
-            <button type="button" class="btn-clear" onclick="limparAgenda()">
-                🗑️ Limpar Agenda
-            </button>
+            <button class="btn-clear" onclick="limparAgenda()">🗑️ Limpar Agenda</button>
         </header>
 
-        <!-- Cards com KPIs -->
         <section class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-title">Faturamento Hoje</div>
                 <div class="kpi-value" id="kpiFatHoje">R$ 0,00</div>
-                <div class="kpi-subtitle">Baseado em serviços concluídos</div>
+                <div class="kpi-subtitle">Serviços concluídos</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">Faturamento do Mês</div>
@@ -333,20 +101,17 @@
             <div class="kpi-card">
                 <div class="kpi-title">Serviço Mais Popular</div>
                 <div class="kpi-value" id="kpiServicoPopular" style="font-size: 18px;">Nenhum ainda</div>
-                <div class="kpi-subtitle">Mais realizado no mês</div>
+                <div class="kpi-subtitle">Mais realizado</div>
             </div>
         </section>
 
-        <!-- Lista de Atendimentos -->
         <section class="section-card">
             <div class="table-header">
-                <div class="table-title">
-                    📅 Lista de Atendimentos
-                </div>
+                <h2>📅 Lista de Atendimentos</h2>
                 <div class="filter-group">
                     <label for="filterData">Data:</label>
                     <input type="date" id="filterData" class="form-control">
-                    <button type="button" class="btn-filter" onclick="carregarAgendamentos()">Filtrar</button>
+                    <button class="btn-filter" onclick="carregarAgendamentos()">Filtrar</button>
                 </div>
             </div>
 
@@ -364,9 +129,7 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="agendamentosTbody">
-                        <!-- Tabela alimentada via JS -->
-                    </tbody>
+                    <tbody id="agendamentosTbody"></tbody>
                 </table>
                 <div id="emptyState" class="empty-state" style="display: none;">
                     Nenhum agendamento encontrado para esta data.
@@ -380,7 +143,7 @@
         const tbody = document.getElementById('agendamentosTbody');
         const emptyState = document.getElementById('emptyState');
 
-        // Configura a data padrão para HOJE
+        // Configura a data inicial no filtro para HOJE
         const hoje = new Date();
         const ano = hoje.getFullYear();
         const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -391,31 +154,30 @@
             const dataFiltro = inputFilterData.value;
             try {
                 const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
-                const responseData = await res.json();
+                const data = await res.json();
 
-                // Trata se o backend respondeu com Array direto ou dentro de objeto
                 let lista = [];
-                if (Array.isArray(responseData)) {
-                    lista = responseData;
-                } else if (Array.isArray(responseData.agendamentos)) {
-                    lista = responseData.agendamentos;
-                } else if (Array.isArray(responseData.dados)) {
-                    lista = responseData.dados;
-                }
+                if (Array.isArray(data)) lista = data;
+                else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
+                else if (Array.isArray(data.dados)) lista = data.dados;
 
                 renderizarTabela(lista);
 
-                if (responseData.kpis) {
-                    atualizarKPIs(responseData.kpis);
+                if (data.kpis) {
+                    document.getElementById('kpiFatHoje').innerText = `R$ ${data.kpis.faturamentoHoje || '0,00'}`;
+                    document.getElementById('kpiFatMes').innerText = `R$ ${data.kpis.faturamentoMes || '0,00'}`;
+                    document.getElementById('kpiBarbeiroDestaque').innerText = data.kpis.barbeiroDestaque || 'Nenhum ainda';
+                    document.getElementById('kpiBarbeiroSub').innerText = `R$ ${data.kpis.vendasBarbeiro || '0,00'} em vendas`;
+                    document.getElementById('kpiServicoPopular').innerText = data.kpis.servicoPopular || 'Nenhum ainda';
                 }
             } catch (err) {
-                console.error('Erro ao carregar agendamentos:', err);
+                console.error('Erro ao buscar agendamentos:', err);
             }
         }
 
         function renderizarTabela(lista) {
             tbody.innerHTML = '';
-            
+
             if (!lista || lista.length === 0) {
                 emptyState.style.display = 'block';
                 return;
@@ -426,10 +188,9 @@
             lista.forEach(item => {
                 const tr = document.createElement('tr');
 
-                // Trata nomes de propriedades variadas vindas do backend
                 const dataOriginal = item.data || inputFilterData.value;
                 const dataFmt = dataOriginal.includes('-') ? dataOriginal.split('-').reverse().join('/') : dataOriginal;
-                
+
                 const cliente = item.clienteNome || item.cliente || item.nome || 'Cliente';
                 const whats = item.clienteWhatsapp || item.whatsapp || item.telefone || '';
                 const servico = item.servicoNome || item.servico || 'Serviço';
@@ -441,15 +202,13 @@
                 if (status === 'Concluído') badgeClass = 'badge-concluido';
                 if (status === 'Cancelado') badgeClass = 'badge-cancelado';
 
-                const whatsApenasNumeros = whats.replace(/\D/g, '');
+                const whatsNum = whats.replace(/\D/g, '');
 
                 tr.innerHTML = `
                     <td><strong>${horario}</strong></td>
                     <td>${dataFmt}</td>
                     <td>${cliente}</td>
-                    <td>
-                        ${whats ? `<a href="https://wa.me/55${whatsApenasNumeros}" target="_blank" style="color: #25d366; text-decoration: none;">${whats}</a>` : '-'}
-                    </td>
+                    <td>${whatsNum ? `<a href="https://wa.me/55${whatsNum}" target="_blank" style="color:#25d366;text-decoration:none;">${whats}</a>` : '-'}</td>
                     <td>${servico}</td>
                     <td>${barbeiro}</td>
                     <td><span class="badge ${badgeClass}">${status}</span></td>
@@ -462,20 +221,8 @@
             });
         }
 
-        function atualizarKPIs(kpis) {
-            if (!kpis) return;
-            document.getElementById('kpiFatHoje').innerText = `R$ ${kpis.faturamentoHoje || '0,00'}`;
-            document.getElementById('kpiFatMes').innerText = `R$ ${kpis.faturamentoMes || '0,00'}`;
-            document.getElementById('kpiBarbeiroDestaque').innerText = kpis.barbeiroDestaque || 'Nenhum ainda';
-            document.getElementById('kpiBarbeiroSub').innerText = `R$ ${kpis.vendasBarbeiro || '0,00'} em vendas`;
-            document.getElementById('kpiServicoPopular').innerText = kpis.servicoPopular || 'Nenhum ainda';
-        }
-
         async function alterarStatus(id, novoStatus) {
-            if (!id || id === 'undefined') {
-                alert('ID do agendamento inválido.');
-                return;
-            }
+            if (!id || id === 'undefined') return;
             try {
                 const res = await fetch(`/api/agendamentos/${id}/status`, {
                     method: 'PATCH',
@@ -483,11 +230,7 @@
                     body: JSON.stringify({ status: novoStatus })
                 });
 
-                if (res.ok) {
-                    carregarAgendamentos();
-                } else {
-                    alert('Erro ao atualizar status.');
-                }
+                if (res.ok) carregarAgendamentos();
             } catch (err) {
                 console.error(err);
             }
@@ -495,19 +238,16 @@
 
         async function limparAgenda() {
             const dataFiltro = inputFilterData.value;
-            if (confirm(`Tem certeza de que deseja limpar os agendamentos do dia ${dataFiltro.split('-').reverse().join('/')}?`)) {
+            if (confirm(`Limpar os agendamentos do dia ${dataFiltro.split('-').reverse().join('/')}?`)) {
                 try {
                     const res = await fetch(`/api/agendamentos/limpar?data=${dataFiltro}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        carregarAgendamentos();
-                    }
+                    if (res.ok) carregarAgendamentos();
                 } catch (err) {
                     console.error(err);
                 }
             }
         }
 
-        // Carrega os dados na abertura da tela
         carregarAgendamentos();
     </script>
 </body>
