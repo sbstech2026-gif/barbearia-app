@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento - Barbearia</title>
+    <title>BarberFlow - Agendamento Digital</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -14,238 +14,341 @@
         }
 
         body {
-            background-color: #121212;
+            background-color: #0b0b0b;
             color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 20px 10px;
         }
 
-        .container {
+        .card-container {
             width: 100%;
-            max-width: 480px;
-            background-color: #1e1e1e;
+            max-width: 420px;
+            background-color: #141414;
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #2a2a2a;
+            border: 1px solid #222222;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
         }
 
-        .header {
+        /* Banner Topo */
+        .banner {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .content {
+            padding: 24px 20px;
+        }
+
+        .header-title {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
-        .logo {
-            width: 90px;
-            height: 90px;
-            border-radius: 12px;
-            object-fit: cover;
-            margin-bottom: 12px;
-            border: 2px solid #d4af37;
-        }
-
-        .title {
-            font-size: 22px;
+        .header-title h1 {
+            color: #d4af37;
+            font-size: 18px;
             font-weight: 700;
-            color: #ffffff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .subtitle {
-            font-size: 13px;
+        .header-title p {
             color: #888888;
-            margin-top: 4px;
+            font-size: 12px;
+            margin-top: 2px;
         }
 
+        /* Form Controls */
         .form-group {
             margin-bottom: 18px;
         }
 
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #cccccc;
-            margin-bottom: 6px;
+        .label-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #d4af37;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
-        input, select {
+        select, input[type="text"], input[type="tel"], input[type="date"] {
             width: 100%;
-            padding: 12px;
-            background-color: #2a2a2a;
-            border: 1px solid #333333;
+            padding: 12px 14px;
+            background-color: #1c1c1c;
+            border: 1px solid #2a2a2a;
             border-radius: 8px;
             color: #ffffff;
             font-size: 14px;
             outline: none;
-            transition: 0.3s;
+            color-scheme: dark;
+            transition: all 0.3s;
         }
 
-        input:focus, select:focus {
+        select:focus, input:focus {
             border-color: #d4af37;
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
         }
 
-        .barber-grid {
+        /* Legenda de Horários */
+        .legend-box {
+            background-color: #1a1a1a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            padding: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 12px;
         }
 
-        .barber-card {
-            background-color: #2a2a2a;
-            border: 1px solid #333333;
-            border-radius: 10px;
-            padding: 12px 16px;
+        .legend-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: 0.3s;
+            gap: 6px;
         }
 
-        .barber-card:hover, .barber-card.selected {
-            border-color: #d4af37;
-            background-color: #322d1b;
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
         }
 
-        .barber-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .dot-free { background-color: #2a2a2a; border: 1px solid #444; }
+        .dot-selected { background-color: #d4af37; }
+        .dot-busy { background-color: #8b0000; }
 
-        .barber-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #d4af37;
-            color: #121212;
+        /* Area de seleção de horário */
+        .slots-container {
+            background-color: #181818;
+            border: 1px dashed #2e2e2e;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            color: #777777;
+            font-size: 13px;
+            min-height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-slot {
+            background-color: #222222;
+            color: #ffffff;
+            border: 1px solid #333333;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-slot.selected {
+            background-color: #d4af37;
+            color: #121212;
             font-weight: bold;
+            border-color: #d4af37;
         }
 
-        .barber-name {
-            font-size: 14px;
-            font-weight: 600;
+        .btn-slot.busy {
+            background-color: #3a1515;
+            color: #884444;
+            cursor: not-allowed;
+            border-color: #552222;
         }
 
-        .btn-submit {
+        hr {
+            border: none;
+            border-top: 1px solid #222222;
+            margin: 20px 0;
+        }
+
+        .btn-confirm {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #d4af37, #aa8c2c);
-            border: none;
+            background-color: #222222;
+            color: #666666;
+            border: 1px solid #333333;
             border-radius: 8px;
-            color: #121212;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
-            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: not-allowed;
+            transition: all 0.3s;
             margin-top: 10px;
-            transition: 0.3s;
         }
 
-        .btn-submit:hover {
-            opacity: 0.9;
+        .btn-confirm.active {
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            color: #121212;
+            border: none;
+            cursor: pointer;
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 11px;
+            color: #555555;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200" alt="Logo Barbearia" class="logo">
-            <h1 class="title">Agende seu Horário</h1>
-            <p class="subtitle">Escolha o serviço, barbeiro e horário de sua preferência</p>
-        </div>
+    <div class="card-container">
+        <!-- Banner Superior -->
+        <img src="BarberFLOW.jpg" alt="BarberFlow SaaS" class="banner" onerror="this.style.display='none'">
 
-        <form id="formAgendamento">
-            <div class="form-group">
-                <label for="cliente">Seu Nome Completo</label>
-                <input type="text" id="cliente" required placeholder="Digite seu nome">
+        <div class="content">
+            <!-- Título Barbearia -->
+            <div class="header-title">
+                <h1>✂ BARBEARIA ESTILO</h1>
+                <p>Seu estilo. Seu momento.</p>
             </div>
 
-            <div class="form-group">
-                <label for="whatsapp">Seu WhatsApp</label>
-                <input type="tel" id="whatsapp" required placeholder="(00) 00000-0000">
-            </div>
-
-            <div class="form-group">
-                <label for="servico">Selecione o Serviço</label>
-                <select id="servico" required>
-                    <option value="" disabled selected>Escolha um serviço...</option>
-                    <option value="Corte de Cabelo" data-preco="35">Corte de Cabelo (R$ 35,00)</option>
-                    <option value="Barba Completa" data-preco="30">Barba Completa (R$ 30,00)</option>
-                    <option value="Combo (Corte + Barba)" data-preco="60">Combo (Corte + Barba) (R$ 60,00)</option>
-                    <option value="Sobrancelha" data-preco="15">Sobrancelha (R$ 15,00)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Escolha o Barbeiro</label>
-                <div class="barber-grid">
-                    <div class="barber-card selected" onclick="selectBarber('Carlos (Mestre Barbeiro)', this)">
-                        <div class="barber-info">
-                            <div class="barber-avatar">C</div>
-                            <span class="barber-name">Carlos (Mestre Barbeiro)</span>
-                        </div>
-                    </div>
-                    <div class="barber-card" onclick="selectBarber('Mateus Silva', this)">
-                        <div class="barber-info">
-                            <div class="barber-avatar">M</div>
-                            <span class="barber-name">Mateus Silva</span>
-                        </div>
-                    </div>
-                    <div class="barber-card" onclick="selectBarber('Sandro', this)">
-                        <div class="barber-info">
-                            <div class="barber-avatar">S</div>
-                            <span class="barber-name">Sandro</span>
-                        </div>
-                    </div>
+            <form id="formAgendamento">
+                <!-- 1. ESCOLHA O SERVIÇO -->
+                <div class="form-group">
+                    <div class="label-icon">✨ 1. ESCOLHA O SERVIÇO</div>
+                    <select id="servico" required>
+                        <option value="" disabled selected>Carregando serviços...</option>
+                        <option value="Corte de Cabelo" data-preco="35">Corte de Cabelo - R$ 35,00</option>
+                        <option value="Barba Completa" data-preco="30">Barba Completa - R$ 30,00</option>
+                        <option value="Combo (Corte + Barba)" data-preco="60">Combo (Corte + Barba) - R$ 60,00</option>
+                        <option value="Sobrancelha" data-preco="15">Sobrancelha - R$ 15,00</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="form-group" style="display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label for="data">Data</label>
+                <!-- 2. ESCOLHA O BARBEIRO -->
+                <div class="form-group">
+                    <div class="label-icon">👤 2. ESCOLHA O BARBEIRO</div>
+                    <select id="barbeiro" required>
+                        <option value="" disabled selected>Carregando barbeiros...</option>
+                        <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
+                        <option value="Mateus Silva">Mateus Silva</option>
+                        <option value="Sandro">Sandro</option>
+                    </select>
+                </div>
+
+                <!-- 3. SELECIONE A DATA -->
+                <div class="form-group">
+                    <div class="label-icon">📅 3. SELECIONE A DATA</div>
                     <input type="date" id="data" required>
                 </div>
-                <div style="flex: 1;">
-                    <label for="horario">Horário</label>
-                    <input type="time" id="horario" required>
-                </div>
-            </div>
 
-            <button type="submit" class="btn-submit">Confirmar pelo WhatsApp</button>
-        </form>
+                <!-- 4. SELECIONE O HORÁRIO -->
+                <div class="form-group">
+                    <div class="label-icon">🕒 4. SELECIONE O HORÁRIO</div>
+                    
+                    <div class="legend-box">
+                        <div class="legend-item"><div class="dot dot-free"></div><span style="color:#888;">Livre</span></div>
+                        <div class="legend-item"><div class="dot dot-selected"></div><span style="color:#d4af37;">Selecionado</span></div>
+                        <div class="legend-item"><div class="dot dot-busy"></div><span style="color:#b84444;">Ocupado</span></div>
+                    </div>
+
+                    <div class="slots-container" id="containerHorarios">
+                        Selecione o barbeiro primeiro.
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- SEU NOME -->
+                <div class="form-group">
+                    <div class="label-icon">👤 SEU NOME</div>
+                    <input type="text" id="nome" placeholder="Ex: João Silva" required>
+                </div>
+
+                <!-- SEU WHATSAPP -->
+                <div class="form-group">
+                    <div class="label-icon">📞 SEU WHATSAPP</div>
+                    <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" required>
+                </div>
+
+                <!-- BOTÃO CONFIRMAR -->
+                <button type="submit" class="btn-confirm" id="btnConfirmar" disabled>CONFIRMAR AGENDAMENTO</button>
+            </form>
+
+            <div class="footer-text">
+                &lt;/&gt; Desenvolvido com Node.js e React/Web Techs
+            </div>
+        </div>
     </div>
 
     <script>
-        let barbeiroSelecionado = 'Carlos (Mestre Barbeiro)';
+        const hojeIso = new Date().toISOString().split('T')[0];
+        document.getElementById('data').value = hojeIso;
 
-        function selectBarber(nome, el) {
-            barbeiroSelecionado = nome;
-            document.querySelectorAll('.barber-card').forEach(card => card.classList.remove('selected'));
-            el.classList.add('selected');
+        let horarioSelecionado = null;
+
+        const selectBarbeiro = document.getElementById('barbeiro');
+        const containerHorarios = document.getElementById('containerHorarios');
+        const btnConfirmar = document.getElementById('btnConfirmar');
+
+        // Gera horários quando escolhe o barbeiro
+        selectBarbeiro.addEventListener('change', gerarHorarios);
+
+        function gerarHorarios() {
+            containerHorarios.innerHTML = '';
+            const horariosValidos = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+            horariosValidos.forEach(hora => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-slot';
+                btn.innerText = hora;
+                
+                btn.onclick = () => {
+                    document.querySelectorAll('.btn-slot').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    horarioSelecionado = hora;
+                    validarFormulario();
+                };
+
+                containerHorarios.appendChild(btn);
+            });
         }
 
-        document.getElementById('formAgendamento').addEventListener('submit', async function(e) {
+        function validarFormulario() {
+            if (horarioSelecionado && document.getElementById('nome').value.trim() !== '') {
+                btnConfirmar.classList.add('active');
+                btnConfirmar.disabled = false;
+            }
+        }
+
+        document.getElementById('nome').addEventListener('input', validarFormulario);
+
+        // Envio do formulário
+        document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const cliente = document.getElementById('cliente').value;
+            const cliente = document.getElementById('nome').value;
             const whatsapp = document.getElementById('whatsapp').value;
             const selectServico = document.getElementById('servico');
             const servico = selectServico.value;
             const preco = selectServico.options[selectServico.selectedIndex].getAttribute('data-preco') || 0;
+            const barbeiro = selectBarbeiro.value;
             const data = document.getElementById('data').value;
-            const horario = document.getElementById('horario').value;
 
-            // Formata data de YYYY-MM-DD para DD/MM/YYYY
             const dataFormatada = data.split('-').reverse().join('/');
 
-            // 1. Salva no banco de dados via API do Backend
             try {
                 await fetch('/api/agendamentos', {
                     method: 'POST',
@@ -254,27 +357,25 @@
                         cliente,
                         whatsapp,
                         servico: `${servico} (R$ ${preco}.00)`,
-                        barbeiro: barbeiroSelecionado,
-                        data: dataFormatada,
-                        horario,
+                        barbeiro,
+                        data,
+                        horario: horarioSelecionado,
                         preco: parseFloat(preco)
                     })
                 });
             } catch (err) {
-                console.error("Erro ao salvar agendamento:", err);
+                console.error('Erro ao salvar:', err);
             }
 
-            // 2. Abre o WhatsApp com a mensagem formatada
-            const numeroBarbearia = '5549988727098'; // Seu número
             const mensagem = `Olá! Gostaria de agendar um horário:%0A%0A` +
                              `👤 *Cliente:* ${cliente}%0A` +
                              `📱 *WhatsApp:* ${whatsapp}%0A` +
                              `✂️ *Serviço:* ${servico} (R$ ${preco}.00)%0A` +
-                             `💈 *Barbeiro:* ${barbeiroSelecionado}%0A` +
+                             `💈 *Barbeiro:* ${barbeiro}%0A` +
                              `📅 *Data:* ${dataFormatada}%0A` +
-                             `⏰ *Horário:* ${horario}`;
+                             `⏰ *Horário:* ${horarioSelecionado}`;
 
-            window.open(`https://wa.me/${numeroBarbearia}?text=${mensagem}`, '_blank');
+            window.open(`https://wa.me/5549988727098?text=${mensagem}`, '_blank');
         });
     </script>
 </body>
