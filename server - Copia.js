@@ -217,23 +217,6 @@ app.get('/api/admin/agendamentos', (req, res) => {
   }
 });
 
-// Admin - Limpar Agendamentos de Teste
-app.post('/api/limpar-testes', (req, res) => {
-  try {
-    const query = "DELETE FROM agendamentos WHERE clienteNome LIKE '%Teste%' OR clienteWhatsapp LIKE '%12345%'";
-    const stmt = db.prepare(query);
-    const resultado = stmt.run();
-
-    res.json({ 
-      sucesso: true, 
-      mensagem: `Agendamentos de teste removidos com sucesso! (${resultado.changes} apagados)` 
-    });
-  } catch (error) {
-    console.error('Erro ao limpar testes:', error);
-    res.status(500).json({ sucesso: false, erro: 'Erro ao limpar dados de teste.' });
-  }
-});
-
 // Admin - Atualizar Status (Atendido / Cancelado / Agendado)
 app.patch('/api/admin/agendamentos/:id/status', (req, res) => {
   try {
