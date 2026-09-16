@@ -259,8 +259,8 @@
     <div class="container">
         <!-- Topo da Barbearia -->
         <div class="brand-header">
-            <!-- Certifique-se de que a imagem da logo redonda está na mesma pasta ou URL correta -->
-            <img src="BarberFLOW.jpeg" alt="Logo BarberFlow" class="logo-img" onerror="this.src='https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150&auto=format&fit=crop&q=80'">
+            <!-- Caso sua imagem tenha outro nome (ex: logo.jpg), basta alterar o src abaixo -->
+            <img src="BarberFLOW.jpeg" alt="Logo BarberFlow" class="logo-img" onerror="this.style.display='none'">
             <h1>BARBEARIA ESTILO</h1>
             <p>Seu estilo. Seu momento.</p>
         </div>
@@ -271,10 +271,10 @@
                 <div class="form-group">
                     <label for="servico">1. Escolha o Serviço</label>
                     <select id="servico" class="form-control" required>
-                        <option value="Corte Social / Degradê" data-preco="45" data-duracao="30">Corte Social / Degradê - R$ 45,00</option>
-                        <option value="Barba Completa" data-preco="35" data-duracao="30">Barba Completa - R$ 35,00</option>
-                        <option value="Corte + Barba" data-preco="75" data-duracao="60">Corte + Barba - R$ 75,00</option>
-                        <option value="Pezinho / Acabamento" data-preco="20" data-duracao="20">Pezinho / Acabamento - R$ 20,00</option>
+                        <option value="Corte Social / Degradê" data-preco="45">Corte Social / Degradê - R$ 45,00</option>
+                        <option value="Barba Completa" data-preco="35">Barba Completa - R$ 35,00</option>
+                        <option value="Corte + Barba" data-preco="75">Corte + Barba - R$ 75,00</option>
+                        <option value="Pezinho / Acabamento" data-preco="20">Pezinho / Acabamento - R$ 20,00</option>
                     </select>
                 </div>
 
@@ -300,7 +300,7 @@
                         <div class="legend-item"><div class="legend-dot dot-ocupado"></div> Ocupado</div>
                     </div>
                     <div class="slots-grid" id="slotsGrid">
-                        <!-- Os horários serão injetados via JS -->
+                        <!-- Horários inseridos via JS -->
                     </div>
                     <input type="hidden" id="horarioSelecionado" required>
                 </div>
@@ -318,7 +318,7 @@
                 <button type="submit" class="btn-submit">Confirmar Agendamento</button>
             </form>
 
-            <!-- Tela de Sucesso (Oculta por padrão) -->
+            <!-- Tela de Sucesso -->
             <div id="successScreen" class="success-screen">
                 <div class="success-icon">🎉</div>
                 <h2>Agendamento Confirmado!</h2>
@@ -334,12 +334,10 @@
     </div>
 
     <script>
-        // Configuração de datas e horários
         const inputData = document.getElementById('data');
         const slotsGrid = document.getElementById('slotsGrid');
         const inputHorario = document.getElementById('horarioSelecionado');
         
-        // Define a data de hoje no formato YYYY-MM-DD (local)
         const hoje = new Date();
         const ano = hoje.getFullYear();
         const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -363,7 +361,6 @@
                 const res = await fetch(`/api/agendamentos/ocupados?data=${dataSelecionada}&barbeiro=${encodeURIComponent(barbeiroSelecionado)}`);
                 const data = await res.json();
                 const horariosOcupados = data.ocupados || [];
-
                 renderizarSlots(horariosOcupados, dataSelecionada);
             } catch (e) {
                 console.error('Erro ao buscar horários ocupados:', e);
@@ -389,7 +386,6 @@
                 const horaInt = parseInt(hStr);
                 const minInt = parseInt(mStr);
 
-                // Verifica se já passou do horário no dia de hoje
                 let jaPassou = false;
                 if (ehHoje) {
                     if (horaInt < horaAtualRelogio || (horaInt === horaAtualRelogio && minInt <= minutosAtuaisRelogio)) {
@@ -424,7 +420,7 @@
 
         document.getElementById('barbeiro').addEventListener('change', carregarHorariosOcupados);
 
-        // Envio do formulário
+        // Envio do formulário ajustado para corresponder ao backend
         document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -443,13 +439,13 @@
             const clienteWhatsapp = document.getElementById('clienteWhatsapp').value;
 
             const payload = {
-                servicoNome,
-                preco,
-                barbeiroNome,
-                data,
-                horario,
-                clienteNome,
-                clienteWhatsapp
+                servico: servicoNome,
+                preco: preco,
+                barbeiro: barbeiroNome,
+                data: data,
+                horario: horario,
+                cliente: clienteNome,
+                telefone: clienteWhatsapp
             };
 
             try {
@@ -460,19 +456,15 @@
                 });
 
                 const resultado = await res.json();
-                if (resultado.sucesso) {
-                    // Esconde form e mostra sucesso
+                if (res.ok && (resultado.sucesso !== false)) {
                     document.getElementById('formAgendamento').style.display = 'none';
-                    const successScreen = document.getElementById('successScreen');
-                    successScreen.style.display = 'block';
+                    document.getElementById('successScreen').style.display = 'block';
 
                     const dataFormatada = data.split('-').reverse().join('/');
                     document.getElementById('successMessage').innerText = 
                         `Olá ${clienteNome}, seu agendamento de ${servicoNome} com ${barbeiroNome} para o dia ${dataFormatada} às ${horario} foi confirmado!`;
 
-                    // Configura link do WhatsApp para o barbeiro/sistema
                     const msgWhats = `Olá, acabei de agendar ${servicoNome} para o dia ${dataFormatada} às ${horario} pelo sistema!`;
-                    // Substitua pelo número real do barbeiro se desejar (ex: 5549999999999)
                     const numeroBarbeiro = '5549999999999'; 
                     document.getElementById('btnWhatsappLink').href = `https://wa.me/${numeroBarbeiro}?text=${encodeURIComponent(msgWhats)}`;
 
@@ -494,7 +486,6 @@
             carregarHorariosOcupados();
         }
 
-        // Carrega ao iniciar
         carregarHorariosOcupados();
     </script>
 </body>
