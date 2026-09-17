@@ -22,8 +22,10 @@
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen p-3 sm:p-6 relative">
 
+  <!-- Container de Notificações Toast -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+  <!-- Container Principal -->
   <div class="max-w-7xl mx-auto w-full">
     
     <!-- Header -->
@@ -44,33 +46,6 @@
       </div>
     </header>
 
-    <!-- DASHBOARD FINANCEIRO -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
-        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Faturamento Hoje</div>
-        <div class="text-xl sm:text-2xl font-extrabold text-gold mt-1" id="dashFatHoje">R$ 0,00</div>
-        <div class="text-[10px] text-gray-500 mt-1">Baseado em serviços concluídos</div>
-      </div>
-
-      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
-        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Faturamento do Mês</div>
-        <div class="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1" id="dashFatMes">R$ 0,00</div>
-        <div class="text-[10px] text-gray-500 mt-1">Acumulado mensal</div>
-      </div>
-
-      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
-        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Barbeiro Destaque</div>
-        <div class="text-base sm:text-lg font-bold text-white mt-1 truncate" id="dashBarbeiro">Nenhum ainda</div>
-        <div class="text-[10px] text-gold mt-1" id="dashBarbeiroReceita">R$ 0,00 em vendas</div>
-      </div>
-
-      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
-        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Serviço Mais Popular</div>
-        <div class="text-sm sm:text-base font-bold text-white mt-1 truncate" id="dashServico">Nenhum ainda</div>
-        <div class="text-[10px] text-gray-500 mt-1">Mais realizado no mês</div>
-      </div>
-    </section>
-
     <!-- Filtro de Data -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 bg-darkCard p-3 sm:p-4 rounded-xl border border-gray-800">
       <h2 class="text-base font-bold text-white flex items-center gap-2">📅 Atendimentos</h2>
@@ -82,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Tabela Responsiva Sem Estouro de Tela -->
+    <!-- Tabela Responsiva -->
     <main class="w-full">
       <div class="bg-darkCard rounded-xl border border-gray-800 shadow-xl overflow-x-auto">
         <table class="w-full text-left text-xs sm:text-sm text-gray-300 table-auto">
@@ -141,22 +116,12 @@
       tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
 
       try {
-        // Rota correta do seu backend
         const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
         const data = await res.json();
 
         let lista = [];
         if (Array.isArray(data)) lista = data;
         else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
-
-        // Atualiza relatórios se retornados
-        if (data.kpis) {
-          document.getElementById('dashFatHoje').innerText = `R$ ${data.kpis.faturamentoHoje || '0,00'}`;
-          document.getElementById('dashFatMes').innerText = `R$ ${data.kpis.faturamentoMes || '0,00'}`;
-          document.getElementById('dashBarbeiro').innerText = data.kpis.barbeiroDestaque || 'Nenhum ainda';
-          document.getElementById('dashBarbeiroReceita').innerText = `R$ ${data.kpis.vendasBarbeiro || '0,00'} em vendas`;
-          document.getElementById('dashServico').innerText = data.kpis.servicoPopular || 'Nenhum ainda';
-        }
 
         if (!lista || lista.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
