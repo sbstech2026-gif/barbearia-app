@@ -7,9 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(express.json());
+// Servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexão com o SQLite
+// Inicialização e Conexão com o Banco de Dados SQLite
 const db = new sqlite3.Database('./database.sqlite', (err) => {
     if (err) {
         console.error('Erro ao conectar ao banco de dados SQLite:', err.message);
@@ -18,7 +19,7 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
     }
 });
 
-// Criação da Tabela de Agendamentos
+// Criação da Tabela de Agendamentos caso não exista
 db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS agendamentos (
@@ -35,18 +36,18 @@ db.serialize(() => {
     `);
 });
 
-// Helper de Preços à prova de falhas
+// Helper de Preços à prova de falhas (Garante R$ 60,00 no Combo)
 function extrairPreco(servicoStr) {
     if (!servicoStr) return 0.00;
 
-    // 1. Tenta pegar valor no texto (ex: "R$ 60,00" ou "60.00")
+    // 1. Tenta extrair valor no texto (ex: "R$ 60,00" ou "60.00")
     const match = servicoStr.match(/R\$\s*([\d.,]+)/i);
     if (match) {
         const val = parseFloat(match[1].replace('.', '').replace(',', '.'));
         if (!isNaN(val) && val > 0) return val;
     }
 
-    // 2. Mapeamento direto
+    // 2. Mapeamento direto pelos nomes dos serviços
     const str = servicoStr.toLowerCase();
     if (str.includes('combo') || str.includes('corte + barba')) return 60.00;
     if (str.includes('corte')) return 35.00;
@@ -56,7 +57,7 @@ function extrairPreco(servicoStr) {
     return 0.00;
 }
 
-// ROTA 1: Criar novo agendamento (Tela do Cliente)
+// ROTA 1: Criar novo agendamento (Tela do Cliente com trava contra agendamento duplo)
 app.post('/api/agendamentos', (req, res) => {
     try {
         const { servico, barbeiro, data, horario, cliente, whatsapp } = req.body;
@@ -65,8 +66,8 @@ app.post('/api/agendamentos', (req, res) => {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
         }
 
-        // Validação de horário ocupado
-        const checkQuery = `SELECT id FROM agendamentos WHERE barbeiro = ? AND data = ? AND horario = ? AND status != 'Cancelado'`;
+        // Bloqueia duplicados para o mesmo barbeiro no mesmo dia e horário
+        const checkQuery = `SELECT id FROM agendamentos WHERE barbeiro = ? AND data = ? AND horario = ? AND (status IS NULL OR status != 'Cancelado')`;
         
         db.get(checkQuery, [barbeiro, data, horario], (err, row) => {
             if (err) {
@@ -102,7 +103,7 @@ app.post('/api/agendamentos', (req, res) => {
     }
 });
 
-// ROTA 2: Buscar agendamentos e calcular KPIs
+// ROTA 2: Buscar agendamentos e calcular KPIs do Painel
 app.get('/api/agendamentos', (req, res) => {
     const { data } = req.query;
 
@@ -121,13 +122,14 @@ app.get('/api/agendamentos', (req, res) => {
             return res.status(500).json({ error: err.message });
         }
 
+        // Busca todos os agendamentos para calcular as métricas (KPIs)
         db.all("SELECT * FROM agendamentos", [], (errAll, allRows) => {
             if (errAll) {
                 return res.json(rows);
             }
 
             const hojeStr = data || new Date().toISOString().split('T')[0];
-            const mesAtualStr = hojeStr.substring(0, 7);
+            const mesAtualStr = hojeStr.substring(0, 7); // YYYY-MM
 
             let fatHoje = 0;
             let fatMes = 0;
@@ -138,10 +140,12 @@ app.get('/api/agendamentos', (req, res) => {
                 const valor = extrairPreco(item.servico);
                 const itemData = item.data;
 
+                // Faturamento Hoje (Apenas Concluídos)
                 if (itemData === hojeStr && (item.status === 'Concluído' || item.status === 'atendido')) {
                     fatHoje += valor;
                 }
 
+                // Faturamento do Mês (Apenas Concluídos)
                 if (itemData && itemData.startsWith(mesAtualStr) && (item.status === 'Concluído' || item.status === 'atendido')) {
                     fatMes += valor;
 
@@ -151,12 +155,14 @@ app.get('/api/agendamentos', (req, res) => {
                     vendasPorBarbeiro[item.barbeiro] += valor;
                 }
 
+                // Serviço Mais Popular (no mês)
                 if (itemData && itemData.startsWith(mesAtualStr) && item.status !== 'Cancelado') {
                     const nomeServico = (item.servico || '').split('(')[0].trim();
                     contagemServicos[nomeServico] = (contagemServicos[nomeServico] || 0) + 1;
                 }
             });
 
+            // Encontra Barbeiro Destaque
             let barbeiroDestaque = 'Nenhum ainda';
             let maiorVenda = 0;
             for (const [barbeiro, total] of Object.entries(vendasPorBarbeiro)) {
@@ -166,6 +172,7 @@ app.get('/api/agendamentos', (req, res) => {
                 }
             }
 
+            // Encontra Serviço Popular
             let servicoPopular = 'Nenhum ainda';
             let maiorQtd = 0;
             for (const [servico, qtd] of Object.entries(contagemServicos)) {
@@ -175,6 +182,7 @@ app.get('/api/agendamentos', (req, res) => {
                 }
             }
 
+            // Retorna dados para a página
             res.json({
                 agendamentos: rows,
                 kpis: {
@@ -189,7 +197,7 @@ app.get('/api/agendamentos', (req, res) => {
     });
 });
 
-// ROTA 3: Atualizar Status
+// ROTA 3: Atualizar Status do Agendamento (Concluir / Cancelar)
 app.patch('/api/agendamentos/:id/status', (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -210,7 +218,7 @@ app.patch('/api/agendamentos/:id/status', (req, res) => {
     });
 });
 
-// ROTA 4: Limpar Agendamentos por Data
+// ROTA 4: Limpar Agendamentos de uma data específica
 app.delete('/api/agendamentos/limpar', (req, res) => {
     const { data } = req.query;
 
@@ -227,7 +235,7 @@ app.delete('/api/agendamentos/limpar', (req, res) => {
     });
 });
 
-// ROTAS DE PÁGINAS
+// ROTAS DE PÁGINAS (Apontando para a pasta 'public')
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -236,7 +244,7 @@ app.get(['/admin', '/painel'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'painel.html'));
 });
 
-// Inicialização
+// Inicialização do Servidor Express
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
