@@ -19,34 +19,93 @@
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
   <div class="max-w-7xl mx-auto w-full">
     
-    <!-- Header com Botão de Voltar -->
+    <!-- Header -->
     <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
       <div>
         <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
         <h1 class="text-xl sm:text-2xl font-bold text-gold">Dashboard Financeiro</h1>
-        <p class="text-gray-400 text-xs sm:text-sm">Visão geral de faturamento e métricas da barbearia.</p>
+        <p class="text-gray-400 text-xs sm:text-sm">Visão geral do faturamento de atendimentos concluídos.</p>
       </div>
-      <a href="painel.html" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-2">
-        ⬅️ Voltar à Agenda
-      </a>
+      <button onclick="carregarFinanceiro()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
+        🔄 Atualizar Dados
+      </button>
     </header>
 
     <!-- Cards de Resumo Financeiro -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-darkCard p-4 rounded-xl border border-gray-800">
-        <span class="text-gray-400 text-xs block mb-1">Faturamento Hoje</span>
-        <h2 class="text-2xl font-bold text-emerald-400">R$ 0,00</h2>
+      <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento Geral (Concluídos)</span>
+        <h2 id="fatTotal" class="text-3xl font-bold text-emerald-400">R$ 0,00</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Soma de todos os serviços finalizados</span>
       </div>
-      <div class="bg-darkCard p-4 rounded-xl border border-gray-800">
-        <span class="text-gray-400 text-xs block mb-1">Faturamento Mensal</span>
-        <h2 class="text-2xl font-bold text-gold">R$ 0,00</h2>
+
+      <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Serviços Concluídos</span>
+        <h2 id="qtdConcluidos" class="text-3xl font-bold text-gold">0</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Total de clientes atendidos</span>
       </div>
-      <div class="bg-darkCard p-4 rounded-xl border border-gray-800">
-        <span class="text-gray-400 text-xs block mb-1">Cortes Concluídos</span>
-        <h2 class="text-2xl font-bold text-blue-400">0</h2>
+
+      <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Ticket Médio</span>
+        <h2 id="ticketMedio" class="text-3xl font-bold text-blue-400">R$ 0,00</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Média gasta por cliente</span>
       </div>
     </div>
 
   </div>
+
+  <script>
+    // Mapeador de preços para garantir o valor do serviço
+    function extrairPreco(servicoStr) {
+      if (!servicoStr) return 0.00;
+      const nomeLower = servicoStr.toLowerCase();
+      
+      if (nomeLower.includes('combo') || nomeLower.includes('corte + barba')) return 60.00;
+      if (nomeLower.includes('corte')) return 35.00;
+      if (nomeLower.includes('barba')) return 30.00;
+      if (nomeLower.includes('sobrancelha')) return 15.00;
+
+      return 0.00;
+    }
+
+    async function carregarFinanceiro() {
+      try {
+        // Busca todos os agendamentos sem filtrar por data fixa
+        const res = await fetch('/api/agendamentos');
+        const data = await res.json();
+
+        let lista = [];
+        if (Array.isArray(data)) lista = data;
+        else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
+
+        // Filtra apenas os agendamentos CONCLUÍDOS
+        const concluidos = lista.filter(item => {
+          const st = (item.status || '').toLowerCase();
+          return st === 'concluído' || st === 'concluido' || st === 'atendido';
+        });
+
+        // Calcula a soma total dos serviços concluídos
+        let faturamentoTotal = 0;
+        concluidos.forEach(item => {
+          const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
+          faturamentoTotal += valor;
+        });
+
+        const totalAtendimentos = concluidos.length;
+        const ticketMedio = totalAtendimentos > 0 ? (faturamentoTotal / totalAtendimentos) : 0;
+
+        // Atualiza a tela
+        document.getElementById('fatTotal').innerText = `R$ ${faturamentoTotal.toFixed(2).replace('.', ',')}`;
+        document.getElementById('qtdConcluidos').innerText = totalAtendimentos;
+        document.getElementById('ticketMedio').innerText = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
+
+      } catch (err) {
+        console.error('Erro ao carregar dados financeiro:', err);
+      }
+    }
+
+    // Carrega os valores assim que a página abre
+    carregarFinanceiro();
+  </script>
 </body>
 </html>
