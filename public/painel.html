@@ -29,7 +29,7 @@
     <!-- Header -->
     <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-gray-800 pb-4 gap-4">
       <div class="flex items-center gap-3">
-        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 50px; height: 50px; object-fit: cover;" class="rounded-xl border border-gray-800 shrink-0">
+        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 50px; height: 50px; object-fit: cover;" class="rounded-xl border border-gray-800 shrink-0" onerror="this.style.display='none'">
         <div>
           <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
           <h1 class="text-xl sm:text-2xl font-bold text-gold leading-tight">Agenda de Atendimentos</h1>
@@ -38,7 +38,7 @@
       </div>
       
       <div class="w-full sm:w-auto flex justify-end">
-        <button onclick="limparAgendamentosTeste()" class="w-full sm:w-auto bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-1.5">
+        <button onclick="limparAgenda()" class="w-full sm:w-auto bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-1.5">
           🗑️ Limpar Agenda
         </button>
       </div>
@@ -60,46 +60,46 @@
 
       <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
         <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Barbeiro Destaque</div>
-        <div class="text-base sm:text-lg font-bold text-white mt-1 truncate" id="dashBarbeiro">-</div>
+        <div class="text-base sm:text-lg font-bold text-white mt-1 truncate" id="dashBarbeiro">Nenhum ainda</div>
         <div class="text-[10px] text-gold mt-1" id="dashBarbeiroReceita">R$ 0,00 em vendas</div>
       </div>
 
       <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
         <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Serviço Mais Popular</div>
-        <div class="text-sm sm:text-base font-bold text-white mt-1 truncate" id="dashServico">-</div>
+        <div class="text-sm sm:text-base font-bold text-white mt-1 truncate" id="dashServico">Nenhum ainda</div>
         <div class="text-[10px] text-gray-500 mt-1">Mais realizado no mês</div>
       </div>
     </section>
 
-    <!-- Filtro -->
+    <!-- Filtro de Data -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 bg-darkCard p-3 sm:p-4 rounded-xl border border-gray-800">
       <h2 class="text-base font-bold text-white flex items-center gap-2">📅 Atendimentos</h2>
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <input type="date" id="filtroData" class="w-full sm:w-auto bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-gold">
-        <button onclick="carregarTudo()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
+        <button onclick="carregarAgendamentos()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
           Filtrar
         </button>
       </div>
     </div>
 
-    <!-- Tabela com Layout Ajustado -->
+    <!-- Tabela Responsiva Sem Estouro de Tela -->
     <main class="w-full">
       <div class="bg-darkCard rounded-xl border border-gray-800 shadow-xl overflow-x-auto">
-        <table class="w-full text-left text-xs sm:text-sm text-gray-300">
+        <table class="w-full text-left text-xs sm:text-sm text-gray-300 table-auto">
           <thead class="bg-gray-900 text-gold uppercase text-[10px] sm:text-xs border-b border-gray-800">
             <tr>
-              <th class="p-3 sm:p-4 whitespace-nowrap">Horário</th>
-              <th class="p-3 sm:p-4 whitespace-nowrap">Data</th>
-              <th class="p-3 sm:p-4 whitespace-nowrap">Cliente</th>
-              <th class="p-3 sm:p-4 whitespace-nowrap">WhatsApp</th>
-              <th class="p-3 sm:p-4 whitespace-nowrap">Serviço</th>
-              <th class="p-3 sm:p-4 whitespace-nowrap">Barbeiro</th>
-              <th class="p-3 sm:p-4 text-center whitespace-nowrap">Status</th>
-              <th class="p-3 sm:p-4 text-center whitespace-nowrap">Ações</th>
+              <th class="p-3">Horário</th>
+              <th class="p-3">Data</th>
+              <th class="p-3">Cliente</th>
+              <th class="p-3">WhatsApp</th>
+              <th class="p-3">Serviço</th>
+              <th class="p-3">Barbeiro</th>
+              <th class="p-3 text-center">Status</th>
+              <th class="p-3 text-center">Ações</th>
             </tr>
           </thead>
           <tbody id="tabelaAgendamentos" class="divide-y divide-gray-800">
-            <!-- Conteúdo dinâmico -->
+            <!-- Preenchido via JS -->
           </tbody>
         </table>
       </div>
@@ -126,77 +126,82 @@
     }
 
     function renderStatusBadge(status) {
-      if (status === 'atendido') {
-        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">✓ Atendido</span>`;
+      if (status === 'Concluído' || status === 'atendido') {
+        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">✓ Concluído</span>`;
       }
-      if (status === 'cancelado') {
+      if (status === 'Cancelado' || status === 'cancelado') {
         return `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">✕ Cancelado</span>`;
       }
       return `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">⏱ Agendado</span>`;
     }
 
-    async function carregarRelatorios() {
-      try {
-        const res = await fetch('/api/admin/relatorios');
-        const data = await res.json();
-
-        if (data.sucesso) {
-          const stats = data.estatisticas;
-          document.getElementById('dashFatHoje').innerText = `R$ ${stats.faturamentoHoje.toFixed(2).replace('.', ',')}`;
-          document.getElementById('dashFatMes').innerText = `R$ ${stats.faturamentoMes.toFixed(2).replace('.', ',')}`;
-          document.getElementById('dashBarbeiro').innerText = stats.barbeiroDestaque;
-          document.getElementById('dashBarbeiroReceita').innerText = `R$ ${stats.receitaBarbeiroDestaque.toFixed(2).replace('.', ',')} em vendas`;
-          document.getElementById('dashServico').innerText = stats.servicoPopular;
-        }
-      } catch (err) {
-        console.error('Erro ao carregar relatórios:', err);
-      }
-    }
-
     async function carregarAgendamentos() {
-      const data = document.getElementById('filtroData').value;
+      const dataFiltro = document.getElementById('filtroData').value;
       const tbody = document.getElementById('tabelaAgendamentos');
       tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
 
       try {
-        const res = await fetch(`/api/admin/agendamentos?data=${data}`);
-        const result = await res.json();
+        // Rota correta do seu backend
+        const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
+        const data = await res.json();
 
-        if (!result.agendamentos || result.agendamentos.length === 0) {
+        let lista = [];
+        if (Array.isArray(data)) lista = data;
+        else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
+
+        // Atualiza relatórios se retornados
+        if (data.kpis) {
+          document.getElementById('dashFatHoje').innerText = `R$ ${data.kpis.faturamentoHoje || '0,00'}`;
+          document.getElementById('dashFatMes').innerText = `R$ ${data.kpis.faturamentoMes || '0,00'}`;
+          document.getElementById('dashBarbeiro').innerText = data.kpis.barbeiroDestaque || 'Nenhum ainda';
+          document.getElementById('dashBarbeiroReceita').innerText = `R$ ${data.kpis.vendasBarbeiro || '0,00'} em vendas`;
+          document.getElementById('dashServico').innerText = data.kpis.servicoPopular || 'Nenhum ainda';
+        }
+
+        if (!lista || lista.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = result.agendamentos.map(a => {
-          const numeroLimpo = a.clienteWhatsapp.replace(/\D/g, '');
+        tbody.innerHTML = lista.map(a => {
+          const id = a.id;
+          const cliente = a.clienteNome || a.cliente || a.nome || 'Cliente';
+          const whats = a.clienteWhatsapp || a.whatsapp || '';
+          const servico = a.servicoNome || a.servico || 'Serviço';
+          const barbeiro = a.barbeiroNome || a.barbeiro || 'Barbeiro';
+          const horario = a.horario || a.hora || '--:--';
+          const status = a.status || 'Confirmado';
+          const dataItem = a.data || dataFiltro;
+
+          const numeroLimpo = whats.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
-          const msgLembrete = encodeURIComponent(`Olá ${a.clienteNome}, confirmamos seu agendamento na barbearia para ${a.data.split('-').reverse().join('/')} às ${a.horario}. Nos vemos em breve!`);
+          const msgLembrete = encodeURIComponent(`Olá ${cliente}, confirmamos seu agendamento na barbearia para ${dataItem.split('-').reverse().join('/')} às ${horario}. Nos vemos em breve!`);
 
           return `
             <tr class="hover:bg-gray-800/50 transition">
-              <td class="p-2 sm:p-3 font-bold text-gold whitespace-nowrap">${a.horario}</td>
-              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.data.split('-').reverse().join('/')}</td>
-              <td class="p-2 sm:p-3 font-semibold text-white whitespace-nowrap text-xs">${a.clienteNome}</td>
+              <td class="p-2 sm:p-3 font-bold text-gold whitespace-nowrap">${horario}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem}</td>
+              <td class="p-2 sm:p-3 font-semibold text-white whitespace-nowrap text-xs">${cliente}</td>
               <td class="p-2 sm:p-3 whitespace-nowrap text-xs">
-                <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1">
-                  📱 ${a.clienteWhatsapp}
-                </a>
+                ${numeroLimpo ? `<a href="${whatsappUrl}" target="_blank" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1">📱 ${whats}</a>` : '-'}
               </td>
-              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.servicoNome} (R$ ${a.preco.toFixed(2)})</td>
-              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.barbeiroNome}</td>
-              <td class="p-2 sm:p-3 text-center whitespace-nowrap">${renderStatusBadge(a.status || 'agendado')}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${servico}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${barbeiro}</td>
+              <td class="p-2 sm:p-3 text-center whitespace-nowrap">${renderStatusBadge(status)}</td>
               <td class="p-2 sm:p-3 text-center whitespace-nowrap">
                 <div class="flex items-center justify-center gap-1.5">
-                  <a href="https://wa.me/55${numeroLimpo.replace(/^55/, '')}?text=${msgLembrete}" target="_blank" class="bg-teal-950/60 hover:bg-teal-900/80 text-teal-300 border border-teal-700/50 font-medium px-2 py-1 rounded transition text-[11px]">
-                    🗓️ Lembrete
-                  </a>
-                  ${(a.status || 'agendado') !== 'atendido' ? `
-                    <button onclick="alterarStatus('${a.id}', 'atendido')" class="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
+                  ${numeroLimpo ? `
+                    <a href="https://wa.me/55${numeroLimpo.replace(/^55/, '')}?text=${msgLembrete}" target="_blank" class="bg-teal-950/60 hover:bg-teal-900/80 text-teal-300 border border-teal-700/50 font-medium px-2 py-1 rounded transition text-[11px]">
+                      🗓️ Lembrete
+                    </a>
+                  ` : ''}
+                  ${status !== 'Concluído' && status !== 'atendido' ? `
+                    <button onclick="alterarStatus('${id}', 'Concluído')" class="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
                       Concluir
                     </button>
                   ` : ''}
-                  ${(a.status || 'agendado') !== 'cancelado' ? `
-                    <button onclick="alterarStatus('${a.id}', 'cancelado')" class="bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
+                  ${status !== 'Cancelado' && status !== 'cancelado' ? `
+                    <button onclick="alterarStatus('${id}', 'Cancelado')" class="bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
                       Cancelar
                     </button>
                   ` : ''}
@@ -207,54 +212,49 @@
         }).join('');
 
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-red-400">Erro ao carregar dados.</td></tr>';
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-red-400">Erro ao carregar dados. Verifique a conexão.</td></tr>';
       }
     }
 
-    function carregarTudo() {
-      carregarAgendamentos();
-      carregarRelatorios();
-    }
-
     async function alterarStatus(id, novoStatus) {
+      if (!id) return;
       try {
-        const res = await fetch(`/api/admin/agendamentos/${id}/status`, {
+        const res = await fetch(`/api/agendamentos/${id}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: novoStatus })
         });
         const result = await res.json();
 
-        if (result.sucesso) {
-          mostrarToast(novoStatus === 'atendido' ? 'Atendimento concluído e faturado!' : 'Agendamento cancelado.', 'sucesso');
-          carregarTudo();
+        if (res.ok || result.success) {
+          mostrarToast(novoStatus === 'Concluído' ? 'Atendimento concluído!' : 'Agendamento cancelado.', 'sucesso');
+          carregarAgendamentos();
         } else {
-          mostrarToast(result.erro || 'Erro ao atualizar status.', 'erro');
+          mostrarToast(result.message || 'Erro ao atualizar status.', 'erro');
         }
       } catch (err) {
-        mostrarToast('Erro de conexão ao alterar status.', 'erro');
+        mostrarToast('Erro ao comunicar com o servidor.', 'erro');
       }
     }
 
-    async function limparAgendamentosTeste() {
-      if (confirm("Deseja realmente limpar toda a agenda?")) {
+    async function limparAgenda() {
+      const dataFiltro = document.getElementById('filtroData').value;
+      if (confirm(`Deseja limpar os agendamentos da data ${dataFiltro.split('-').reverse().join('/')}?`)) {
         try {
-          const res = await fetch('/api/limpar-testes', { method: 'POST' });
-          const data = await res.json();
-          
-          if (data.sucesso) {
-            mostrarToast(data.mensagem, 'sucesso');
-            carregarTudo();
-          } else {
-            mostrarToast(data.erro || 'Erro ao limpar dados.', 'erro');
+          const res = await fetch(`/api/agendamentos/limpar?data=${dataFiltro}`, { method: 'DELETE' });
+          if (res.ok) {
+            mostrarToast('Agenda limpa com sucesso!', 'sucesso');
+            carregarAgendamentos();
           }
         } catch (err) {
-          mostrarToast('Erro de conexão com o servidor.', 'erro');
+          mostrarToast('Erro ao limpar a agenda.', 'erro');
         }
       }
     }
 
-    carregarTudo();
+    // Inicializa
+    carregarAgendamentos();
   </script>
 </body>
 </html>
