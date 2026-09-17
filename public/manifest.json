@@ -1,0 +1,17 @@
+{
+  "short_name": "BarberFlow",
+  "name": "BarberFlow - Gestão de Barbearia",
+  "icons": [
+    {
+      "src": "logo-barbearia.jpeg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/painel",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "display": "standalone",
+  "orientation": "portrait"
+}

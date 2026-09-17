@@ -33,6 +33,22 @@
         .btn-confirm.active { background: linear-gradient(135deg, #d4af37, #aa8c2c); color: #121212; border: none; cursor: pointer; }
         .footer-text { text-align: center; font-size: 11px; color: #555555; margin-top: 20px; }
     </style>
+
+<!-- Configuração PWA (App Instalável) -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Service Worker registrado com sucesso!'))
+          .catch(err => console.error('Erro ao registrar Service Worker:', err));
+      });
+    }
+  </script>
+
 </head>
 <body>
 
