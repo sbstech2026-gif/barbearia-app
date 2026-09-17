@@ -1,4 +1,6 @@
 {
+  "id": "/agenda-app",
+  "scope": "/",
   "short_name": "BarberFlow",
   "name": "BarberFlow - Gestão de Barbearia",
   "icons": [

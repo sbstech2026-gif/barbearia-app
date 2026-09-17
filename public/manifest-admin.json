@@ -1,0 +1,17 @@
+{
+  "id": "/admin-app",
+  "short_name": "Painel Barber",
+  "name": "BarberFlow - Painel do Barbeiro",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#0d0e12",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2965/2965358.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ]
+}

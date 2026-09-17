@@ -1,43 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
+
+
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda de Atendimentos | BarberFlow</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            gold: '#D4AF37',
-            darkBg: '#111111',
-            darkCard: '#1a1a1a'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Atendimentos | BarberFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: '#D4AF37',
+                        darkBg: '#111111',
+                        darkCard: '#1a1a1a'
+                    }
+                }
+            }
         }
-      }
-    }
-  </script>
+    </script>
 
-<!-- Configuração PWA (App Instalável) -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#111111">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Service Worker registrado com sucesso!'))
-          .catch(err => console.error('Erro ao registrar Service Worker:', err));
-      });
-    }
-  </script>
-
-
-
+    <!-- Configuração PWA (App Instalável do Painel) -->
+    <link rel="manifest" href="/manifest-admin.json">
+    <meta name="theme-color" content="#111111">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registrado com sucesso!'))
+                    .catch(err => console.error('Erro ao registrar Service Worker:', err));
+            });
+        }
+    </script>
 </head>
+
+
 <body class="bg-darkBg text-gray-100 min-h-screen p-3 sm:p-6 relative">
 
   <!-- Container de Notificações Toast -->
