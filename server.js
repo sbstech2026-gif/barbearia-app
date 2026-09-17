@@ -36,13 +36,34 @@ db.serialize(() => {
     `);
 });
 
-// Helper para converter preço do serviço em número
+// Tabela Oficial de Serviços / Preços
+const PRECOS_SERVICOS = [
+    { termo: 'combo', preco: 60.00 },
+    { termo: 'corte + barba', preco: 60.00 },
+    { termo: 'corte', preco: 35.00 },
+    { termo: 'barba', preco: 30.00 },
+    { termo: 'sobrancelha', preco: 15.00 }
+];
+
+// Helper para converter preço do serviço em número correto
 function extrairPreco(servicoStr) {
     if (!servicoStr) return 0;
-    const match = servicoStr.match(/R\$\s*([\d.,]+)/);
+
+    // 1. Tenta extrair valor numérico se estiver no texto (ex: "Combo - R$ 60,00")
+    const match = servicoStr.match(/R\$\s*([\d.,]+)/i);
     if (match) {
-        return parseFloat(match[1].replace('.', '').replace(',', '.'));
+        const valorExtraido = parseFloat(match[1].replace('.', '').replace(',', '.'));
+        if (valorExtraido > 0) return valorExtraido;
     }
+
+    // 2. Mapeamento exato pelos nomes/termos da tabela de serviços
+    const nomeLower = servicoStr.toLowerCase();
+    for (const item of PRECOS_SERVICOS) {
+        if (nomeLower.includes(item.termo)) {
+            return item.preco;
+        }
+    }
+
     return 0;
 }
 
