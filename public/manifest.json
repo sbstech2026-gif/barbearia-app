@@ -9,7 +9,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/painel",
+  "start_url": "/",
   "background_color": "#111111",
   "theme_color": "#111111",
   "display": "standalone",
