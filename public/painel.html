@@ -159,7 +159,23 @@
 
           const numeroLimpo = whats.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
-          const msgLembrete = encodeURIComponent(`Olá ${cliente}, confirmamos seu agendamento na barbearia para ${dataItem.split('-').reverse().join('/')} às ${horario}. Nos vemos em breve!`);
+          const mensagemLembrete = 
+    `💈 *BARBEARIA ESTILO*\n` +
+    `──────────────────────────────\n` +
+    `👋 Olá, *${cliente}*!\n\n` +
+    `Passando para confirmar o seu agendamento:\n\n` +
+    `📅 *Data:* ${dataFormatada}\n` +
+    `⏰ *Horário:* ${horario}\n` +
+    `✂️ *Serviço:* ${servico}\n` +
+    `👤 *Barbeiro:* ${barbeiro}\n\n` +
+    `📍 *Endereço:* Rua Exemplo, 123 - Centro\n\n` +
+    `⚠️ *Aviso:* Caso precise desmarcar, avise-nos com antecedência.\n\n` +
+    `Estamos te esperando! 🚀\n` +
+    `──────────────────────────────`;
+
+const urlWhatsapp = `https://wa.me/55${whatsapp}?text=${encodeURIComponent(mensagemLembrete)}`;
+
+
 
           return `
             <tr class="hover:bg-gray-800/50 transition">
