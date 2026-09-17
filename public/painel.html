@@ -68,6 +68,7 @@
               <th class="p-3">Cliente</th>
               <th class="p-3">WhatsApp</th>
               <th class="p-3">Serviço</th>
+              <th class="p-3 text-emerald-400">Valor</th>
               <th class="p-3">Barbeiro</th>
               <th class="p-3 text-center">Status</th>
               <th class="p-3 text-center">Ações</th>
@@ -113,7 +114,7 @@
     async function carregarAgendamentos() {
       const dataFiltro = document.getElementById('filtroData').value;
       const tbody = document.getElementById('tabelaAgendamentos');
-      tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
 
       try {
         const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
@@ -124,7 +125,7 @@
         else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
 
         if (!lista || lista.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
           return;
         }
 
@@ -137,6 +138,12 @@
           const horario = a.horario || a.hora || '--:--';
           const status = a.status || 'Confirmado';
           const dataItem = a.data || dataFiltro;
+          
+          // Tratamento do valor do serviço
+          const valor = a.preco || a.valor || a.servicoPreco || '0.00';
+          const valorFormatado = typeof valor === 'number' 
+            ? `R$ ${valor.toFixed(2).replace('.', ',')}` 
+            : (valor.toString().includes('R$') ? valor : `R$ ${parseFloat(valor || 0).toFixed(2).replace('.', ',')}`);
 
           const numeroLimpo = whats.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
@@ -151,6 +158,7 @@
                 ${numeroLimpo ? `<a href="${whatsappUrl}" target="_blank" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1">📱 ${whats}</a>` : '-'}
               </td>
               <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${servico}</td>
+              <td class="p-2 sm:p-3 font-bold text-emerald-400 whitespace-nowrap text-xs">${valorFormatado}</td>
               <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${barbeiro}</td>
               <td class="p-2 sm:p-3 text-center whitespace-nowrap">${renderStatusBadge(status)}</td>
               <td class="p-2 sm:p-3 text-center whitespace-nowrap">
@@ -178,7 +186,7 @@
 
       } catch (err) {
         console.error(err);
-        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-red-400">Erro ao carregar dados. Verifique a conexão.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-red-400">Erro ao carregar dados. Verifique a conexão.</td></tr>';
       }
     }
 
