@@ -161,18 +161,18 @@
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
           const dataFormatada = dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem;
 
-          // Mensagem de lembrete com formato visual melhorado
+          // Unicode seguro para emojis no WhatsApp sem dar erro de encoding (diamantes pretos)
           const textoLembrete = 
-            `💈 *BARBEARIA ESTILO*\n` +
-            `──────────────────────────────\n` +
-            `👋 Olá, *${cliente}*!\n\n` +
+            `\u{1F488} *BARBEARIA ESTILO*\n` +
+            `----------------------------------------\n` +
+            `\u{1F44B} Ol\u00E1, *${cliente}*!\n\n` +
             `Passando para lembrar do seu agendamento:\n\n` +
-            `📅 *Data:* ${dataFormatada}\n` +
-            `⏰ *Horário:* ${horario}\n` +
-            `✂️ *Serviço:* ${servico}\n` +
-            `👤 *Barbeiro:* ${barbeiro}\n\n` +
-            `Te esperamos aqui! 🚀\n` +
-            `──────────────────────────────`;
+            `\u{1F4C5} *Data:* ${dataFormatada}\n` +
+            `\u{23F0} *Hor\u00E1rio:* ${horario}\n` +
+            `\u{2702}\u{FE0F} *Servi\u00E7o:* ${servico}\n` +
+            `\u{1F468}\u{200D}\u{1F488} *Barbeiro:* ${barbeiro}\n\n` +
+            `Te esperamos aqui! \u{1F680}\n` +
+            `----------------------------------------`;
 
           const msgLembrete = encodeURIComponent(textoLembrete);
 
