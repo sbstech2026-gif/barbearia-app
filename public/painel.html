@@ -137,22 +137,31 @@
 
           const nomeCliente = a.cliente || a.clienteNome || 'Cliente';
           const nomeBarbeiro = a.barbeiro || a.barbeiroNome || 'Barbeiro';
-          
-          // Lembrete Automático via WhatsApp
-          const textoLembrete = `Olá ${nomeCliente}, passando para lembrar do seu corte hoje às ${a.horario} com o barbeiro ${nomeBarbeiro}. Te esperamos aqui!`;
+          const nomeServico = a.servico || a.servicoNome || 'Serviço';
+          const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '';
+
+          // Mensagem formatada e estruturada com dados dinâmicos do agendamento
+          const textoLembrete = `Olá, *${nomeCliente}*! 👋\n\n` +
+            `Passando para lembrar do seu agendamento na barbearia:\n\n` +
+            `📌 *Serviço:* ${nomeServico}\n` +
+            `👤 *Barbeiro:* ${nomeBarbeiro}\n` +
+            `📅 *Data:* ${dataFormatada}\n` +
+            `⏰ *Horário:* ${a.horario}\n\n` +
+            `Te esperamos aqui! Qualquer imprevisto, favor nos avisar. 💈✂️`;
+
           const lembreteUrl = `https://api.whatsapp.com/send?phone=55${numeroLimpo.replace(/^55/, '')}&text=${encodeURIComponent(textoLembrete)}`;
 
           return `
             <tr class="hover:bg-gray-800/50 transition">
               <td class="p-4 font-bold text-gold whitespace-nowrap">${a.horario}</td>
-              <td class="p-4 whitespace-nowrap">${a.data.split('-').reverse().join('/')}</td>
+              <td class="p-4 whitespace-nowrap">${dataFormatada}</td>
               <td class="p-4 font-semibold text-white whitespace-nowrap">${nomeCliente}</td>
               <td class="p-4 whitespace-nowrap">
                 <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1 font-medium">
                   📱 ${numWhatsapp}
                 </a>
               </td>
-              <td class="p-4 whitespace-nowrap">${a.servico || a.servicoNome}</td>
+              <td class="p-4 whitespace-nowrap">${nomeServico}</td>
               <td class="p-4 whitespace-nowrap">${nomeBarbeiro}</td>
               <td class="p-4 text-center whitespace-nowrap">${renderStatusBadge(statusAtual)}</td>
               <td class="p-4 text-center whitespace-nowrap">
