@@ -19,18 +19,21 @@
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
   <div class="max-w-7xl mx-auto w-full space-y-6">
     
-    <!-- Topo / Filtro de Data -->
+    <!-- Header com Logo -->
     <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4">
-      <div>
-        <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
-        <h1 class="text-2xl font-bold text-gold">Relatório Financeiro</h1>
-        <p class="text-gray-400 text-xs sm:text-sm">Faturamento de atendimentos concluídos por dia e barbeiro.</p>
+      <div class="flex items-center gap-3">
+        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 50px; height: 50px; object-fit: cover;" class="rounded-xl border border-gray-800 shrink-0" onerror="this.style.display='none'">
+        <div>
+          <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
+          <h1 class="text-2xl font-bold text-gold">Relatório Financeiro</h1>
+          <p class="text-gray-400 text-xs sm:text-sm">Faturamento de atendimentos concluídos por dia e barbeiro.</p>
+        </div>
       </div>
 
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <label for="filtroData" class="text-xs text-gray-400">Data:</label>
         <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold [color-scheme:dark]">
-        <button onclick="carregarFinanceiro()" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition">
+        <button onclick="carregarFinanceiro()" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer">
           Filtrar
         </button>
       </div>
@@ -211,7 +214,6 @@
       }
     }
 
-    // Inicializa a consulta ao carregar a página
     carregarFinanceiro();
   </script>
 </body>
