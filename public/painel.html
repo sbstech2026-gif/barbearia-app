@@ -135,21 +135,31 @@
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
           const statusAtual = a.status || 'Agendado';
 
+          const nomeCliente = a.cliente || a.clienteNome || 'Cliente';
+          const nomeBarbeiro = a.barbeiro || a.barbeiroNome || 'Barbeiro';
+          
+          // Lembrete Automático via WhatsApp
+          const textoLembrete = `Olá ${nomeCliente}, passando para lembrar do seu corte hoje às ${a.horario} com o barbeiro ${nomeBarbeiro}. Te esperamos aqui!`;
+          const lembreteUrl = `https://api.whatsapp.com/send?phone=55${numeroLimpo.replace(/^55/, '')}&text=${encodeURIComponent(textoLembrete)}`;
+
           return `
             <tr class="hover:bg-gray-800/50 transition">
               <td class="p-4 font-bold text-gold whitespace-nowrap">${a.horario}</td>
               <td class="p-4 whitespace-nowrap">${a.data.split('-').reverse().join('/')}</td>
-              <td class="p-4 font-semibold text-white whitespace-nowrap">${a.cliente || a.clienteNome}</td>
+              <td class="p-4 font-semibold text-white whitespace-nowrap">${nomeCliente}</td>
               <td class="p-4 whitespace-nowrap">
                 <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1 font-medium">
                   📱 ${numWhatsapp}
                 </a>
               </td>
               <td class="p-4 whitespace-nowrap">${a.servico || a.servicoNome}</td>
-              <td class="p-4 whitespace-nowrap">${a.barbeiro || a.barbeiroNome}</td>
+              <td class="p-4 whitespace-nowrap">${nomeBarbeiro}</td>
               <td class="p-4 text-center whitespace-nowrap">${renderStatusBadge(statusAtual)}</td>
               <td class="p-4 text-center whitespace-nowrap">
                 <div class="flex items-center justify-center gap-2">
+                  <a href="${lembreteUrl}" target="_blank" rel="noopener" class="bg-teal-600/20 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer inline-flex items-center gap-1">
+                    📅 Enviar Lembrete
+                  </a>
                   ${statusAtual !== 'Concluído' && statusAtual !== 'atendido' ? `
                     <button onclick="alterarStatus('${a.id}', 'Concluído')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer">
                       Concluir
