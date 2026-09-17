@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel do Barbeiro | Gestão de Agendamentos</title>
+  <title>Agenda de Atendimentos | BarberFlow</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -20,62 +20,88 @@
     }
   </script>
 </head>
-<body class="bg-darkBg text-gray-100 min-h-screen p-6 relative">
+<body class="bg-darkBg text-gray-100 min-h-screen p-3 sm:p-6 relative">
 
-  <!-- Container de Notificações Toast -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- Container Principal -->
-  <div class="max-w-7xl mx-auto">
-    <!-- Header com a Logo e Filtro -->
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4 gap-4">
-      <div class="flex items-center gap-4">
-        <!-- Caminho ajustado para buscar a logo direto da pasta public -->
-        <div class="w-16 h-16 rounded-xl border border-gray-800 bg-gray-900 overflow-hidden flex items-center justify-center shrink-0">
-          <img 
-            src="/logo-barbearia.jpeg" 
-            alt="BarberFlow Logo" 
-            class="w-full h-full object-cover"
-            onerror="this.onerror=null; this.src='/logo-barbearia.jpeg';" 
-          />
-        </div>
+  <div class="max-w-7xl mx-auto w-full">
+    
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-gray-800 pb-4 gap-4">
+      <div class="flex items-center gap-3">
+        <img src="logo-barbearia.jpeg" alt="BarberFlow" style="width: 50px; height: 50px; object-fit: cover;" class="rounded-xl border border-gray-800 shrink-0">
         <div>
-          <span class="text-xs font-bold text-gold uppercase tracking-wider">Barber Flow</span>
-          <h1 class="text-3xl font-bold text-gold">Agenda de Atendimentos</h1>
-          <p class="text-gray-400 text-sm">Acompanhe os horários, status e fluxo de clientes em tempo real</p>
+          <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
+          <h1 class="text-xl sm:text-2xl font-bold text-gold leading-tight">Agenda de Atendimentos</h1>
+          <p class="text-gray-400 text-xs sm:text-sm">Acompanhe os horários, status e fluxo de clientes em tempo real.</p>
         </div>
       </div>
-      <div class="flex items-center gap-3">
-        <label for="filtroData" class="text-sm font-medium text-gray-300">Data:</label>
-        <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold [color-scheme:dark]">
-        <button onclick="carregarAgendamentos()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition cursor-pointer">
-          Filtrar
+      
+      <div class="w-full sm:w-auto flex justify-end">
+        <button onclick="limparAgendamentosTeste()" class="w-full sm:w-auto bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-1.5">
+          🗑️ Limpar Agenda
         </button>
       </div>
     </header>
 
-    <!-- Tabela de Agendamentos -->
-    <main>
-      <div class="bg-darkCard rounded-xl border border-gray-800 overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-gray-300">
-            <thead class="bg-gray-900 text-gold uppercase text-xs border-b border-gray-800">
-              <tr>
-                <th class="p-4 whitespace-nowrap">Horário</th>
-                <th class="p-4 whitespace-nowrap">Data</th>
-                <th class="p-4 whitespace-nowrap">Cliente</th>
-                <th class="p-4 whitespace-nowrap">WhatsApp</th>
-                <th class="p-4 whitespace-nowrap">Serviço</th>
-                <th class="p-4 whitespace-nowrap">Barbeiro</th>
-                <th class="p-4 text-center whitespace-nowrap">Status</th>
-                <th class="p-4 text-center whitespace-nowrap">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaAgendamentos" class="divide-y divide-gray-800">
-              <!-- Dados inseridos via JS -->
-            </tbody>
-          </table>
-        </div>
+    <!-- DASHBOARD FINANCEIRO -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
+        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Faturamento Hoje</div>
+        <div class="text-xl sm:text-2xl font-extrabold text-gold mt-1" id="dashFatHoje">R$ 0,00</div>
+        <div class="text-[10px] text-gray-500 mt-1">Baseado em serviços concluídos</div>
+      </div>
+
+      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
+        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Faturamento do Mês</div>
+        <div class="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1" id="dashFatMes">R$ 0,00</div>
+        <div class="text-[10px] text-gray-500 mt-1">Acumulado mensal</div>
+      </div>
+
+      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
+        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Barbeiro Destaque</div>
+        <div class="text-base sm:text-lg font-bold text-white mt-1 truncate" id="dashBarbeiro">-</div>
+        <div class="text-[10px] text-gold mt-1" id="dashBarbeiroReceita">R$ 0,00 em vendas</div>
+      </div>
+
+      <div class="bg-darkCard border border-gray-800 p-4 rounded-xl shadow-lg">
+        <div class="text-gray-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Serviço Mais Popular</div>
+        <div class="text-sm sm:text-base font-bold text-white mt-1 truncate" id="dashServico">-</div>
+        <div class="text-[10px] text-gray-500 mt-1">Mais realizado no mês</div>
+      </div>
+    </section>
+
+    <!-- Filtro -->
+    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 bg-darkCard p-3 sm:p-4 rounded-xl border border-gray-800">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">📅 Atendimentos</h2>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input type="date" id="filtroData" class="w-full sm:w-auto bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-gold">
+        <button onclick="carregarTudo()" class="bg-gold hover:bg-yellow-600 text-black font-semibold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
+          Filtrar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabela com Layout Ajustado -->
+    <main class="w-full">
+      <div class="bg-darkCard rounded-xl border border-gray-800 shadow-xl overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm text-gray-300">
+          <thead class="bg-gray-900 text-gold uppercase text-[10px] sm:text-xs border-b border-gray-800">
+            <tr>
+              <th class="p-3 sm:p-4 whitespace-nowrap">Horário</th>
+              <th class="p-3 sm:p-4 whitespace-nowrap">Data</th>
+              <th class="p-3 sm:p-4 whitespace-nowrap">Cliente</th>
+              <th class="p-3 sm:p-4 whitespace-nowrap">WhatsApp</th>
+              <th class="p-3 sm:p-4 whitespace-nowrap">Serviço</th>
+              <th class="p-3 sm:p-4 whitespace-nowrap">Barbeiro</th>
+              <th class="p-3 sm:p-4 text-center whitespace-nowrap">Status</th>
+              <th class="p-3 sm:p-4 text-center whitespace-nowrap">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaAgendamentos" class="divide-y divide-gray-800">
+            <!-- Conteúdo dinâmico -->
+          </tbody>
+        </table>
       </div>
     </main>
   </div>
@@ -86,18 +112,13 @@
     function mostrarToast(mensagem, tipo = 'sucesso') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      
       const corFundo = tipo === 'sucesso' ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-300' : 'bg-red-950/90 border-red-500/50 text-red-300';
       
       toast.className = `pointer-events-auto px-4 py-3 rounded-lg border shadow-xl text-xs font-medium backdrop-blur-md transition-all duration-300 translate-y-2 opacity-0 flex items-center gap-2 ${corFundo}`;
       toast.innerHTML = `<span>${mensagem}</span>`;
-
       container.appendChild(toast);
 
-      setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      }, 10);
-
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
       setTimeout(() => {
         toast.classList.add('translate-y-2', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
@@ -105,13 +126,31 @@
     }
 
     function renderStatusBadge(status) {
-      if (status === 'Concluído' || status === 'atendido') {
-        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✓ Concluído</span>`;
+      if (status === 'atendido') {
+        return `<span class="bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">✓ Atendido</span>`;
       }
-      if (status === 'Cancelado' || status === 'cancelado') {
-        return `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">✕ Cancelado</span>`;
+      if (status === 'cancelado') {
+        return `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">✕ Cancelado</span>`;
       }
-      return `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap inline-flex items-center gap-1">⏱ Agendado</span>`;
+      return `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap">⏱ Agendado</span>`;
+    }
+
+    async function carregarRelatorios() {
+      try {
+        const res = await fetch('/api/admin/relatorios');
+        const data = await res.json();
+
+        if (data.sucesso) {
+          const stats = data.estatisticas;
+          document.getElementById('dashFatHoje').innerText = `R$ ${stats.faturamentoHoje.toFixed(2).replace('.', ',')}`;
+          document.getElementById('dashFatMes').innerText = `R$ ${stats.faturamentoMes.toFixed(2).replace('.', ',')}`;
+          document.getElementById('dashBarbeiro').innerText = stats.barbeiroDestaque;
+          document.getElementById('dashBarbeiroReceita').innerText = `R$ ${stats.receitaBarbeiroDestaque.toFixed(2).replace('.', ',')} em vendas`;
+          document.getElementById('dashServico').innerText = stats.servicoPopular;
+        }
+      } catch (err) {
+        console.error('Erro ao carregar relatórios:', err);
+      }
     }
 
     async function carregarAgendamentos() {
@@ -120,62 +159,44 @@
       tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
 
       try {
-        const res = await fetch(`/api/agendamentos?data=${data}`);
+        const res = await fetch(`/api/admin/agendamentos?data=${data}`);
         const result = await res.json();
-        const agendamentos = Array.isArray(result) ? result : (result.agendamentos || []);
 
-        if (!agendamentos || agendamentos.length === 0) {
+        if (!result.agendamentos || result.agendamentos.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = agendamentos.map(a => {
-          const numWhatsapp = a.whatsapp || a.clienteWhatsapp || '';
-          const numeroLimpo = numWhatsapp.replace(/\D/g, '');
+        tbody.innerHTML = result.agendamentos.map(a => {
+          const numeroLimpo = a.clienteWhatsapp.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
-          const statusAtual = a.status || 'Agendado';
-
-          const nomeCliente = a.cliente || a.clienteNome || 'Cliente';
-          const nomeBarbeiro = a.barbeiro || a.barbeiroNome || 'Barbeiro';
-          const nomeServico = a.servico || a.servicoNome || 'Serviço';
-          const dataFormatada = a.data ? a.data.split('-').reverse().join('/') : '';
-
-          // Mensagem formatada e estruturada com dados dinâmicos do agendamento
-          const textoLembrete = `Olá, *${nomeCliente}*! 👋\n\n` +
-            `Passando para lembrar do seu agendamento na barbearia:\n\n` +
-            `📌 *Serviço:* ${nomeServico}\n` +
-            `👤 *Barbeiro:* ${nomeBarbeiro}\n` +
-            `📅 *Data:* ${dataFormatada}\n` +
-            `⏰ *Horário:* ${a.horario}\n\n` +
-            `Te esperamos aqui! Qualquer imprevisto, favor nos avisar. 💈✂️`;
-
-          const lembreteUrl = `https://api.whatsapp.com/send?phone=55${numeroLimpo.replace(/^55/, '')}&text=${encodeURIComponent(textoLembrete)}`;
+          const msgLembrete = encodeURIComponent(`Olá ${a.clienteNome}, confirmamos seu agendamento na barbearia para ${a.data.split('-').reverse().join('/')} às ${a.horario}. Nos vemos em breve!`);
 
           return `
             <tr class="hover:bg-gray-800/50 transition">
-              <td class="p-4 font-bold text-gold whitespace-nowrap">${a.horario}</td>
-              <td class="p-4 whitespace-nowrap">${dataFormatada}</td>
-              <td class="p-4 font-semibold text-white whitespace-nowrap">${nomeCliente}</td>
-              <td class="p-4 whitespace-nowrap">
-                <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1 font-medium">
-                  📱 ${numWhatsapp}
+              <td class="p-2 sm:p-3 font-bold text-gold whitespace-nowrap">${a.horario}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.data.split('-').reverse().join('/')}</td>
+              <td class="p-2 sm:p-3 font-semibold text-white whitespace-nowrap text-xs">${a.clienteNome}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">
+                <a href="${whatsappUrl}" target="_blank" rel="noopener" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1">
+                  📱 ${a.clienteWhatsapp}
                 </a>
               </td>
-              <td class="p-4 whitespace-nowrap">${nomeServico}</td>
-              <td class="p-4 whitespace-nowrap">${nomeBarbeiro}</td>
-              <td class="p-4 text-center whitespace-nowrap">${renderStatusBadge(statusAtual)}</td>
-              <td class="p-4 text-center whitespace-nowrap">
-                <div class="flex items-center justify-center gap-2">
-                  <a href="${lembreteUrl}" target="_blank" rel="noopener" class="bg-teal-600/20 hover:bg-teal-600 text-teal-400 hover:text-white border border-teal-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer inline-flex items-center gap-1">
-                    📅 Enviar Lembrete
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.servicoNome} (R$ ${a.preco.toFixed(2)})</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${a.barbeiroNome}</td>
+              <td class="p-2 sm:p-3 text-center whitespace-nowrap">${renderStatusBadge(a.status || 'agendado')}</td>
+              <td class="p-2 sm:p-3 text-center whitespace-nowrap">
+                <div class="flex items-center justify-center gap-1.5">
+                  <a href="https://wa.me/55${numeroLimpo.replace(/^55/, '')}?text=${msgLembrete}" target="_blank" class="bg-teal-950/60 hover:bg-teal-900/80 text-teal-300 border border-teal-700/50 font-medium px-2 py-1 rounded transition text-[11px]">
+                    🗓️ Lembrete
                   </a>
-                  ${statusAtual !== 'Concluído' && statusAtual !== 'atendido' ? `
-                    <button onclick="alterarStatus('${a.id}', 'Concluído')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer">
+                  ${(a.status || 'agendado') !== 'atendido' ? `
+                    <button onclick="alterarStatus('${a.id}', 'atendido')" class="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
                       Concluir
                     </button>
                   ` : ''}
-                  ${statusAtual !== 'Cancelado' && statusAtual !== 'cancelado' ? `
-                    <button onclick="alterarStatus('${a.id}', 'Cancelado')" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/30 font-medium px-3 py-1 rounded transition text-xs whitespace-nowrap cursor-pointer">
+                  ${(a.status || 'agendado') !== 'cancelado' ? `
+                    <button onclick="alterarStatus('${a.id}', 'cancelado')" class="bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-700/50 font-medium px-2 py-1 rounded transition text-[11px] cursor-pointer">
                       Cancelar
                     </button>
                   ` : ''}
@@ -190,27 +211,50 @@
       }
     }
 
+    function carregarTudo() {
+      carregarAgendamentos();
+      carregarRelatorios();
+    }
+
     async function alterarStatus(id, novoStatus) {
       try {
-        const res = await fetch(`/api/agendamentos/${id}/status`, {
+        const res = await fetch(`/api/admin/agendamentos/${id}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: novoStatus })
         });
         const result = await res.json();
 
-        if (res.ok) {
-          mostrarToast(`Status alterado para ${novoStatus}!`, 'sucesso');
-          carregarAgendamentos();
+        if (result.sucesso) {
+          mostrarToast(novoStatus === 'atendido' ? 'Atendimento concluído e faturado!' : 'Agendamento cancelado.', 'sucesso');
+          carregarTudo();
         } else {
-          mostrarToast(result.error || 'Erro ao atualizar status.', 'erro');
+          mostrarToast(result.erro || 'Erro ao atualizar status.', 'erro');
         }
       } catch (err) {
         mostrarToast('Erro de conexão ao alterar status.', 'erro');
       }
     }
 
-    carregarAgendamentos();
+    async function limparAgendamentosTeste() {
+      if (confirm("Deseja realmente limpar toda a agenda?")) {
+        try {
+          const res = await fetch('/api/limpar-testes', { method: 'POST' });
+          const data = await res.json();
+          
+          if (data.sucesso) {
+            mostrarToast(data.mensagem, 'sucesso');
+            carregarTudo();
+          } else {
+            mostrarToast(data.erro || 'Erro ao limpar dados.', 'erro');
+          }
+        } catch (err) {
+          mostrarToast('Erro de conexão com o servidor.', 'erro');
+        }
+      }
+    }
+
+    carregarTudo();
   </script>
 </body>
 </html>
