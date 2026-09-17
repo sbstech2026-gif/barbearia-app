@@ -17,94 +17,200 @@
   </script>
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
-  <div class="max-w-7xl mx-auto w-full">
+  <div class="max-w-7xl mx-auto w-full space-y-6">
     
-    <!-- Header -->
-    <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+    <!-- Topo / Filtro de Data -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4">
       <div>
         <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">BarberFlow SaaS</span>
-        <h1 class="text-xl sm:text-2xl font-bold text-gold">Dashboard Financeiro</h1>
-        <p class="text-gray-400 text-xs sm:text-sm">Visão geral do faturamento de atendimentos concluídos.</p>
+        <h1 class="text-2xl font-bold text-gold">Relatório Financeiro</h1>
+        <p class="text-gray-400 text-xs sm:text-sm">Faturamento de atendimentos concluídos por dia e barbeiro.</p>
       </div>
-      <button onclick="carregarFinanceiro()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-2 cursor-pointer">
-        🔄 Atualizar Dados
-      </button>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <label for="filtroData" class="text-xs text-gray-400">Data:</label>
+        <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold [color-scheme:dark]">
+        <button onclick="carregarFinanceiro()" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition">
+          Filtrar
+        </button>
+      </div>
     </header>
 
-    <!-- Cards de Resumo Financeiro -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <!-- Cards de Indicadores do Dia -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento Geral (Concluídos)</span>
-        <h2 id="fatTotal" class="text-3xl font-bold text-emerald-400">R$ 0,00</h2>
-        <span class="text-[11px] text-gray-500 mt-1 block">Soma de todos os serviços finalizados</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento na Data Selecionada</span>
+        <h2 id="fatDia" class="text-3xl font-bold text-emerald-400">R$ 0,00</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Apenas serviços concluídos do dia</span>
       </div>
 
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Serviços Concluídos</span>
-        <h2 id="qtdConcluidos" class="text-3xl font-bold text-gold">0</h2>
-        <span class="text-[11px] text-gray-500 mt-1 block">Total de clientes atendidos</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Cortes Concluídos (Dia)</span>
+        <h2 id="qtdDia" class="text-3xl font-bold text-gold">0</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Atendimentos finalizados na data</span>
       </div>
 
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Ticket Médio</span>
-        <h2 id="ticketMedio" class="text-3xl font-bold text-blue-400">R$ 0,00</h2>
-        <span class="text-[11px] text-gray-500 mt-1 block">Média gasta por cliente</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento Acumulado (Total Geral)</span>
+        <h2 id="fatAcumulado" class="text-3xl font-bold text-blue-400">R$ 0,00</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Soma histórica no sistema</span>
       </div>
     </div>
+
+    <!-- Seção de Faturamento por Barbeiro -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-3">
+      <h3 class="text-sm font-bold text-gold uppercase tracking-wider">✂️ Desempenho por Barbeiro (Na Data)</h3>
+      <div id="barbeirosContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </section>
+
+    <!-- Tabela de Serviços Concluídos no Dia -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-4">
+      <h3 class="text-sm font-bold text-gray-200">📋 Descritivo dos Atendimentos Concluídos</h3>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="text-gray-400 border-b border-gray-800 uppercase text-[11px]">
+              <th class="py-2.5 px-3">Horário</th>
+              <th class="py-2.5 px-3">Cliente</th>
+              <th class="py-2.5 px-3">Serviço</th>
+              <th class="py-2.5 px-3">Barbeiro</th>
+              <th class="py-2.5 px-3 text-right">Valor</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaFinanceiroBody" class="divide-y divide-gray-800 text-gray-300">
+            <!-- Renderizado dinamicamente via JS -->
+          </tbody>
+        </table>
+        
+        <div id="emptyFinanceiro" class="text-center py-6 text-gray-500 text-xs" style="display: none;">
+          Nenhum atendimento concluído para esta data.
+        </div>
+      </div>
+    </section>
 
   </div>
 
   <script>
-    // Mapeador de preços para garantir o valor do serviço
+    const inputFiltroData = document.getElementById('filtroData');
+    
+    // Define a data atual como padrão
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    inputFiltroData.value = `${ano}-${mes}-${dia}`;
+
     function extrairPreco(servicoStr) {
       if (!servicoStr) return 0.00;
-      const nomeLower = servicoStr.toLowerCase();
-      
-      if (nomeLower.includes('combo') || nomeLower.includes('corte + barba')) return 60.00;
-      if (nomeLower.includes('corte')) return 35.00;
-      if (nomeLower.includes('barba')) return 30.00;
-      if (nomeLower.includes('sobrancelha')) return 15.00;
-
+      const lower = servicoStr.toLowerCase();
+      if (lower.includes('combo') || lower.includes('corte + barba')) return 60.00;
+      if (lower.includes('corte')) return 35.00;
+      if (lower.includes('barba')) return 30.00;
+      if (lower.includes('sobrancelha')) return 15.00;
       return 0.00;
     }
 
     async function carregarFinanceiro() {
+      const dataSelecionada = inputFiltroData.value;
+
       try {
-        // Busca todos os agendamentos sem filtrar por data fixa
         const res = await fetch('/api/agendamentos');
-        const data = await res.json();
+        const responseData = await res.json();
 
         let lista = [];
-        if (Array.isArray(data)) lista = data;
-        else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
+        if (Array.isArray(responseData)) lista = responseData;
+        else if (Array.isArray(responseData.agendamentos)) lista = responseData.agendamentos;
 
-        // Filtra apenas os agendamentos CONCLUÍDOS
-        const concluidos = lista.filter(item => {
+        // 1. Filtrar APENAS agendamentos CONCLUÍDOS
+        const concluidosGeral = lista.filter(item => {
           const st = (item.status || '').toLowerCase();
           return st === 'concluído' || st === 'concluido' || st === 'atendido';
         });
 
-        // Calcula a soma total dos serviços concluídos
-        let faturamentoTotal = 0;
-        concluidos.forEach(item => {
-          const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
-          faturamentoTotal += valor;
+        // 2. Filtrar Concluídos da Data Selecionada
+        const concluidosDoDia = concluidosGeral.filter(item => item.data === dataSelecionada);
+
+        // 3. Cálculos de Faturamento
+        let fatTotalAcumulado = 0;
+        concluidosGeral.forEach(i => {
+          fatTotalAcumulado += parseFloat(i.preco) || extrairPreco(i.servicoNome || i.servico);
         });
 
-        const totalAtendimentos = concluidos.length;
-        const ticketMedio = totalAtendimentos > 0 ? (faturamentoTotal / totalAtendimentos) : 0;
+        let fatDoDia = 0;
+        const porBarbeiro = {};
 
-        // Atualiza a tela
-        document.getElementById('fatTotal').innerText = `R$ ${faturamentoTotal.toFixed(2).replace('.', ',')}`;
-        document.getElementById('qtdConcluidos').innerText = totalAtendimentos;
-        document.getElementById('ticketMedio').innerText = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
+        concluidosDoDia.forEach(item => {
+          const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
+          fatDoDia += valor;
+
+          const barbeiro = item.barbeiroNome || item.barbeiro || 'Não Especificado';
+          if (!porBarbeiro[barbeiro]) {
+            porBarbeiro[barbeiro] = { total: 0, qtd: 0 };
+          }
+          porBarbeiro[barbeiro].total += valor;
+          porBarbeiro[barbeiro].qtd += 1;
+        });
+
+        // Update Cards
+        document.getElementById('fatDia').innerText = `R$ ${fatDoDia.toFixed(2).replace('.', ',')}`;
+        document.getElementById('qtdDia').innerText = concluidosDoDia.length;
+        document.getElementById('fatAcumulado').innerText = `R$ ${fatTotalAcumulado.toFixed(2).replace('.', ',')}`;
+
+        // 4. Renderizar Cards de Barbeiros
+        const barbeirosContainer = document.getElementById('barbeirosContainer');
+        barbeirosContainer.innerHTML = '';
+
+        const nomesBarbeiros = Object.keys(porBarbeiro);
+        if (nomesBarbeiros.length === 0) {
+          barbeirosContainer.innerHTML = `<div class="text-gray-500 text-xs col-span-full">Nenhum atendimento finalizado por barbeiro nesta data.</div>`;
+        } else {
+          nomesBarbeiros.forEach(nome => {
+            const dados = porBarbeiro[nome];
+            const div = document.createElement('div');
+            div.className = 'bg-darkBg p-3.5 rounded-lg border border-gray-800 flex justify-between items-center';
+            div.innerHTML = `
+              <div>
+                <p class="font-semibold text-gray-200">${nome}</p>
+                <p class="text-[11px] text-gray-400">${dados.qtd} corte(s)</p>
+              </div>
+              <span class="font-bold text-gold text-base">R$ ${dados.total.toFixed(2).replace('.', ',')}</span>
+            `;
+            barbeirosContainer.appendChild(div);
+          });
+        }
+
+        // 5. Renderizar Tabela do Dia
+        const tbody = document.getElementById('tabelaFinanceiroBody');
+        const emptyState = document.getElementById('emptyFinanceiro');
+        tbody.innerHTML = '';
+
+        if (concluidosDoDia.length === 0) {
+          emptyState.style.display = 'block';
+        } else {
+          emptyState.style.display = 'none';
+          concluidosDoDia.forEach(item => {
+            const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-2.5 px-3 font-semibold text-gold">${item.horario || item.hora || '--:--'}</td>
+              <td class="py-2.5 px-3">${item.clienteNome || item.cliente || item.nome || 'Cliente'}</td>
+              <td class="py-2.5 px-3">${item.servicoNome || item.servico || 'Serviço'}</td>
+              <td class="py-2.5 px-3">${item.barbeiroNome || item.barbeiro || 'Barbeiro'}</td>
+              <td class="py-2.5 px-3 text-right font-bold text-emerald-400">R$ ${valor.toFixed(2).replace('.', ',')}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
 
       } catch (err) {
-        console.error('Erro ao carregar dados financeiro:', err);
+        console.error('Erro ao processar dados financeiro:', err);
       }
     }
 
-    // Carrega os valores assim que a página abre
+    // Inicializa a consulta ao carregar a página
     carregarFinanceiro();
   </script>
 </body>
