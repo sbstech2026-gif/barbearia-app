@@ -159,12 +159,27 @@
 
           const numeroLimpo = whats.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
-          const msgLembrete = encodeURIComponent(`Olá ${cliente}, confirmamos seu agendamento na barbearia para ${dataItem.split('-').reverse().join('/')} às ${horario}. Nos vemos em breve!`);
+          const dataFormatada = dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem;
+
+          // Mensagem de lembrete com formato visual melhorado
+          const textoLembrete = 
+            `💈 *BARBEARIA ESTILO*\n` +
+            `──────────────────────────────\n` +
+            `👋 Olá, *${cliente}*!\n\n` +
+            `Passando para lembrar do seu agendamento:\n\n` +
+            `📅 *Data:* ${dataFormatada}\n` +
+            `⏰ *Horário:* ${horario}\n` +
+            `✂️ *Serviço:* ${servico}\n` +
+            `👤 *Barbeiro:* ${barbeiro}\n\n` +
+            `Te esperamos aqui! 🚀\n` +
+            `──────────────────────────────`;
+
+          const msgLembrete = encodeURIComponent(textoLembrete);
 
           return `
             <tr class="hover:bg-gray-800/50 transition">
               <td class="p-2 sm:p-3 font-bold text-gold whitespace-nowrap">${horario}</td>
-              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem}</td>
+              <td class="p-2 sm:p-3 whitespace-nowrap text-xs">${dataFormatada}</td>
               <td class="p-2 sm:p-3 font-semibold text-white whitespace-nowrap text-xs">${cliente}</td>
               <td class="p-2 sm:p-3 whitespace-nowrap text-xs">
                 ${numeroLimpo ? `<a href="${whatsappUrl}" target="_blank" class="text-green-400 hover:text-green-300 hover:underline inline-flex items-center gap-1">📱 ${whats}</a>` : '-'}
