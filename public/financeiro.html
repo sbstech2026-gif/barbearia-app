@@ -45,7 +45,7 @@
       </div>
 
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Cortes Concluídos (Dia)</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">Atendimentos Concluídos (Dia)</span>
         <h2 id="qtdDia" class="text-3xl font-bold text-gold">0</h2>
         <span class="text-[11px] text-gray-500 mt-1 block">Atendimentos finalizados na data</span>
       </div>
@@ -171,10 +171,11 @@
             const dados = porBarbeiro[nome];
             const div = document.createElement('div');
             div.className = 'bg-darkBg p-3.5 rounded-lg border border-gray-800 flex justify-between items-center';
+            const textoAtendimento = dados.qtd === 1 ? 'atendimento' : 'atendimentos';
             div.innerHTML = `
               <div>
                 <p class="font-semibold text-gray-200">${nome}</p>
-                <p class="text-[11px] text-gray-400">${dados.qtd} corte(s)</p>
+                <p class="text-[11px] text-gray-400">${dados.qtd} ${textoAtendimento}</p>
               </div>
               <span class="font-bold text-gold text-base">R$ ${dados.total.toFixed(2).replace('.', ',')}</span>
             `;
