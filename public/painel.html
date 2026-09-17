@@ -7,13 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d0e12;
-            --card-bg: #14161d;
+            --bg-color: #0f1015;
+            --card-bg: #181a20;
             --accent-color: #d4af37;
             --accent-hover: #c5a028;
             --text-main: #ffffff;
             --text-muted: #9ca3af;
-            --border-color: #232730;
+            --border-color: #2d3139;
             --danger: #ef4444;
             --success: #22c55e;
         }
@@ -28,19 +28,20 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 24px;
+            padding: 20px;
         }
 
         .container {
-            max-width: 1280px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
+        /* Cabeçalho */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
             gap: 15px;
             border-bottom: 1px solid var(--border-color);
@@ -102,11 +103,12 @@
             color: white;
         }
 
+        /* Cards de Métricas */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .metric-card {
@@ -114,10 +116,11 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .metric-card h3 {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -125,7 +128,7 @@
         }
 
         .metric-card .value {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
             color: var(--accent-color);
             margin-bottom: 4px;
@@ -136,6 +139,7 @@
             color: var(--text-muted);
         }
 
+        /* Filtros e Tabela */
         .section-box {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -155,9 +159,6 @@
         .section-header h2 {
             font-size: 18px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .filter-group {
@@ -173,14 +174,13 @@
             padding: 8px 12px;
             border-radius: 6px;
             color-scheme: dark;
-            outline: none;
         }
 
         .btn-primary {
             background-color: var(--accent-color);
             color: #121212;
             border: none;
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
@@ -199,72 +199,71 @@
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         th, td {
-            padding: 12px 14px;
+            padding: 12px 15px;
             border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
         }
 
         th {
-            color: var(--accent-color);
+            color: var(--text-muted);
             font-weight: 600;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        tr:hover td {
             background-color: rgba(255,255,255,0.01);
         }
 
         .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            display: inline-block;
         }
 
-        .badge-agendado { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .badge-atendido { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-cancelado { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-agendado { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-atendido { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-cancelado { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
         .actions-cell {
             display: flex;
             gap: 6px;
+            align-items: center;
         }
 
         .btn-action {
             padding: 5px 10px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             border: none;
-            transition: opacity 0.2s;
         }
 
-        .btn-action:hover { opacity: 0.85; }
         .btn-atendido { background-color: #166534; color: #dcfce7; }
+        .btn-atendido:hover { background-color: #15803d; }
+        
         .btn-cancelar { background-color: #991b1b; color: #fee2e2; }
-        .btn-lembrete { background-color: #25d366; color: #000000; font-weight: bold; }
+        .btn-cancelar:hover { background-color: #b91c1c; }
+
+        .btn-lembrete { background-color: #25d366; color: #000; font-weight: bold; }
+        .btn-lembrete:hover { background-color: #1da851; }
 
         .empty-state {
             text-align: center;
-            padding: 30px;
+            padding: 40px;
             color: var(--text-muted);
-        }
-        .error-state {
-            text-align: center;
-            padding: 30px;
-            color: #ef4444;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- Cabeçalho -->
         <div class="header">
             <div class="brand-box">
                 <div class="brand-logo">BF</div>
@@ -277,6 +276,7 @@
             <button class="btn-danger" id="btnLimparAgenda">🗑️ Limpar Agenda</button>
         </div>
 
+        <!-- Cards de Métricas -->
         <div class="metrics-grid">
             <div class="metric-card">
                 <h3>Faturamento Hoje</h3>
@@ -290,16 +290,17 @@
             </div>
             <div class="metric-card">
                 <h3>Barbeiro Destaque</h3>
-                <div class="value" id="barbeiroDestaque" style="font-size: 18px;">Nenhum ainda</div>
+                <div class="value" id="barbeiroDestaque" style="font-size: 20px;">Nenhum ainda</div>
                 <div class="sub" id="recBarbeiroDestaque">R$ 0,00 em vendas</div>
             </div>
             <div class="metric-card">
                 <h3>Serviço Mais Popular</h3>
-                <div class="value" id="servicoPopular" style="font-size: 18px;">Nenhum ainda</div>
+                <div class="value" id="servicoPopular" style="font-size: 20px;">Nenhum ainda</div>
                 <div class="sub">Mais realizado no mês</div>
             </div>
         </div>
 
+        <!-- Tabela -->
         <div class="section-box">
             <div class="section-header">
                 <h2>📅 Atendimentos</h2>
@@ -337,13 +338,12 @@
     <script>
         document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
 
-        function extrairValorNumerico(str) {
+        function extrairPreco(str) {
             if (!str) return 0;
             const match = String(str).match(/R\$\s*([\d.,]+)/i);
             if (match) {
                 return parseFloat(match[1].replace('.', '').replace(',', '.')) || 0;
             }
-            if (typeof str === 'number') return str;
             return 0;
         }
 
@@ -353,11 +353,8 @@
 
             try {
                 const res = await fetch(`/api/agendamentos?data=${dataSelecionada}`);
-                if (!res.ok) throw new Error('Erro na resposta do servidor');
-
                 const data = await res.json();
                 
-                // Trata o formato de resposta do backend
                 let agendamentos = [];
                 let kpis = null;
 
@@ -368,7 +365,7 @@
                     kpis = data.kpis;
                 }
 
-                // Atualiza KPIs se vierem da API
+                // Atualiza Cards de Métricas
                 if (kpis) {
                     document.getElementById('fatHoje').innerText = `R$ ${kpis.faturamentoHoje || '0,00'}`;
                     document.getElementById('fatMes').innerText = `R$ ${kpis.faturamentoMes || '0,00'}`;
@@ -379,7 +376,7 @@
 
                 tbody.innerHTML = '';
 
-                if (agendamentos.length === 0) {
+                if (!agendamentos || agendamentos.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="9" class="empty-state">Nenhum agendamento encontrado para esta data.</td></tr>`;
                     return;
                 }
@@ -388,29 +385,29 @@
                     const tr = document.createElement('tr');
                     
                     const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : '-';
-                    const valorCalculado = item.preco ? item.preco : extrairValorNumerico(item.servico);
+                    const valorCalculado = extrairPreco(item.servico);
                     
                     let badgeClass = 'badge-agendado';
-                    const st = (item.status || '').toLowerCase();
-                    if (st === 'atendido' || st === 'concluído') badgeClass = 'badge-atendido';
-                    if (st === 'cancelado') badgeClass = 'badge-cancelado';
+                    const statusLower = (item.status || '').toLowerCase();
+                    if (statusLower === 'atendido' || statusLower === 'concluído') badgeClass = 'badge-atendido';
+                    if (statusLower === 'cancelado') badgeClass = 'badge-cancelado';
 
                     const numWhats = (item.whatsapp || '').replace(/\D/g, '');
 
                     tr.innerHTML = `
                         <td><strong>${item.horario}</strong></td>
                         <td>${dataFormatada}</td>
-                        <td>${item.cliente || item.clienteNome}</td>
+                        <td>${item.cliente}</td>
                         <td><a href="https://wa.me/55${numWhats}" target="_blank" style="color: #4ade80; text-decoration: none;">📱 ${item.whatsapp}</a></td>
-                        <td>${(item.servico || '').split('(')[0].trim()}</td>
+                        <td>${item.servico}</td>
                         <td style="color: #4ade80; font-weight: 600;">R$ ${valorCalculado.toFixed(2).replace('.', ',')}</td>
-                        <td>${item.barbeiro || item.barbeiroNome}</td>
+                        <td>${item.barbeiro}</td>
                         <td><span class="badge ${badgeClass}">${item.status || 'Agendado'}</span></td>
                         <td>
                             <div class="actions-cell">
-                                <button class="btn-action btn-atendido" onclick="mudarStatus('${item.id}', 'atendido')">✓ Concluir</button>
+                                <button class="btn-action btn-atendido" onclick="mudarStatus('${item.id}', 'Concluído')">✓ Concluir</button>
                                 <button class="btn-action btn-cancelar" onclick="mudarStatus('${item.id}', 'Cancelado')">Cancelar</button>
-                                <button class="btn-action btn-lembrete" onclick="enviarLembrete('${item.cliente || item.clienteNome}', '${item.whatsapp}', '${dataFormatada}', '${item.horario}', '${(item.servico||'').split('(')[0].trim()}', '${item.barbeiro || item.barbeiroNome}')">📲 Lembrete</button>
+                                <button class="btn-action btn-lembrete" onclick="enviarLembrete('${item.cliente}', '${item.whatsapp}', '${dataFormatada}', '${item.horario}', '${item.servico}', '${item.barbeiro}')">📲 Lembrete</button>
                             </div>
                         </td>
                     `;
@@ -419,7 +416,7 @@
 
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                tbody.innerHTML = `<tr><td colspan="9" class="error-state">Erro ao carregar dados. Verifique a conexão.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color: #ef4444;">Erro ao carregar dados. Verifique a conexão.</td></tr>`;
             }
         }
 
