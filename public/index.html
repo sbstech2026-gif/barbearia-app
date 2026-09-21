@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BarberFlow - Agendamento Digital</title>
+    <title>SmartBarber - Agendamento Direto & Rápido</title>
 
-<title>BarberFlow - Agendamento Digital</title>
+<title>SmartBarber - Agendamento Direto & Rápido</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#111111">
     <script>
@@ -64,11 +64,11 @@
 <body>
 
     <div class="card-container">
-        <img src="banner-barbearia.jpeg" alt="BarberFlow SaaS" class="banner" onerror="this.style.display='none'">
+        <img src="banner-barbearia.jpeg" alt="SmartBarber" class="banner" onerror="this.style.display='none'">
 
         <div class="content">
             <div class="header-title">
-                <h1>✂ BARBEARIA ESTILO</h1>
+                <h1>✂ BARBEARIA STYLE</h1>
                 <p>Seu estilo. Seu momento.</p>
             </div>
 
@@ -85,7 +85,7 @@
                 </div>
 
                 <div class="form-group">
-                    <div class="label-icon">👤 2. ESCOLHA O BARBEIRO</div>
+                    <div class="label-icon">👤 2. ESCOLHA O PROFISSIONAL</div>
                     <select id="barbeiro" required>
                         <option value="" disabled selected>Selecione um barbeiro...</option>
                         <option value="Carlos (Mestre Barbeiro)">Carlos (Mestre Barbeiro)</option>
@@ -109,7 +109,7 @@
                     </div>
 
                     <div class="slots-container" id="containerHorarios">
-                        Selecione o barbeiro e a data primeiro.
+                        Selecione o profissional e a data primeiro.
                     </div>
                 </div>
 
@@ -153,7 +153,7 @@
             validarFormulario();
 
             if (!barbeiro || !data) {
-                containerHorarios.innerHTML = 'Selecione o barbeiro e a data primeiro.';
+                containerHorarios.innerHTML = 'Selecione o profissional e a data primeiro.';
                 return;
             }
 
@@ -168,7 +168,7 @@
                 
                 let lista = Array.isArray(dataRes) ? dataRes : (dataRes.agendamentos || []);
                 
-                // Filtra horários que já foram agendados para este mesmo barbeiro nesta data
+                // Filtra horários que já foram agendados para este mesmo profissional nesta data
                 horariosOcupados = lista
                     .filter(a => a.barbeiro === barbeiro && a.status !== 'Cancelado')
                     .map(a => a.horario);
