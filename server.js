@@ -21,7 +21,7 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas e garantir compatibilidade automática de todas as colunas
+// Criar tabelas e garantir compatibilidade automática de colunas
 db.serialize(() => {
   // Cria a tabela caso não exista
   db.run(`
@@ -38,7 +38,7 @@ db.serialize(() => {
     )
   `);
 
-  // Lista de colunas para garantir que arquivos de banco antigos no Render sejam atualizados sem erro
+  // Lista de colunas para garantir compatibilidade
   const colunasObrigatorias = [
     'cliente TEXT',
     'whatsapp TEXT',
@@ -50,10 +50,9 @@ db.serialize(() => {
     'preco REAL'
   ];
 
-  // Adiciona silenciosamente qualquer coluna que falte na tabela antiga
   colunasObrigatorias.forEach((coluna) => {
     db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
-      // Ignora o erro se a coluna já existir
+      // Ignora erro se a coluna já existir
     });
   });
 
@@ -68,7 +67,7 @@ db.serialize(() => {
 
 // --- ROTAS DA API DE AGENDAMENTOS ---
 
-// 1. Listar todos os agendamentos (suporta filtro opcional por data)
+// 1. Listar todos os agendamentos
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -95,7 +94,7 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// 2. Criar novo agendamento (trata e mapeia automaticamente os nomes dos campos)
+// 2. Criar novo agendamento (trata a restrição servicoId NOT NULL automaticamente)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -103,7 +102,7 @@ app.post('/api/agendamentos', (req, res) => {
     servico, servicoNome,
     barbeiro, barbeiroNome,
     data, horario, hora,
-    preco
+    preco, servicoId
   } = req.body;
 
   const nomeCliente = cliente || clienteNome || nome || 'Cliente';
@@ -111,26 +110,43 @@ app.post('/api/agendamentos', (req, res) => {
   const nomeServico = servico || servicoNome || 'Serviço';
   const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const horaAgendamento = horario || hora || '--:--';
+  const idServico = servicoId || 1;
 
-  const query = `
-    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
-    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
+  // Tenta inserir preenchendo a coluna servicoId caso ela exista e exija valor
+  const queryComServicoId = `
+    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco, servicoId)
+    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?, ?)
   `;
 
   db.run(
-    query,
-    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
+    queryComServicoId,
+    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0, idServico],
     function (err) {
       if (err) {
-        console.error('Erro ao inserir agendamento:', err.message);
-        return res.status(500).json({ error: err.message });
+        // Fallback: Se a coluna servicoId não existir na tabela, faz o insert normal sem ela
+        const querySemServicoId = `
+          INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
+          VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
+        `;
+        db.run(
+          querySemServicoId,
+          [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
+          function (err2) {
+            if (err2) {
+              console.error('Erro ao inserir agendamento:', err2.message);
+              return res.status(500).json({ error: err2.message });
+            }
+            res.json({ id: this.lastID, status: 'Agendado', success: true });
+          }
+        );
+      } else {
+        res.json({ id: this.lastID, status: 'Agendado', success: true });
       }
-      res.json({ id: this.lastID, status: 'Agendado', success: true });
     }
   );
 });
 
-// 3. Atualizar status de um agendamento (Concluído / Cancelado)
+// 3. Atualizar status de um agendamento
 const atualizarStatusHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -151,7 +167,7 @@ app.put('/api/agendamentos/:id', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id', atualizarStatusHandler);
 
-// 4. Limpar/Deletar agendamentos
+// 4. Deletar agendamentos
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -176,7 +192,6 @@ app.delete('/api/agendamentos', (req, res) => {
 
 // --- ROTAS DA API DE SERVIÇOS ---
 
-// 1. Listar todos os serviços
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -184,7 +199,6 @@ app.get('/api/servicos', (req, res) => {
   });
 });
 
-// 2. Criar novo serviço ou atualizar existente pelo nome
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
 
@@ -211,7 +225,6 @@ app.post('/api/servicos', (req, res) => {
   });
 });
 
-// 3. Atualizar serviço por ID
 app.put('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
   const { nome, preco } = req.body;
@@ -226,7 +239,6 @@ app.put('/api/servicos/:id', (req, res) => {
   });
 });
 
-// 4. Excluir um serviço por ID
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
@@ -235,14 +247,14 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
-// --- ROTA DE REINICIALIZAÇÃO DO BANCO ---
+// --- ROTA DE SEGURANÇA PARA RESET DO BANCO ---
 app.get('/reset-db', (req, res) => {
   const fs = require('fs');
   db.close(() => {
     if (fs.existsSync('./barbearia.db')) {
       fs.unlinkSync('./barbearia.db');
     }
-    res.send('Banco de dados zerado com sucesso! Recarregue a página principal para criar um novo banco.');
+    res.send('Banco de dados zerado com sucesso! Recarregue o site para criar a estrutura atualizada.');
   });
 });
 
@@ -256,7 +268,6 @@ app.get('/servicos', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'servicos.html'));
 });
 
-// Redirecionamento padrão para o index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
