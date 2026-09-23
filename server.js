@@ -21,21 +21,35 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas necessárias na inicialização
+// Criar tabelas e garantir que TODAS as colunas necessárias existam
 db.serialize(() => {
+  // Criar tabela base se não existir
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente TEXT,
-      whatsapp TEXT,
-      servico TEXT,
-      barbeiro TEXT,
       data TEXT,
       horario TEXT,
-      status TEXT DEFAULT 'Agendado',
-      preco REAL
+      status TEXT DEFAULT 'Agendado'
     )
   `);
+
+  // Adicionar colunas uma a uma para garantir compatibilidade com bancos antigos
+  const colunasParaGarantir = [
+    'ALTER TABLE agendamentos ADD COLUMN cliente TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN clienteNome TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN nome TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN clienteWhatsapp TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN servico TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN barbeiro TEXT',
+    'ALTER TABLE agendamentos ADD COLUMN preco REAL'
+  ];
+
+  colunasParaGarantir.forEach((sql) => {
+    db.run(sql, (err) => {
+      // Ignora o erro se a coluna já existir no banco de dados
+    });
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
@@ -77,7 +91,7 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// Criar novo agendamento
+// Criar novo agendamento (Insere em todas as colunas de nome para nunca falhar)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -88,21 +102,27 @@ app.post('/api/agendamentos', (req, res) => {
     preco
   } = req.body;
 
-  const nomeCliente = cliente || clienteNome || nome || 'Cliente';
-  const telWhatsapp = whatsapp || clienteWhatsapp || '';
-  const nomeServico = servico || servicoNome || 'Serviço';
-  const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
-  const horaAgendamento = horario || hora || '--:--';
+  const valorNome = cliente || clienteNome || nome || 'Cliente';
+  const valorWhatsapp = whatsapp || clienteWhatsapp || '';
+  const valorServico = servico || servicoNome || 'Serviço';
+  const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
+  const valorHorario = horario || hora || '--:--';
   const valorPreco = preco || 0;
 
   const query = `
-    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
-    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
+    INSERT INTO agendamentos 
+    (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
   `;
 
   db.run(
     query,
-    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, valorPreco],
+    [
+      valorNome, valorNome, valorNome,
+      valorWhatsapp, valorWhatsapp,
+      valorServico, valorBarbeiro,
+      data, valorHorario, valorPreco
+    ],
     function (err) {
       if (err) {
         console.error('Erro ao inserir agendamento:', err.message);
