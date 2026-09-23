@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 
-
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +36,6 @@
         }
     </script>
 </head>
-
 
 <body class="bg-darkBg text-gray-100 min-h-screen p-3 sm:p-6 relative">
 
@@ -109,14 +106,16 @@
   </div>
 
   <script>
+    // Inicializa o input com a data de hoje (YYYY-MM-DD)
     document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
 
-    // Mapeamento forçado pelos nomes exatos do formulário
-    function extrairOuMapearPreco(servicoStr) {
+    function extrairOuMapearPreco(servicoStr, precoBanco) {
+      if (precoBanco && !isNaN(Number(precoBanco)) && Number(precoBanco) > 0) {
+        return Number(precoBanco);
+      }
       if (!servicoStr) return 0.00;
 
       const nomeLower = servicoStr.toLowerCase();
-      
       if (nomeLower.includes('combo') || nomeLower.includes('corte + barba')) return 60.00;
       if (nomeLower.includes('corte')) return 35.00;
       if (nomeLower.includes('barba')) return 30.00;
@@ -152,17 +151,27 @@
     }
 
     async function carregarAgendamentos() {
-      const dataFiltro = document.getElementById('filtroData').value;
+      const dataFiltroInput = document.getElementById('filtroData').value; // YYYY-MM-DD
       const tbody = document.getElementById('tabelaAgendamentos');
       tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-gray-500">Carregando...</td></tr>';
 
+      // Converte data YYYY-MM-DD para DD/MM/YYYY para comparar com o banco
+      const partesData = dataFiltroInput ? dataFiltroInput.split('-') : [];
+      const dataFiltroBR = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : '';
+
       try {
-        const res = await fetch(`/api/agendamentos?data=${dataFiltro}`);
+        const res = await fetch('/api/agendamentos');
         const data = await res.json();
 
-        let lista = [];
-        if (Array.isArray(data)) lista = data;
-        else if (Array.isArray(data.agendamentos)) lista = data.agendamentos;
+        let lista = Array.isArray(data) ? data : (data.agendamentos || []);
+
+        // Filtra na memória para garantir compatibilidade com o formato YYYY-MM-DD e DD/MM/YYYY
+        if (dataFiltroInput) {
+          lista = lista.filter(item => {
+            if (!item.data) return false;
+            return item.data === dataFiltroBR || item.data === dataFiltroInput;
+          });
+        }
 
         if (!lista || lista.length === 0) {
           tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-gray-400">Nenhum agendamento encontrado para esta data.</td></tr>';
@@ -177,19 +186,17 @@
           const barbeiro = a.barbeiroNome || a.barbeiro || 'Barbeiro';
           const horario = a.horario || a.hora || '--:--';
           const status = a.status || 'Agendado';
-          const dataItem = a.data || dataFiltro;
+          const dataItem = a.data || (partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : dataFiltroInput);
           
-          // Força o cálculo do preço ignorando o campo do banco antigo
-          const valorNum = extrairOuMapearPreco(servico);
+          const valorNum = extrairOuMapearPreco(servico, a.preco);
           const valorFormatado = `R$ ${valorNum.toFixed(2).replace('.', ',')}`;
 
           const numeroLimpo = whats.replace(/\D/g, '');
           const whatsappUrl = `https://wa.me/55${numeroLimpo.replace(/^55/, '')}`;
           const dataFormatada = dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem;
 
-          // Unicode seguro para emojis no WhatsApp sem dar erro de encoding (diamantes pretos)
           const textoLembrete = 
-            `\u{1F488} *BARBEARIA STYLE*\n` +
+            `\u{1F488} *SMARTBARBER*\n` +
             `----------------------------------------\n` +
             `\u{1F44B} Ol\u00E1, *${cliente}*!\n\n` +
             `Passando para lembrar do seu agendamento:\n\n` +
@@ -246,18 +253,18 @@
     async function alterarStatus(id, novoStatus) {
       if (!id) return;
       try {
-        const res = await fetch(`/api/agendamentos/${id}/status`, {
-          method: 'PATCH',
+        // Envia requisição via PUT para corresponder com as rotas do backend em server.js
+        const res = await fetch(`/api/agendamentos/${id}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status: novoStatus })
         });
-        const result = await res.json();
 
-        if (res.ok || result.success) {
+        if (res.ok) {
           mostrarToast(novoStatus === 'Concluído' ? 'Atendimento concluído!' : 'Agendamento cancelado.', 'sucesso');
           carregarAgendamentos();
         } else {
-          mostrarToast(result.message || 'Erro ao atualizar status.', 'erro');
+          mostrarToast('Erro ao atualizar status.', 'erro');
         }
       } catch (err) {
         mostrarToast('Erro ao comunicar com o servidor.', 'erro');
@@ -265,10 +272,9 @@
     }
 
     async function limparAgenda() {
-      const dataFiltro = document.getElementById('filtroData').value;
-      if (confirm(`Deseja limpar os agendamentos da data ${dataFiltro.split('-').reverse().join('/')}?`)) {
+      if (confirm(`Deseja realmente limpar todos os agendamentos salvos?`)) {
         try {
-          const res = await fetch(`/api/agendamentos/limpar?data=${dataFiltro}`, { method: 'DELETE' });
+          const res = await fetch('/api/agendamentos', { method: 'DELETE' });
           if (res.ok) {
             mostrarToast('Agenda limpa com sucesso!', 'sucesso');
             carregarAgendamentos();
@@ -279,7 +285,7 @@
       }
     }
 
-    // Inicializa
+    // Carrega dados ao abrir a página
     carregarAgendamentos();
   </script>
 </body>
