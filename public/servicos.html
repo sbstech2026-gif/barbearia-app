@@ -19,14 +19,19 @@
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
   <div class="max-w-4xl mx-auto space-y-6">
     
-    <!-- Header -->
+    <!-- Header com Logo Inserida -->
     <header class="flex justify-between items-center border-b border-gray-800 pb-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gold">Gestão de Serviços e Preços</h1>
-        <p class="text-gray-400 text-xs sm:text-sm">Cadastre e altere os valores cobrados na barbearia</p>
+      <div class="flex items-center gap-3.5">
+        <!-- Logo alinhada com o cabeçalho -->
+        <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-12 h-12 rounded-lg object-cover border border-gold/30 shadow-md">
+        <div>
+          <span class="text-[10px] font-bold tracking-widest text-gold uppercase block leading-none mb-1">SMARTBARBER</span>
+          <h1 class="text-xl sm:text-2xl font-bold text-gold leading-tight">Gestão de Serviços e Preços</h1>
+          <p class="text-gray-400 text-xs sm:text-sm">Cadastre e altere os valores cobrados na barbearia</p>
+        </div>
       </div>
-      <!-- Botão corrigido para apontar para o Painel de Gerenciamento -->
-      <a href="painel.html" class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
+      <!-- Botão para o Painel -->
+      <a href="/painel" class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
         ← Voltar ao Painel
       </a>
     </header>
