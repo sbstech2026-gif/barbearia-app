@@ -105,7 +105,7 @@ app.get('/api/servicos', (req, res) => {
   });
 });
 
-// 2. Criar um novo serviço
+// 2. Criar novo serviço (com verificação para evitar duplicados por nome)
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
 
@@ -113,16 +113,52 @@ app.post('/api/servicos', (req, res) => {
     return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
   }
 
-  const query = `INSERT INTO servicos (nome, preco) VALUES (?, ?)`;
-  db.run(query, [nome, preco], function(err) {
+  const nomeFormatado = nome.trim();
+
+  // Verifica se o serviço com mesmo nome já existe
+  db.get('SELECT * FROM servicos WHERE LOWER(nome) = LOWER(?)', [nomeFormatado], (err, row) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.status(201).json({ id: this.lastID, nome, preco });
+
+    if (row) {
+      // Se já existe, atualiza o valor do serviço existente em vez de duplicar
+      db.run('UPDATE servicos SET preco = ? WHERE id = ?', [preco, row.id], function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.json({ id: row.id, nome: row.nome, preco, updated: true });
+      });
+    } else {
+      // Se não existe, cria um novo
+      db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nomeFormatado, preco], function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, nome: nomeFormatado, preco });
+      });
+    }
   });
 });
 
-// 3. Excluir um serviço por ID
+// 3. Atualizar serviço por ID
+app.put('/api/servicos/:id', (req, res) => {
+  const { id } = req.params;
+  const { nome, preco } = req.body;
+
+  if (!nome || !preco) {
+    return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
+  }
+
+  db.run('UPDATE servicos SET nome = ?, preco = ? WHERE id = ?', [nome.trim(), preco, id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id, nome: nome.trim(), preco, updated: this.changes });
+  });
+});
+
+// 4. Excluir um serviço por ID
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM servicos WHERE id = ?', [id], function(err) {
