@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Inicializar / Conectar Banco de Dados SQLite
-const db = new sqlite3.Database('./barbearia.db', (err) => {
+let db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) {
     console.error('Erro ao conectar ao SQLite:', err.message);
   } else {
@@ -21,31 +21,36 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas com estrutura flexível e sem restrições rígidas
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS agendamentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente TEXT,
-      whatsapp TEXT,
-      servico TEXT,
-      barbeiro TEXT,
-      data TEXT,
-      horario TEXT,
-      status TEXT DEFAULT 'Agendado',
-      preco REAL,
-      servicoId INTEGER
-    )
-  `);
+// Função para criar/inicializar as tabelas
+function initDb() {
+  db.serialize(() => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS agendamentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cliente TEXT,
+        whatsapp TEXT,
+        servico TEXT,
+        barbeiro TEXT,
+        data TEXT,
+        horario TEXT,
+        status TEXT DEFAULT 'Agendado',
+        preco REAL,
+        servicoId INTEGER
+      )
+    `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS servicos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      preco TEXT NOT NULL
-    )
-  `);
-});
+    db.run(`
+      CREATE TABLE IF NOT EXISTS servicos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        preco TEXT NOT NULL
+      )
+    `);
+  });
+}
+
+// Cria as tabelas na inicialização do servidor
+initDb();
 
 // --- ROTAS DA API DE AGENDAMENTOS ---
 
@@ -65,13 +70,13 @@ app.get('/api/agendamentos', (req, res) => {
       [data, dataBR],
       (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(rows || []);
       }
     );
   } else {
     db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
+      res.json(rows || []);
     });
   }
 });
@@ -161,7 +166,7 @@ app.delete('/api/agendamentos', (req, res) => {
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+    res.json(rows || []);
   });
 });
 
@@ -213,15 +218,14 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
-// Rota para resetar o ficheiro da base de dados bloqueado
+// ROTA DE RESET SEGURA (Limpa as tabelas sem fechar a conexão do SQLite)
 app.get('/reset-db', (req, res) => {
-  const fs = require('fs');
-  db.close(() => {
-    if (fs.existsSync('./barbearia.db')) {
-      fs.unlinkSync('./barbearia.db');
-    }
-    res.send('Banco de dados zerado com sucesso! Recarregue o site para criar a estrutura atualizada.');
+  db.serialize(() => {
+    db.run('DROP TABLE IF EXISTS agendamentos');
+    db.run('DROP TABLE IF EXISTS servicos');
+    initDb();
   });
+  res.send('Banco de dados resetado e recriado com sucesso! Agora você já pode agendar normalmente.');
 });
 
 // --- ROTAS DE PÁGINAS ---
