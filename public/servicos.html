@@ -1,197 +1,147 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Serviços - BarberFlow</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0f1015;
-            --card-bg: #181a20;
-            --accent-color: #d4af37;
-            --accent-hover: #c5a028;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af;
-            --border-color: #2d3139;
-            --danger: #ef4444;
-            --success: #22c55e;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Serviços | BarberFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { gold: '#D4AF37', darkBg: '#111111', darkCard: '#1a1a1a' }
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
-        }
-
-        .header h1 { font-size: 22px; color: var(--accent-color); }
-        .header p { font-size: 13px; color: var(--text-muted); }
-
-        .btn-back {
-            background: transparent;
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .card h2 { font-size: 16px; margin-bottom: 15px; color: var(--text-main); }
-
-        .form-group {
-            display: grid;
-            grid-template-columns: 2fr 1fr 120px;
-            gap: 12px;
-        }
-
-        @media (max-width: 600px) {
-            .form-group { grid-template-columns: 1fr; }
-        }
-
-        input {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .btn-accent {
-            background-color: var(--accent-color);
-            color: #121212;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .btn-accent:hover { background-color: var(--accent-hover); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { color: var(--text-muted); font-size: 13px; }
-        .valor-td { color: var(--success); font-weight: 600; }
-
-        .btn-del {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-    </style>
+      }
+    }
+  </script>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>Gestão de Serviços e Preços</h1>
-                <p>Cadastre e altere os valores cobrados na barbearia</p>
-            </div>
-            <a href="/admin" class="btn-back">← Voltar à Agenda</a>
+<body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="flex justify-between items-center border-b border-gray-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gold">Gestão de Serviços e Preços</h1>
+        <p class="text-gray-400 text-xs sm:text-sm">Cadastre e altere os valores cobrados na barbearia</p>
+      </div>
+      <!-- Botão corrigido para apontar para o Painel de Gerenciamento -->
+      <a href="painel.html" class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
+        ← Voltar ao Painel
+      </a>
+    </header>
+
+    <!-- Formulário para Adicionar Novo Serviço -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800">
+      <h2 class="text-sm font-bold text-gold mb-3 flex items-center gap-2">
+        <span>+</span> Adicionar Novo Serviço
+      </h2>
+      <form id="formServico" onsubmit="adicionarServico(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <input type="text" id="nomeServico" placeholder="Ex: Corte + Barba" required class="sm:col-span-1 bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold">
+        <input type="number" id="valorServico" step="0.01" placeholder="Valor (R$) Ex: 45.00" required class="sm:col-span-1 bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold">
+        <button type="submit" class="bg-gold hover:bg-yellow-600 text-black font-bold px-4 py-2 rounded-lg text-xs transition cursor-pointer">
+          Cadastrar
+        </button>
+      </form>
+    </section>
+
+    <!-- Tabela de Serviços Atuais -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-4">
+      <h2 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+        📋 Tabela de Serviços Atuais
+      </h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="text-gray-400 border-b border-gray-800 uppercase text-[11px]">
+              <th class="py-2.5 px-3">Serviço</th>
+              <th class="py-2.5 px-3">Valor</th>
+              <th class="py-2.5 px-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaServicosBody" class="divide-y divide-gray-800 text-gray-300">
+            <!-- Renderizado via JS -->
+          </tbody>
+        </table>
+        
+        <div id="emptyServicos" class="text-center py-6 text-gray-500 text-xs" style="display: none;">
+          Nenhum serviço cadastrado até ao momento.
         </div>
+      </div>
+    </section>
 
-        <!-- Formulário para Novo Serviço -->
-        <div class="card">
-            <h2>➕ Adicionar Novo Serviço</h2>
-            <form id="formServico" class="form-group">
-                <input type="text" id="nomeServico" placeholder="Ex: Corte + Barba" required>
-                <input type="number" id="valorServico" step="0.01" placeholder="Valor (R$) Ex: 45.00" required>
-                <button type="submit" class="btn-accent">Cadastrar</button>
-            </form>
-        </div>
+  </div>
 
-        <!-- Lista de Serviços -->
-        <div class="card">
-            <h2>📋 Tabela de Serviços Atuais</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>SERVIÇO</th>
-                        <th>VALOR</th>
-                        <th>AÇÕES</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaServicos">
-                    <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Carregando serviços...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+  <script>
+    async function carregarServicos() {
+      const tbody = document.getElementById('tabelaServicosBody');
+      const emptyState = document.getElementById('emptyServicos');
+      
+      try {
+        const res = await fetch('/api/servicos');
+        if (!res.ok) throw new Error('Falha na requisição');
+        const servicos = await res.json();
 
-    <script>
-        async function carregarServicos() {
-            const tbody = document.getElementById('tabelaServicos');
-            try {
-                const res = await fetch('/api/servicos');
-                const servicos = await res.json();
+        tbody.innerHTML = '';
 
-                tbody.innerHTML = '';
-                if (servicos.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Nenhum serviço cadastrado.</td></tr>`;
-                    return;
-                }
-
-                servicos.forEach(s => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${s.nome}</strong></td>
-                        <td class="valor-td">R$ ${parseFloat(s.valor).toFixed(2).replace('.', ',')}</td>
-                        <td>
-                            <button class="btn-del" onclick="excluirServico('${s.id}')">Excluir</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--danger);">Erro ao carregar serviços.</td></tr>`;
-            }
+        if (!servicos || servicos.length === 0) {
+          emptyState.style.display = 'block';
+          return;
         }
 
-        document.getElementById('formServico').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nome = document.getElementById('nomeServico').value;
-            const valor = document.getElementById('valorServico').value;
+        emptyState.style.display = 'none';
+        servicos.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 font-semibold text-gray-200">${s.nome}</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-bold">R$ ${parseFloat(s.preco).toFixed(2).replace('.', ',')}</td>
+            <td class="py-2.5 px-3 text-right">
+              <button onclick="deletarServico(${s.id})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2.5 py-1 rounded text-xs transition">
+                Excluir
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-400 font-semibold">Erro ao carregar serviços.</td></tr>`;
+      }
+    }
 
-            await fetch('/api/servicos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, valor })
-            });
+    async function adicionarServico(e) {
+      e.preventDefault();
+      const nome = document.getElementById('nomeServico').value;
+      const preco = parseFloat(document.getElementById('valorServico').value);
 
-            document.getElementById('nomeServico').value = '';
-            document.getElementById('valorServico').value = '';
-            carregarServicos();
+      try {
+        const res = await fetch('/api/servicos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, preco })
         });
 
-        async function excluirServico(id) {
-            if (confirm('Deseja realmente remover este serviço?')) {
-                await fetch(`/api/servicos/${id}`, { method: 'DELETE' });
-                carregarServicos();
-            }
+        if (res.ok) {
+          document.getElementById('formServico').reset();
+          carregarServicos();
         }
+      } catch (err) {
+        console.error('Erro ao cadastrar serviço:', err);
+      }
+    }
 
-        carregarServicos();
-    </script>
+    async function deletarServico(id) {
+      if (!confirm('Tem a certeza que deseja excluir este serviço?')) return;
+
+      try {
+        const res = await fetch(`/api/servicos/${id}`, { method: 'DELETE' });
+        if (res.ok) carregarServicos();
+      } catch (err) {
+        console.error('Erro ao deletar serviço:', err);
+      }
+    }
+
+    carregarServicos();
+  </script>
 </body>
 </html>
