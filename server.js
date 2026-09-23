@@ -297,6 +297,20 @@ app.post('/api/profissionais', (req, res) => {
   });
 });
 
+app.put('/api/profissionais/:id', (req, res) => {
+  const { id } = req.params;
+  const { nome } = req.body;
+
+  if (!nome) {
+    return res.status(400).json({ error: 'Nome é obrigatório.' });
+  }
+
+  db.run('UPDATE profissionais SET nome = ? WHERE id = ?', [nome.trim(), id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id, nome: nome.trim(), updated: this.changes });
+  });
+});
+
 app.delete('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
@@ -319,6 +333,10 @@ app.get('/servicos', (req, res) => {
 
 app.get('/profissionais', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profissionais.html'));
+});
+
+app.get('/financeiro', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'financeiro.html'));
 });
 
 app.get('*', (req, res) => {
