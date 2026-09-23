@@ -248,3 +248,70 @@ app.get(['/admin', '/painel'], (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
+// ==========================================
+// ROTAS ISOLADAS DE GESTÃO DE SERVIÇOS
+// ==========================================
+const fs = require('fs');
+const path = require('path');
+const servicosFilePath = path.join(__dirname, 'servicos.json');
+
+// Função auxiliar para ler serviços salvos
+function lerServicos() {
+    if (!fs.existsSync(servicosFilePath)) {
+        // Tabela inicial padrão (caso o arquivo ainda não exista)
+        const servicosIniciais = [
+            { id: '1', nome: 'Corte de Cabelo', valor: 35.00 },
+            { id: '2', nome: 'Barba', valor: 30.00 },
+            { id: '3', nome: 'Combo (Corte + Barba)', valor: 60.00 },
+            { id: '4', nome: 'Sobrancelha', valor: 15.00 }
+        ];
+        fs.writeFileSync(servicosFilePath, JSON.stringify(servicosIniciais, null, 2));
+        return servicosIniciais;
+    }
+    return JSON.parse(fs.readFileSync(servicosFilePath, 'utf8'));
+}
+
+// 1. Listar Serviços
+app.get('/api/servicos', (req, res) => {
+    try {
+        const servicos = lerServicos();
+        res.json(servicos);
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao carregar serviços.' });
+    }
+});
+
+// 2. Cadastrar Novo Serviço
+app.post('/api/servicos', (req, res) => {
+    try {
+        const { nome, valor } = req.body;
+        if (!nome || !valor) return res.status(400).json({ error: 'Dados incompletos.' });
+
+        const servicos = lerServicos();
+        const novoServico = {
+            id: Date.now().toString(),
+            nome: nome.trim(),
+            valor: parseFloat(valor)
+        };
+
+        servicos.push(novoServico);
+        fs.writeFileSync(servicosFilePath, JSON.stringify(servicos, null, 2));
+        res.status(201).json(novoServico);
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao salvar serviço.' });
+    }
+});
+
+// 3. Excluir Serviço
+app.delete('/api/servicos/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        let servicos = lerServicos();
+        servicos = servicos.filter(s => s.id !== id);
+        fs.writeFileSync(servicosFilePath, JSON.stringify(servicos, null, 2));
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao remover serviço.' });
+    }
+});
