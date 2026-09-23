@@ -21,8 +21,9 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas e garantir que todas as colunas necessárias existam
+// Criar tabelas e garantir compatibilidade automática de todas as colunas
 db.serialize(() => {
+  // Cria a tabela caso não exista
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,10 +38,24 @@ db.serialize(() => {
     )
   `);
 
-  // Garante que colunas adicionadas recentemente existam no banco do Render sem quebrar dados existentes
-  db.run(`ALTER TABLE agendamentos ADD COLUMN cliente TEXT`, () => {});
-  db.run(`ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT`, () => {});
-  db.run(`ALTER TABLE agendamentos ADD COLUMN preco REAL`, () => {});
+  // Lista de colunas para garantir que arquivos de banco antigos no Render sejam atualizados sem erro
+  const colunasObrigatorias = [
+    'cliente TEXT',
+    'whatsapp TEXT',
+    'servico TEXT',
+    'barbeiro TEXT',
+    'data TEXT',
+    'horario TEXT',
+    'status TEXT DEFAULT "Agendado"',
+    'preco REAL'
+  ];
+
+  // Adiciona silenciosamente qualquer coluna que falte na tabela antiga
+  colunasObrigatorias.forEach((coluna) => {
+    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
+      // Ignora o erro se a coluna já existir
+    });
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
@@ -53,12 +68,11 @@ db.serialize(() => {
 
 // --- ROTAS DA API DE AGENDAMENTOS ---
 
-// 1. Listar todos os agendamentos (suporta filtro opcional por data ?data=YYYY-MM-DD ou DD/MM/YYYY)
+// 1. Listar todos os agendamentos (suporta filtro opcional por data)
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
   if (data) {
-    // Se a data veio em formato YYYY-MM-DD, cria a versão DD/MM/YYYY para comparar
     let dataBR = data;
     if (data.includes('-')) {
       const partes = data.split('-');
@@ -81,7 +95,7 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// 2. Criar novo agendamento (suporta múltiplos nomes de campos vindos do formulário)
+// 2. Criar novo agendamento (trata e mapeia automaticamente os nomes dos campos)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -116,7 +130,7 @@ app.post('/api/agendamentos', (req, res) => {
   );
 });
 
-// 3. Atualizar status de um agendamento (Suporta PUT e PATCH)
+// 3. Atualizar status de um agendamento (Concluído / Cancelado)
 const atualizarStatusHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -137,7 +151,7 @@ app.put('/api/agendamentos/:id', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id', atualizarStatusHandler);
 
-// 4. Limpar/Deletar agendamentos (geral ou por data)
+// 4. Limpar/Deletar agendamentos
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -170,7 +184,7 @@ app.get('/api/servicos', (req, res) => {
   });
 });
 
-// 2. Criar ou atualizar serviço
+// 2. Criar novo serviço ou atualizar existente pelo nome
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
 
@@ -221,14 +235,14 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
-// --- ROTA DE REINICIALIZAÇÃO DO BANCO (RESET) ---
+// --- ROTA DE REINICIALIZAÇÃO DO BANCO ---
 app.get('/reset-db', (req, res) => {
   const fs = require('fs');
   db.close(() => {
     if (fs.existsSync('./barbearia.db')) {
       fs.unlinkSync('./barbearia.db');
     }
-    res.send('Banco de dados zerado com sucesso! Reinicie o servidor para recriar as tabelas.');
+    res.send('Banco de dados zerado com sucesso! Recarregue a página principal para criar um novo banco.');
   });
 });
 
