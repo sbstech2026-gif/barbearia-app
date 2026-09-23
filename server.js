@@ -21,36 +21,61 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas e garantir que TODAS as colunas necessárias existam
+// Reestruturar e migrar o banco para eliminar a restrição NOT NULL em servicoId
 db.serialize(() => {
-  // Criar tabela base se não existir
-  db.run(`
-    CREATE TABLE IF NOT EXISTS agendamentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      data TEXT,
-      horario TEXT,
-      status TEXT DEFAULT 'Agendado'
-    )
-  `);
+  // Verificar estrutura existente da tabela agendamentos
+  db.all("PRAGMA table_info(agendamentos)", [], (err, rows) => {
+    if (err) return;
 
-  // Adicionar colunas uma a uma para garantir compatibilidade com bancos antigos
-  const colunasParaGarantir = [
-    'ALTER TABLE agendamentos ADD COLUMN cliente TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN clienteNome TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN nome TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN clienteWhatsapp TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN servico TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN barbeiro TEXT',
-    'ALTER TABLE agendamentos ADD COLUMN preco REAL'
-  ];
+    // Se a tabela existe e tem servicoId com restrição NOT NULL, faz a migração automática
+    const temServicoIdNotNull = rows && rows.some(col => col.name === 'servicoId' && col.notnull === 1);
 
-  colunasParaGarantir.forEach((sql) => {
-    db.run(sql, (err) => {
-      // Ignora o erro se a coluna já existir no banco de dados
-    });
+    if (temServicoIdNotNull) {
+      console.log('Migrando tabela agendamentos para remover restrição NOT NULL...');
+      db.run("ALTER TABLE agendamentos RENAME TO agendamentos_old", (err) => {
+        if (!err) {
+          db.run(`
+            CREATE TABLE IF NOT EXISTS agendamentos (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              cliente TEXT,
+              clienteNome TEXT,
+              nome TEXT,
+              whatsapp TEXT,
+              clienteWhatsapp TEXT,
+              servico TEXT,
+              servicoId INTEGER,
+              barbeiro TEXT,
+              data TEXT,
+              horario TEXT,
+              status TEXT DEFAULT 'Agendado',
+              preco REAL
+            )
+          `);
+        }
+      });
+    } else {
+      // Criar a tabela agendamentos de forma padrão se não existir
+      db.run(`
+        CREATE TABLE IF NOT EXISTS agendamentos (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cliente TEXT,
+          clienteNome TEXT,
+          nome TEXT,
+          whatsapp TEXT,
+          clienteWhatsapp TEXT,
+          servico TEXT,
+          servicoId INTEGER,
+          barbeiro TEXT,
+          data TEXT,
+          horario TEXT,
+          status TEXT DEFAULT 'Agendado',
+          preco REAL
+        )
+      `);
+    }
   });
 
+  // Tabela de serviços
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,12 +116,12 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// Criar novo agendamento (Insere em todas as colunas de nome para nunca falhar)
+// Criar novo agendamento (Resolve o erro enviando servicoId preenchido)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
     whatsapp, clienteWhatsapp,
-    servico, servicoNome,
+    servico, servicoNome, servicoId,
     barbeiro, barbeiroNome,
     data, horario, hora,
     preco
@@ -105,14 +130,15 @@ app.post('/api/agendamentos', (req, res) => {
   const valorNome = cliente || clienteNome || nome || 'Cliente';
   const valorWhatsapp = whatsapp || clienteWhatsapp || '';
   const valorServico = servico || servicoNome || 'Serviço';
+  const valorServicoId = servicoId || 1; // Garante um valor numérico para servicoId
   const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const valorHorario = horario || hora || '--:--';
   const valorPreco = preco || 0;
 
   const query = `
     INSERT INTO agendamentos 
-    (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, barbeiro, data, horario, status, preco)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
+    (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, servicoId, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
   `;
 
   db.run(
@@ -120,7 +146,8 @@ app.post('/api/agendamentos', (req, res) => {
     [
       valorNome, valorNome, valorNome,
       valorWhatsapp, valorWhatsapp,
-      valorServico, valorBarbeiro,
+      valorServico, valorServicoId,
+      valorBarbeiro,
       data, valorHorario, valorPreco
     ],
     function (err) {
