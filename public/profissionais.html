@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Profissionais | BarberFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { gold: '#D4AF37', darkBg: '#111111', darkCard: '#1a1a1a' }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Header com Logo -->
+    <header class="flex justify-between items-center border-b border-gray-800 pb-4">
+      <div class="flex items-center gap-3.5">
+        <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-12 h-12 rounded-lg object-cover border border-gold/30 shadow-md" onerror="this.style.display='none'">
+        <div>
+          <span class="text-[10px] font-bold tracking-widest text-gold uppercase block leading-none mb-1">SMARTBARBER</span>
+          <h1 class="text-xl sm:text-2xl font-bold text-gold leading-tight">Gestão de Profissionais</h1>
+          <p class="text-gray-400 text-xs sm:text-sm">Cadastre e gerencie a equipe de barbeiros da barbearia</p>
+        </div>
+      </div>
+      <a href="painel.html" class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
+        ← Voltar ao Painel
+      </a>
+    </header>
+
+    <!-- Formulário para Adicionar Novo Profissional -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800">
+      <h2 class="text-sm font-bold text-gold mb-3 flex items-center gap-2">
+        <span>+</span> Adicionar Novo Profissional
+      </h2>
+      <form id="formProfissional" onsubmit="adicionarProfissional(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <input type="text" id="nomeProfissional" placeholder="Ex: Carlos (Mestre Barbeiro)" required class="sm:col-span-2 bg-darkBg border border-gray-700 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold">
+        <button type="submit" class="bg-gold hover:bg-yellow-600 text-black font-bold px-4 py-2 rounded-lg text-xs transition cursor-pointer">
+          Cadastrar
+        </button>
+      </form>
+    </section>
+
+    <!-- Tabela de Profissionais Atuais -->
+    <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-4">
+      <h2 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+        💈 Equipe de Barbeiros Cadastrados
+      </h2>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="text-gray-400 border-b border-gray-800 uppercase text-[11px]">
+              <th class="py-2.5 px-3">Profissional / Barbeiro</th>
+              <th class="py-2.5 px-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaProfissionaisBody" class="divide-y divide-gray-800 text-gray-300">
+            <!-- Renderizado via JS -->
+          </tbody>
+        </table>
+        
+        <div id="emptyProfissionais" class="text-center py-6 text-gray-500 text-xs" style="display: none;">
+          Nenhum profissional cadastrado até ao momento.
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    async function carregarProfissionais() {
+      const tbody = document.getElementById('tabelaProfissionaisBody');
+      const emptyState = document.getElementById('emptyProfissionais');
+      
+      try {
+        const res = await fetch('/api/profissionais');
+        if (!res.ok) throw new Error('Falha na requisição');
+        const profissionais = await res.json();
+
+        tbody.innerHTML = '';
+
+        if (!profissionais || profissionais.length === 0) {
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        profissionais.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 font-semibold text-gray-200">${p.nome}</td>
+            <td class="py-2.5 px-3 text-right">
+              <button onclick="deletarProfissional(${p.id})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2.5 py-1 rounded text-xs transition cursor-pointer">
+                Excluir
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="2" class="text-center py-4 text-red-400 font-semibold">Erro ao carregar profissionais.</td></tr>`;
+      }
+    }
+
+    async function adicionarProfissional(e) {
+      e.preventDefault();
+      const nome = document.getElementById('nomeProfissional').value.trim();
+
+      if (!nome) return;
+
+      try {
+        const res = await fetch('/api/profissionais', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome })
+        });
+
+        if (res.ok) {
+          document.getElementById('formProfissional').reset();
+          carregarProfissionais();
+        }
+      } catch (err) {
+        console.error('Erro ao cadastrar profissional:', err);
+      }
+    }
+
+    async function deletarProfissional(id) {
+      if (!confirm('Tem certeza que deseja remover este profissional?')) return;
+
+      try {
+        const res = await fetch(`/api/profissionais/${id}`, { method: 'DELETE' });
+        if (res.ok) carregarProfissionais();
+      } catch (err) {
+        console.error('Erro ao deletar profissional:', err);
+      }
+    }
+
+    carregarProfissionais();
+  </script>
+</body>
+</html>

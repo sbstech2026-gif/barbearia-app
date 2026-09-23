@@ -83,6 +83,14 @@ db.serialize(() => {
       preco TEXT NOT NULL
     )
   `);
+
+  // Tabela de profissionais (Barbeiros)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS profissionais (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL
+    )
+  `);
 });
 
 // ==========================================
@@ -116,7 +124,7 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// Criar novo agendamento (Resolve o erro enviando servicoId preenchido)
+// Criar novo agendamento
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -130,7 +138,7 @@ app.post('/api/agendamentos', (req, res) => {
   const valorNome = cliente || clienteNome || nome || 'Cliente';
   const valorWhatsapp = whatsapp || clienteWhatsapp || '';
   const valorServico = servico || servicoNome || 'Serviço';
-  const valorServicoId = servicoId || 1; // Garante um valor numérico para servicoId
+  const valorServicoId = servicoId || 1;
   const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const valorHorario = horario || hora || '--:--';
   const valorPreco = preco || 0;
@@ -264,6 +272,40 @@ app.delete('/api/servicos/:id', (req, res) => {
 });
 
 // ==========================================
+// ROTAS DA API DE PROFISSIONAIS
+// ==========================================
+
+app.get('/api/profissionais', (req, res) => {
+  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows || []);
+  });
+});
+
+app.post('/api/profissionais', (req, res) => {
+  const { nome } = req.body;
+
+  if (!nome) {
+    return res.status(400).json({ error: 'Nome do profissional é obrigatório.' });
+  }
+
+  const nomeFormatado = nome.trim();
+
+  db.run('INSERT INTO profissionais (nome) VALUES (?)', [nomeFormatado], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({ id: this.lastID, nome: nomeFormatado });
+  });
+});
+
+app.delete('/api/profissionais/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Profissional removido com sucesso', deleted: this.changes });
+  });
+});
+
+// ==========================================
 // ROTAS DE NAVEGAÇÃO DAS PÁGINAS
 // ==========================================
 
@@ -273,6 +315,10 @@ app.get('/painel', (req, res) => {
 
 app.get('/servicos', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'servicos.html'));
+});
+
+app.get('/profissionais', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'profissionais.html'));
 });
 
 app.get('*', (req, res) => {
