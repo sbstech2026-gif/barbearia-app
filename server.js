@@ -12,8 +12,8 @@ app.use(express.urlencoded({ extended: true }));
 // Servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Inicializar / Conectar Banco de Dados SQLite
-let db = new sqlite3.Database('./barbearia.db', (err) => {
+// Inicializar / Conectar ao Banco de Dados SQLite
+const db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) {
     console.error('Erro ao conectar ao SQLite:', err.message);
   } else {
@@ -21,40 +21,36 @@ let db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Função para criar/inicializar as tabelas
-function initDb() {
-  db.serialize(() => {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS agendamentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cliente TEXT,
-        whatsapp TEXT,
-        servico TEXT,
-        barbeiro TEXT,
-        data TEXT,
-        horario TEXT,
-        status TEXT DEFAULT 'Agendado',
-        preco REAL,
-        servicoId INTEGER
-      )
-    `);
+// Criar tabelas necessárias na inicialização
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agendamentos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente TEXT,
+      whatsapp TEXT,
+      servico TEXT,
+      barbeiro TEXT,
+      data TEXT,
+      horario TEXT,
+      status TEXT DEFAULT 'Agendado',
+      preco REAL
+    )
+  `);
 
-    db.run(`
-      CREATE TABLE IF NOT EXISTS servicos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        preco TEXT NOT NULL
-      )
-    `);
-  });
-}
+  db.run(`
+    CREATE TABLE IF NOT EXISTS servicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      preco TEXT NOT NULL
+    )
+  `);
+});
 
-// Cria as tabelas na inicialização do servidor
-initDb();
+// ==========================================
+// ROTAS DA API DE AGENDAMENTOS
+// ==========================================
 
-// --- ROTAS DA API DE AGENDAMENTOS ---
-
-// Listar todos os agendamentos
+// Listar agendamentos
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -89,7 +85,7 @@ app.post('/api/agendamentos', (req, res) => {
     servico, servicoNome,
     barbeiro, barbeiroNome,
     data, horario, hora,
-    preco, servicoId
+    preco
   } = req.body;
 
   const nomeCliente = cliente || clienteNome || nome || 'Cliente';
@@ -97,16 +93,16 @@ app.post('/api/agendamentos', (req, res) => {
   const nomeServico = servico || servicoNome || 'Serviço';
   const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const horaAgendamento = horario || hora || '--:--';
-  const idServico = servicoId || 1;
+  const valorPreco = preco || 0;
 
   const query = `
-    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco, servicoId)
-    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?, ?)
+    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
   `;
 
   db.run(
     query,
-    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0, idServico],
+    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, valorPreco],
     function (err) {
       if (err) {
         console.error('Erro ao inserir agendamento:', err.message);
@@ -161,7 +157,9 @@ app.delete('/api/agendamentos', (req, res) => {
   }
 });
 
-// --- ROTAS DA API DE SERVIÇOS ---
+// ==========================================
+// ROTAS DA API DE SERVIÇOS
+// ==========================================
 
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
@@ -218,17 +216,9 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
-// ROTA DE RESET SEGURA (Limpa as tabelas sem fechar a conexão do SQLite)
-app.get('/reset-db', (req, res) => {
-  db.serialize(() => {
-    db.run('DROP TABLE IF EXISTS agendamentos');
-    db.run('DROP TABLE IF EXISTS servicos');
-    initDb();
-  });
-  res.send('Banco de dados resetado e recriado com sucesso! Agora você já pode agendar normalmente.');
-});
-
-// --- ROTAS DE PÁGINAS ---
+// ==========================================
+// ROTAS DE NAVEGAÇÃO DAS PÁGINAS
+// ==========================================
 
 app.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'painel.html'));
@@ -242,7 +232,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Iniciar servidor
+// Inicialização do Servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
