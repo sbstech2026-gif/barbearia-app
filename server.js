@@ -21,9 +21,8 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas e garantir compatibilidade automática de colunas
+// Criar tabelas com estrutura flexível e sem restrições rígidas
 db.serialize(() => {
-  // Cria a tabela caso não exista
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,27 +33,10 @@ db.serialize(() => {
       data TEXT,
       horario TEXT,
       status TEXT DEFAULT 'Agendado',
-      preco REAL
+      preco REAL,
+      servicoId INTEGER
     )
   `);
-
-  // Lista de colunas para garantir compatibilidade
-  const colunasObrigatorias = [
-    'cliente TEXT',
-    'whatsapp TEXT',
-    'servico TEXT',
-    'barbeiro TEXT',
-    'data TEXT',
-    'horario TEXT',
-    'status TEXT DEFAULT "Agendado"',
-    'preco REAL'
-  ];
-
-  colunasObrigatorias.forEach((coluna) => {
-    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
-      // Ignora erro se a coluna já existir
-    });
-  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
@@ -67,7 +49,7 @@ db.serialize(() => {
 
 // --- ROTAS DA API DE AGENDAMENTOS ---
 
-// 1. Listar todos os agendamentos
+// Listar todos os agendamentos
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -94,7 +76,7 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-// 2. Criar novo agendamento (trata a restrição servicoId NOT NULL automaticamente)
+// Criar novo agendamento
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -112,41 +94,25 @@ app.post('/api/agendamentos', (req, res) => {
   const horaAgendamento = horario || hora || '--:--';
   const idServico = servicoId || 1;
 
-  // Tenta inserir preenchendo a coluna servicoId caso ela exista e exija valor
-  const queryComServicoId = `
+  const query = `
     INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco, servicoId)
     VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?, ?)
   `;
 
   db.run(
-    queryComServicoId,
+    query,
     [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0, idServico],
     function (err) {
       if (err) {
-        // Fallback: Se a coluna servicoId não existir na tabela, faz o insert normal sem ela
-        const querySemServicoId = `
-          INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
-          VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
-        `;
-        db.run(
-          querySemServicoId,
-          [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
-          function (err2) {
-            if (err2) {
-              console.error('Erro ao inserir agendamento:', err2.message);
-              return res.status(500).json({ error: err2.message });
-            }
-            res.json({ id: this.lastID, status: 'Agendado', success: true });
-          }
-        );
-      } else {
-        res.json({ id: this.lastID, status: 'Agendado', success: true });
+        console.error('Erro ao inserir agendamento:', err.message);
+        return res.status(500).json({ error: err.message });
       }
+      res.json({ id: this.lastID, status: 'Agendado', success: true });
     }
   );
 });
 
-// 3. Atualizar status de um agendamento
+// Atualizar status de um agendamento
 const atualizarStatusHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -167,7 +133,7 @@ app.put('/api/agendamentos/:id', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id', atualizarStatusHandler);
 
-// 4. Deletar agendamentos
+// Eliminar agendamentos
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -247,7 +213,7 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
-// --- ROTA DE SEGURANÇA PARA RESET DO BANCO ---
+// Rota para resetar o ficheiro da base de dados bloqueado
 app.get('/reset-db', (req, res) => {
   const fs = require('fs');
   db.close(() => {
