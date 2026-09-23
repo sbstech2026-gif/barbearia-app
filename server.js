@@ -21,21 +21,31 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabela de agendamentos se não existir
-db.run(`
-  CREATE TABLE IF NOT EXISTS agendamentos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    cliente TEXT,
-    servico TEXT,
-    barbeiro TEXT,
-    data TEXT,
-    horario TEXT,
-    status TEXT DEFAULT 'Agendado',
-    preco REAL
-  )
-`);
+// Criar tabela de agendamentos e tabela de serviços se não existirem
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agendamentos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente TEXT,
+      servico TEXT,
+      barbeiro TEXT,
+      data TEXT,
+      horario TEXT,
+      status TEXT DEFAULT 'Agendado',
+      preco REAL
+    )
+  `);
 
-// --- ROTAS DA API ---
+  db.run(`
+    CREATE TABLE IF NOT EXISTS servicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      preco TEXT NOT NULL
+    )
+  `);
+});
+
+// --- ROTAS DA API DE AGENDAMENTOS ---
 
 // 1. Listar todos os agendamentos
 app.get('/api/agendamentos', (req, res) => {
@@ -83,7 +93,57 @@ app.delete('/api/agendamentos', (req, res) => {
   });
 });
 
-// Redirecionamento da rota raiz para o index.html
+// --- ROTAS DA API DE SERVIÇOS ---
+
+// 1. Listar todos os serviços
+app.get('/api/servicos', (req, res) => {
+  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// 2. Criar um novo serviço
+app.post('/api/servicos', (req, res) => {
+  const { nome, preco } = req.body;
+
+  if (!nome || !preco) {
+    return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
+  }
+
+  const query = `INSERT INTO servicos (nome, preco) VALUES (?, ?)`;
+  db.run(query, [nome, preco], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(201).json({ id: this.lastID, nome, preco });
+  });
+});
+
+// 3. Excluir um serviço por ID
+app.delete('/api/servicos/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM servicos WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ message: 'Serviço removido com sucesso', deleted: this.changes });
+  });
+});
+
+// --- ROTAS DE PÁGINAS ---
+
+app.get('/painel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'painel.html'));
+});
+
+app.get('/servicos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'servicos.html'));
+});
+
+// Redirecionamento padrão para o index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
