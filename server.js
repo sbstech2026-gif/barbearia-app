@@ -21,12 +21,13 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabela de agendamentos e tabela de serviços se não existirem
+// Criar tabelas e garantir que todas as colunas necessárias existam
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente TEXT,
+      whatsapp TEXT,
       servico TEXT,
       barbeiro TEXT,
       data TEXT,
@@ -35,6 +36,11 @@ db.serialize(() => {
       preco REAL
     )
   `);
+
+  // Garante que colunas adicionadas recentemente existam no banco do Render sem quebrar dados existentes
+  db.run(`ALTER TABLE agendamentos ADD COLUMN cliente TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN preco REAL`, () => {});
 
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
@@ -47,50 +53,111 @@ db.serialize(() => {
 
 // --- ROTAS DA API DE AGENDAMENTOS ---
 
-// 1. Listar todos os agendamentos
+// 1. Listar todos os agendamentos (suporta filtro opcional por data ?data=YYYY-MM-DD ou DD/MM/YYYY)
 app.get('/api/agendamentos', (req, res) => {
-  db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+  const { data } = req.query;
+
+  if (data) {
+    // Se a data veio em formato YYYY-MM-DD, cria a versão DD/MM/YYYY para comparar
+    let dataBR = data;
+    if (data.includes('-')) {
+      const partes = data.split('-');
+      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
-    res.json(rows);
-  });
+
+    db.all(
+      'SELECT * FROM agendamentos WHERE data = ? OR data = ? ORDER BY horario ASC',
+      [data, dataBR],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+      }
+    );
+  } else {
+    db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
-// 2. Criar novo agendamento
+// 2. Criar novo agendamento (suporta múltiplos nomes de campos vindos do formulário)
 app.post('/api/agendamentos', (req, res) => {
-  const { cliente, servico, barbeiro, data, horario, preco } = req.body;
-  
-  const query = `INSERT INTO agendamentos (cliente, servico, barbeiro, data, horario, status, preco) VALUES (?, ?, ?, ?, ?, 'Agendado', ?)`;
-  db.run(query, [cliente, servico, barbeiro, data, horario, preco || 0], function(err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+  const {
+    cliente, clienteNome, nome,
+    whatsapp, clienteWhatsapp,
+    servico, servicoNome,
+    barbeiro, barbeiroNome,
+    data, horario, hora,
+    preco
+  } = req.body;
+
+  const nomeCliente = cliente || clienteNome || nome || 'Cliente';
+  const telWhatsapp = whatsapp || clienteWhatsapp || '';
+  const nomeServico = servico || servicoNome || 'Serviço';
+  const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
+  const horaAgendamento = horario || hora || '--:--';
+
+  const query = `
+    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
+  `;
+
+  db.run(
+    query,
+    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
+    function (err) {
+      if (err) {
+        console.error('Erro ao inserir agendamento:', err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ id: this.lastID, status: 'Agendado', success: true });
     }
-    res.json({ id: this.lastID, status: 'Agendado' });
-  });
+  );
 });
 
-// 3. Atualizar status de um agendamento (Concluído / Cancelado)
-app.put('/api/agendamentos/:id', (req, res) => {
+// 3. Atualizar status de um agendamento (Suporta PUT e PATCH)
+const atualizarStatusHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  db.run('UPDATE agendamentos SET status = ? WHERE id = ?', [status, id], function(err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ updated: this.changes });
-  });
-});
+  if (!status) {
+    return res.status(400).json({ error: 'Status é obrigatório.' });
+  }
 
-// 4. Limpar/Deletar agendamentos
-app.delete('/api/agendamentos', (req, res) => {
-  db.run('DELETE FROM agendamentos', [], function(err) {
+  db.run('UPDATE agendamentos SET status = ? WHERE id = ?', [status, id], function (err) {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
-    res.json({ message: 'Agenda limpa com sucesso' });
+    res.json({ id, status, updated: this.changes, success: true });
   });
+};
+
+app.put('/api/agendamentos/:id', atualizarStatusHandler);
+app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
+app.patch('/api/agendamentos/:id', atualizarStatusHandler);
+
+// 4. Limpar/Deletar agendamentos (geral ou por data)
+app.delete('/api/agendamentos', (req, res) => {
+  const { data } = req.query;
+
+  if (data) {
+    let dataBR = data;
+    if (data.includes('-')) {
+      const partes = data.split('-');
+      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    db.run('DELETE FROM agendamentos WHERE data = ? OR data = ?', [data, dataBR], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'Agendamentos da data removidos com sucesso', deleted: this.changes });
+    });
+  } else {
+    db.run('DELETE FROM agendamentos', [], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'Agenda limpa com sucesso' });
+    });
+  }
 });
 
 // --- ROTAS DA API DE SERVIÇOS ---
@@ -98,14 +165,12 @@ app.delete('/api/agendamentos', (req, res) => {
 // 1. Listar todos os serviços
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// 2. Criar novo serviço (com verificação para evitar duplicados por nome)
+// 2. Criar ou atualizar serviço
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
 
@@ -115,26 +180,17 @@ app.post('/api/servicos', (req, res) => {
 
   const nomeFormatado = nome.trim();
 
-  // Verifica se o serviço com mesmo nome já existe
   db.get('SELECT * FROM servicos WHERE LOWER(nome) = LOWER(?)', [nomeFormatado], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
 
     if (row) {
-      // Se já existe, atualiza o valor do serviço existente em vez de duplicar
-      db.run('UPDATE servicos SET preco = ? WHERE id = ?', [preco, row.id], function(err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
+      db.run('UPDATE servicos SET preco = ? WHERE id = ?', [preco, row.id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ id: row.id, nome: row.nome, preco, updated: true });
       });
     } else {
-      // Se não existe, cria um novo
-      db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nomeFormatado, preco], function(err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
+      db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nomeFormatado, preco], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ id: this.lastID, nome: nomeFormatado, preco });
       });
     }
@@ -150,10 +206,8 @@ app.put('/api/servicos/:id', (req, res) => {
     return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
   }
 
-  db.run('UPDATE servicos SET nome = ?, preco = ? WHERE id = ?', [nome.trim(), preco, id], function(err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  db.run('UPDATE servicos SET nome = ?, preco = ? WHERE id = ?', [nome.trim(), preco, id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ id, nome: nome.trim(), preco, updated: this.changes });
   });
 });
@@ -161,11 +215,20 @@ app.put('/api/servicos/:id', (req, res) => {
 // 4. Excluir um serviço por ID
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM servicos WHERE id = ?', [id], function(err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Serviço removido com sucesso', deleted: this.changes });
+  });
+});
+
+// --- ROTA DE REINICIALIZAÇÃO DO BANCO (RESET) ---
+app.get('/reset-db', (req, res) => {
+  const fs = require('fs');
+  db.close(() => {
+    if (fs.existsSync('./barbearia.db')) {
+      fs.unlinkSync('./barbearia.db');
+    }
+    res.send('Banco de dados zerado com sucesso! Reinicie o servidor para recriar as tabelas.');
   });
 });
 
