@@ -57,7 +57,6 @@ db.serialize(() => {
     )
   `, (err) => {
     if (!err) {
-      // Garante que a coluna barbeiroId exista caso a tabela tenha sido criada em versão anterior
       db.run(`ALTER TABLE agendamentos ADD COLUMN barbeiroId INTEGER DEFAULT 1`, () => {});
       db.run(`ALTER TABLE agendamentos ADD COLUMN servicoId INTEGER`, () => {});
     }
@@ -68,17 +67,13 @@ db.serialize(() => {
 // ROTAS DA API - SERVIÇOS
 // ==========================================
 
-// Listar todos os serviços
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// Cadastrar novo serviço
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
   if (!nome || preco === undefined) {
@@ -86,20 +81,15 @@ app.post('/api/servicos', (req, res) => {
   }
 
   db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nome, preco], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.status(201).json({ id: this.lastID, nome, preco });
   });
 });
 
-// Deletar serviço
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, deleted: this.changes });
   });
 });
@@ -108,17 +98,13 @@ app.delete('/api/servicos/:id', (req, res) => {
 // ROTAS DA API - PROFISSIONAIS
 // ==========================================
 
-// Listar todos os profissionais
 app.get('/api/profissionais', (req, res) => {
   db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// Cadastrar novo profissional
 app.post('/api/profissionais', (req, res) => {
   const { nome, especialidade, telefone } = req.body;
   if (!nome) {
@@ -129,21 +115,16 @@ app.post('/api/profissionais', (req, res) => {
     'INSERT INTO profissionais (nome, especialidade, telefone) VALUES (?, ?, ?)',
     [nome, especialidade || '', telefone || ''],
     function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+      if (err) return res.status(500).json({ error: err.message });
       res.status(201).json({ id: this.lastID, nome, especialidade, telefone });
     }
   );
 });
 
-// Deletar profissional
 app.delete('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, deleted: this.changes });
   });
 });
@@ -152,10 +133,8 @@ app.delete('/api/profissionais/:id', (req, res) => {
 // ROTAS DA API - AGENDAMENTOS
 // ==========================================
 
-// Listar agendamentos (filtro opcional por data)
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
-
   let query = 'SELECT * FROM agendamentos';
   let params = [];
 
@@ -167,14 +146,11 @@ app.get('/api/agendamentos', (req, res) => {
   query += ' ORDER BY horario ASC';
 
   db.all(query, params, (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// Criar novo agendamento (Tratamento adaptativo NOT NULL para barbeiroId/servicoId)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente,
@@ -191,7 +167,7 @@ app.post('/api/agendamentos', (req, res) => {
 
   const nomeCliente = cliente || clienteNome;
   const nomeBarbeiro = barbeiro || 'Geral';
-  const idBarbeiro = barbeiroId || 1; // Garante ID válido caso o banco exija NOT NULL
+  const idBarbeiro = barbeiroId || 1;
   const nomeServico = servico || 'Serviço';
   const idServico = servicoId || 1;
   const precoFinal = preco || 0;
@@ -200,7 +176,6 @@ app.post('/api/agendamentos', (req, res) => {
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
   }
 
-  // Tenta realizar o INSERT completo
   const queryCompleta = `
     INSERT INTO agendamentos 
     (cliente, whatsapp, servico, servicoId, barbeiro, barbeiroId, data, horario, status, preco)
@@ -225,9 +200,6 @@ app.post('/api/agendamentos', (req, res) => {
         return res.status(201).json({ id: this.lastID, status: 'Agendado', success: true });
       }
 
-      console.warn('Erro no INSERT completo, executando fallback:', err.message);
-
-      // Fallback para versões legadas da tabela
       const queryFallback = `
         INSERT INTO agendamentos 
         (cliente, whatsapp, servico, barbeiro, barbeiroId, data, horario, status, preco)
@@ -248,7 +220,6 @@ app.post('/api/agendamentos', (req, res) => {
         ],
         function (errFallback) {
           if (errFallback) {
-            console.error('Erro no fallback de agendamento:', errFallback.message);
             return res.status(500).json({ error: errFallback.message });
           }
           res.status(201).json({ id: this.lastID, status: 'Agendado', success: true });
@@ -258,13 +229,37 @@ app.post('/api/agendamentos', (req, res) => {
   );
 });
 
-// Cancelar/Deletar agendamento
+// ALTERAÇÃO: Atualizar status do agendamento (PATCH e PUT suportados)
+const atualizarStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: 'Status é obrigatório.' });
+  }
+
+  db.run(
+    'UPDATE agendamentos SET status = ? WHERE id = ?',
+    [status, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Agendamento não encontrado.' });
+      }
+      res.json({ success: true, id, status });
+    }
+  );
+};
+
+app.patch('/api/agendamentos/:id', atualizarStatus);
+app.put('/api/agendamentos/:id', atualizarStatus);
+
 app.delete('/api/agendamentos/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM agendamentos WHERE id = ?', [id], function (err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, deleted: this.changes });
   });
 });
