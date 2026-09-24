@@ -51,7 +51,7 @@
       border-radius: 12px;
       overflow: hidden;
       margin-bottom: 20px;
-      border: 2px solid #ffffff20;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 4px 15px rgba(0,0,0,0.6);
       background: #000;
     }
@@ -331,9 +331,14 @@
 <body>
 
   <div class="container">
-    <!-- BANNER COM A LOGO ESTILIZADA DO SMARTBARBER -->
+    <!-- BANNER COM O NOME CORRETO DO ARQUIVO: banner-barbearia.jpeg -->
     <div class="banner-container">
-      <img src="logo.png" alt="SmartBarber" class="banner-img" onerror="this.src='https://via.placeholder.com/480x180/1a1a1a/d4af37?text=SMARTBARBER'">
+      <img 
+        src="/banner-barbearia.jpeg" 
+        alt="SmartBarber Banner" 
+        class="banner-img" 
+        onerror="this.onerror=null; this.src='/banner-barbearia.jpg';"
+      >
     </div>
 
     <div class="header">
