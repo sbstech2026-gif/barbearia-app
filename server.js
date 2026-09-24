@@ -91,7 +91,7 @@ app.post('/api/servicos', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
 
     if (row) {
-      db.run('UPDATE servicos SET preco = ? WHERE rowid = ? OR id = ?', [preco, row.id, row.id], function (err) {
+      db.run('UPDATE servicos SET preco = ? WHERE rowid = ?', [preco, row.id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ id: row.id, nome: row.nome, preco, updated: true });
       });
@@ -113,7 +113,7 @@ app.put('/api/servicos/:id', (req, res) => {
     return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
   }
 
-  db.run('UPDATE servicos SET nome = ?, preco = ? WHERE rowid = ? OR id = ?', [nome.trim(), preco, id, id], function (err) {
+  db.run('UPDATE servicos SET nome = ?, preco = ? WHERE rowid = ?', [nome.trim(), preco, id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id, nome: nome.trim(), preco, updated: this.changes });
   });
@@ -122,7 +122,7 @@ app.put('/api/servicos/:id', (req, res) => {
 // 4. Excluir Serviço por ID
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM servicos WHERE rowid = ? OR id = ?', [id, id], function (err) {
+  db.run('DELETE FROM servicos WHERE rowid = ?', [id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, message: 'Serviço removido.' });
   });
@@ -151,7 +151,7 @@ app.post('/api/profissionais', (req, res) => {
 
 app.delete('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM profissionais WHERE rowid = ? OR id = ?', [id, id], function (err) {
+  db.run('DELETE FROM profissionais WHERE rowid = ?', [id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, message: 'Profissional removido.' });
   });
@@ -251,9 +251,14 @@ const atualizarStatus = (req, res) => {
   const novoStatus = req.body.status || 'Concluido';
 
   if (targetId && targetId !== 'undefined' && targetId !== 'null') {
-    const sql = `UPDATE agendamentos SET status = ? WHERE rowid = ? OR id = ?`;
-    db.run(sql, [novoStatus, targetId, targetId], function (err) {
+    // Usa apenas rowid: funciona em qualquer schema (com ou sem coluna 'id' explícita).
+    // O 'id' retornado pelo GET já é o rowid ("SELECT rowid as id, *"), então é seguro.
+    const sql = `UPDATE agendamentos SET status = ? WHERE rowid = ?`;
+    db.run(sql, [novoStatus, targetId], function (err) {
       if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Agendamento não encontrado.' });
+      }
       return res.json({ success: true, status: novoStatus, changes: this.changes });
     });
   } else {

@@ -196,7 +196,13 @@
           mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
           carregarAgendamentos();
         } else {
-          mostrarToast('Erro ao atualizar no servidor.', 'erro');
+          let msg = 'Erro ao atualizar no servidor.';
+          try {
+            const errBody = await response.json();
+            if (errBody && errBody.error) msg = `Erro: ${errBody.error}`;
+          } catch (_) {}
+          console.error('Erro ao atualizar (status ' + response.status + '):', msg);
+          mostrarToast(msg, 'erro');
         }
       } catch (err) {
         console.error('Erro na requisição:', err);
