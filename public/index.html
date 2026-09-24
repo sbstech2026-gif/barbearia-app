@@ -14,6 +14,7 @@
       --text-muted: #a0a0a0;
       --input-bg: #2a2a2a;
       --border-color: #333333;
+      --success: #25d366;
     }
 
     * {
@@ -172,6 +173,136 @@
     .box-livre { background-color: var(--input-bg); border: 1px solid var(--border-color); }
     .box-selecionado { background-color: var(--primary); }
     .box-ocupado { background-color: #442222; }
+
+    /* ESTILOS DO MODAL PERSONALIZADO */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--primary);
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(212, 175, 55, 0.2);
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+      border: 1px solid var(--primary);
+    }
+
+    .modal-card h2 {
+      color: var(--primary);
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .modal-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .modal-detalhes {
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: left;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .modal-detalhes div {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    .modal-detalhes div:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .modal-detalhes span {
+      color: var(--text-muted);
+    }
+
+    .modal-detalhes strong {
+      color: var(--text-color);
+    }
+
+    .btn-modal-fechar {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-modal-fechar:hover {
+      opacity: 0.9;
+    }
+
+    .toast-erro {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #e74c3c;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10000;
+    }
   </style>
 </head>
 <body>
@@ -233,15 +364,43 @@
     </form>
   </div>
 
+  <!-- MODAL DE CONFIRMAÇÃO ELEGANTE -->
+  <div class="modal-overlay" id="modalSucesso">
+    <div class="modal-card">
+      <div class="modal-icon">✓</div>
+      <h2>Agendamento Confirmado!</h2>
+      <p>Seu horário foi reservado com sucesso.</p>
+
+      <div class="modal-detalhes">
+        <div><span>Cliente:</span> <strong id="resCliente">-</strong></div>
+        <div><span>Serviço:</span> <strong id="resServico">-</strong></div>
+        <div><span>Profissional:</span> <strong id="resBarbeiro">-</strong></div>
+        <div><span>Data & Hora:</span> <strong id="resDataHora">-</strong></div>
+        <div><span>Valor:</span> <strong id="resValor" style="color: var(--primary);">-</strong></div>
+      </div>
+
+      <button class="btn-modal-fechar" onclick="fecharModal()">OK, ENTENDI</button>
+    </div>
+  </div>
+
+  <div class="toast-erro" id="toastErro"></div>
+
   <script>
     let horarioSelecionado = null;
     let listaServicos = [];
 
     // Definir data mínima como HOJE
     const inputData = document.getElementById('data');
-    const hoje = new Date().toISOString().split('T')[1] ? new Date().toISOString().split('T')[0] : new Date().toLocaleDateString('en-CA');
+    const hoje = new Date().toISOString().split('T')[0];
     inputData.min = hoje;
     inputData.value = hoje;
+
+    function mostrarErro(msg) {
+      const toast = document.getElementById('toastErro');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
 
     // 1. Carregar Serviços
     async function carregarServicos() {
@@ -339,7 +498,7 @@
       e.preventDefault();
 
       if (!horarioSelecionado) {
-        alert('Por favor, selecione um horário disponível!');
+        mostrarErro('Por favor, selecione um horário disponível!');
         return;
       }
 
@@ -354,6 +513,8 @@
       btnSubmit.disabled = true;
       btnSubmit.textContent = 'PROCESSANDO...';
 
+      const precoCalculado = servicoObj ? (servicoObj.preco || servicoObj.valor || 0) : 0;
+
       const payload = {
         cliente: nome,
         clienteNome: nome,
@@ -363,7 +524,7 @@
         barbeiro: barbeiro,
         data: data,
         horario: horarioSelecionado,
-        preco: servicoObj ? (servicoObj.preco || servicoObj.valor || 0) : 0
+        preco: precoCalculado
       };
 
       try {
@@ -376,19 +537,32 @@
         const dataRes = await res.json();
 
         if (res.ok) {
-          alert('Agendamento realizado com sucesso!');
-          location.reload();
+          // Preencher dados no Modal
+          const [ano, mes, dia] = data.split('-');
+          document.getElementById('resCliente').textContent = nome;
+          document.getElementById('resServico').textContent = servicoObj ? servicoObj.nome : 'Serviço';
+          document.getElementById('resBarbeiro').textContent = barbeiro;
+          document.getElementById('resDataHora').textContent = `${dia}/${mes}/${ano} às ${horarioSelecionado}`;
+          document.getElementById('resValor').textContent = `R$ ${Number(precoCalculado).toFixed(2).replace('.', ',')}`;
+
+          // Exibir Modal
+          document.getElementById('modalSucesso').classList.add('active');
         } else {
-          alert('Erro ao agendar: ' + (dataRes.error || 'Erro desconhecido'));
+          mostrarErro('Erro ao agendar: ' + (dataRes.error || 'Erro desconhecido'));
         }
       } catch (err) {
-        alert('Erro de conexão com o servidor.');
+        mostrarErro('Erro de conexão com o servidor.');
         console.error(err);
       } finally {
         btnSubmit.disabled = false;
         btnSubmit.textContent = 'CONFIRMAR AGENDAMENTO';
       }
     });
+
+    function fecharModal() {
+      document.getElementById('modalSucesso').classList.remove('active');
+      location.reload();
+    }
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
