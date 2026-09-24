@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 // Servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conectar ao Banco de Dados SQLite
+// Conectar/Criar Banco de Dados SQLite
 const db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) {
     console.error('Erro ao conectar ao SQLite:', err.message);
@@ -21,18 +21,15 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas se não existirem
+// Criar tabelas e garantir compatibilidade de colunas
 db.serialize(() => {
+  // Tabela Agendamentos
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente TEXT,
-      clienteNome TEXT,
-      nome TEXT,
       whatsapp TEXT,
-      clienteWhatsapp TEXT,
       servico TEXT,
-      servicoId INTEGER,
       barbeiro TEXT,
       data TEXT,
       horario TEXT,
@@ -41,14 +38,30 @@ db.serialize(() => {
     )
   `);
 
+  const colunasAgendamentos = [
+    'cliente TEXT', 'whatsapp TEXT', 'servico TEXT', 
+    'barbeiro TEXT', 'data TEXT', 'horario TEXT', 
+    'status TEXT DEFAULT "Agendado"', 'preco REAL'
+  ];
+
+  colunasAgendamentos.forEach((coluna) => {
+    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {});
+  });
+
+  // Tabela Serviços (com compatibilidade para preco e valor)
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL,
-      preco TEXT NOT NULL
+      preco REAL DEFAULT 0,
+      valor REAL DEFAULT 0
     )
   `);
 
+  db.run(`ALTER TABLE servicos ADD COLUMN preco REAL DEFAULT 0`, () => {});
+  db.run(`ALTER TABLE servicos ADD COLUMN valor REAL DEFAULT 0`, () => {});
+
+  // Tabela Profissionais
   db.run(`
     CREATE TABLE IF NOT EXISTS profissionais (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,30 +71,201 @@ db.serialize(() => {
 });
 
 // ==========================================
-// ROTAS DA API DE PROFISSIONAIS
+// 1. ROTAS DE AGENDAMENTOS
 // ==========================================
 
-// Listar profissionais
-app.get('/api/profissionais', (req, res) => {
-  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+app.get('/api/agendamentos', (req, res) => {
+  const { data } = req.query;
+
+  if (data) {
+    let dataBR = data;
+    if (data.includes('-')) {
+      const partes = data.split('-');
+      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    db.all(
+      'SELECT * FROM agendamentos WHERE data = ? OR data = ? ORDER BY horario ASC',
+      [data, dataBR],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+      }
+    );
+  } else {
+    db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
+});
+
+app.post('/api/agendamentos', (req, res) => {
+  const {
+    cliente, clienteNome, nome,
+    whatsapp, clienteWhatsapp,
+    servico, servicoNome,
+    barbeiro, barbeiroNome,
+    data, horario, hora,
+    preco, servicoId
+  } = req.body;
+
+  const nomeCliente = cliente || clienteNome || nome || 'Cliente';
+  const telWhatsapp = whatsapp || clienteWhatsapp || '';
+  const nomeServico = servico || servicoNome || 'Serviço';
+  const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
+  const horaAgendamento = horario || hora || '--:--';
+  const idServico = servicoId || 1;
+
+  const queryComServicoId = `
+    INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco, servicoId)
+    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?, ?)
+  `;
+
+  db.run(
+    queryComServicoId,
+    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0, idServico],
+    function (err) {
+      if (err) {
+        const querySemServicoId = `
+          INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
+          VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
+        `;
+        db.run(
+          querySemServicoId,
+          [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
+          function (err2) {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ id: this.lastID, status: 'Agendado', success: true });
+          }
+        );
+      } else {
+        res.json({ id: this.lastID, status: 'Agendado', success: true });
+      }
+    }
+  );
+});
+
+const atualizarStatusHandler = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) return res.status(400).json({ error: 'Status é obrigatório.' });
+
+  db.run('UPDATE agendamentos SET status = ? WHERE id = ?', [status, id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
+    res.json({ id, status, updated: this.changes, success: true });
+  });
+};
+
+app.put('/api/agendamentos/:id', atualizarStatusHandler);
+app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
+app.patch('/api/agendamentos/:id', atualizarStatusHandler);
+
+app.delete('/api/agendamentos', (req, res) => {
+  const { data } = req.query;
+
+  if (data) {
+    let dataBR = data;
+    if (data.includes('-')) {
+      const partes = data.split('-');
+      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    db.run('DELETE FROM agendamentos WHERE data = ? OR data = ?', [data, dataBR], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'Agendamentos limpos com sucesso', deleted: this.changes });
+    });
+  } else {
+    db.run('DELETE FROM agendamentos', [], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'Agenda limpa com sucesso' });
+    });
+  }
+});
+
+// ==========================================
+// 2. ROTAS DE SERVIÇOS
+// ==========================================
+
+app.get('/api/servicos', (req, res) => {
+  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const servicosMapeados = rows.map(s => ({
+      id: s.id,
+      nome: s.nome,
+      preco: s.preco !== undefined && s.preco !== null && s.preco !== 0 ? s.preco : (s.valor || 0)
+    }));
+    res.json(servicosMapeados);
   });
 });
 
-// Cadastrar profissional
+app.post('/api/servicos', (req, res) => {
+  const { nome, preco, valor } = req.body;
+  const valorFinal = parseFloat(preco !== undefined && preco !== '' ? preco : valor) || 0;
+
+  if (!nome) return res.status(400).json({ error: 'Nome é obrigatório.' });
+
+  const query = `INSERT INTO servicos (nome, preco, valor) VALUES (?, ?, ?)`;
+  db.run(query, [nome.trim(), valorFinal, valorFinal], function (err) {
+    if (err) {
+      const queryFallback = `INSERT INTO servicos (nome, preco) VALUES (?, ?)`;
+      db.run(queryFallback, [nome.trim(), valorFinal], function (err2) {
+        if (err2) return res.status(500).json({ error: err2.message });
+        res.status(201).json({ id: this.lastID, nome: nome.trim(), preco: valorFinal, success: true });
+      });
+    } else {
+      res.status(201).json({ id: this.lastID, nome: nome.trim(), preco: valorFinal, success: true });
+    }
+  });
+});
+
+app.put('/api/servicos/:id', (req, res) => {
+  const { id } = req.params;
+  const { nome, preco, valor } = req.body;
+  const valorFinal = parseFloat(preco !== undefined && preco !== '' ? preco : valor) || 0;
+
+  db.run('UPDATE servicos SET nome = ?, preco = ?, valor = ? WHERE id = ?', [nome.trim(), valorFinal, valorFinal, id], function (err) {
+    if (err) {
+      db.run('UPDATE servicos SET nome = ?, preco = ? WHERE id = ?', [nome.trim(), valorFinal, id], function (err2) {
+        if (err2) return res.status(500).json({ error: err2.message });
+        res.json({ id, nome: nome.trim(), preco: valorFinal, updated: true });
+      });
+    } else {
+      res.json({ id, nome: nome.trim(), preco: valorFinal, updated: true });
+    }
+  });
+});
+
+app.delete('/api/servicos/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, deleted: this.changes });
+  });
+});
+
+// ==========================================
+// 3. ROTAS DE PROFISSIONAIS
+// ==========================================
+
+app.get('/api/profissionais', (req, res) => {
+  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
 app.post('/api/profissionais', (req, res) => {
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ error: 'Nome é obrigatório.' });
 
-  const nomeFormatado = nome.trim();
-  db.run('INSERT INTO profissionais (nome) VALUES (?)', [nomeFormatado], function (err) {
+  db.run('INSERT INTO profissionais (nome) VALUES (?)', [nome.trim()], function (err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ id: this.lastID, nome: nomeFormatado });
+    res.status(201).json({ id: this.lastID, nome: nome.trim(), success: true });
   });
 });
 
-// Editar profissional
 app.put('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
   const { nome } = req.body;
@@ -93,69 +277,27 @@ app.put('/api/profissionais/:id', (req, res) => {
   });
 });
 
-// Excluir profissional
 app.delete('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Profissional removido com sucesso', deleted: this.changes });
+    res.json({ success: true, deleted: this.changes });
   });
 });
 
 // ==========================================
-// ROTAS DE OUTRAS APIS (Agendamentos e Serviços)
+// 4. ROTAS DE UTILITÁRIOS E PÁGINAS
 // ==========================================
 
-app.get('/api/agendamentos', (req, res) => {
-  const { data } = req.query;
-  if (data) {
-    let dataBR = data;
-    if (data.includes('-')) {
-      const partes = data.split('-');
-      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
+app.get('/reset-db', (req, res) => {
+  const fs = require('fs');
+  db.close(() => {
+    if (fs.existsSync('./barbearia.db')) {
+      fs.unlinkSync('./barbearia.db');
     }
-    db.all('SELECT * FROM agendamentos WHERE data = ? OR data = ? ORDER BY horario ASC', [data, dataBR], (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows || []);
-    });
-  } else {
-    db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows || []);
-    });
-  }
-});
-
-app.post('/api/agendamentos', (req, res) => {
-  const { cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, servicoNome, servicoId, barbeiro, barbeiroNome, data, horario, hora, preco } = req.body;
-  const valorNome = cliente || clienteNome || nome || 'Cliente';
-  const valorWhatsapp = whatsapp || clienteWhatsapp || '';
-  const valorServico = servico || servicoNome || 'Serviço';
-  const valorServicoId = servicoId || 1;
-  const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
-  const valorHorario = horario || hora || '--:--';
-  const valorPreco = preco || 0;
-
-  db.run(
-    `INSERT INTO agendamentos (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, servicoId, barbeiro, data, horario, status, preco) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)`,
-    [valorNome, valorNome, valorNome, valorWhatsapp, valorWhatsapp, valorServico, valorServicoId, valorBarbeiro, data, valorHorario, valorPreco],
-    function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, status: 'Agendado', success: true });
-    }
-  );
-});
-
-app.get('/api/servicos', (req, res) => {
-  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
+    res.send('Banco de dados zerado com sucesso! Recarregue o site para recriar a estrutura.');
   });
 });
-
-// ==========================================
-// ROTAS DE PAGINAS (HTML)
-// ==========================================
 
 app.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'painel.html'));
@@ -169,16 +311,11 @@ app.get('/profissionais', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'profissionais.html'));
 });
 
-app.get('/financeiro', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'financeiro.html'));
-});
-
-// Rota padrão (deve ser a última)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Inicialização do Servidor
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
