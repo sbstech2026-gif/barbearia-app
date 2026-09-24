@@ -1,27 +1,401 @@
-// Função para carregar profissionais do banco no <select> de agendamento
-async function carregarProfissionaisSelect() {
-  const selectProfissional = document.getElementById('barbeiro') || document.getElementById('profissional');
-  if (!selectProfissional) return;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartBarber - Agendamento Online</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --primary: #d4af37;
+      --primary-hover: #b59226;
+      --text-color: #f5f5f5;
+      --text-muted: #a0a0a0;
+      --input-bg: #2a2a2a;
+      --border-color: #333333;
+    }
 
-  try {
-    const res = await fetch('/api/profissionais');
-    const dados = await res.json();
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-    if (dados && dados.length > 0) {
-      selectProfissional.innerHTML = '<option value="">Selecione o profissional...</option>';
-      dados.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.nome;
-        option.textContent = p.nome;
-        selectProfissional.appendChild(option);
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      border: 1px solid var(--border-color);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      color: var(--primary);
+      font-size: 24px;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-color);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary);
+    }
+
+    .horarios-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .horario-btn {
+      padding: 10px 0;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .horario-btn.selected {
+      background-color: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .horario-btn.ocupado {
+      background-color: #2a1a1a;
+      color: #666;
+      border-color: #442222;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: background-color 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
+
+    .legenda {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .legenda-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .box-legenda {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .box-livre { background-color: var(--input-bg); border: 1px solid var(--border-color); }
+    .box-selecionado { background-color: var(--primary); }
+    .box-ocupado { background-color: #442222; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>SMARTBARBER</h1>
+      <p>Agende o seu horário de forma rápida e simples</p>
+    </div>
+
+    <form id="formAgendamento">
+      <!-- 1. SERVIÇO -->
+      <div class="form-group">
+        <label for="servico">💈 1. Escolha o Serviço</label>
+        <select id="servico" required>
+          <option value="">Carregando serviços...</option>
+        </select>
+      </div>
+
+      <!-- 2. PROFISSIONAL -->
+      <div class="form-group">
+        <label for="barbeiro">👤 2. Escolha o Profissional</label>
+        <select id="barbeiro" required>
+          <option value="">Carregando profissionais...</option>
+        </select>
+      </div>
+
+      <!-- 3. DATA -->
+      <div class="form-group">
+        <label for="data">📅 3. Selecione a Data</label>
+        <input type="date" id="data" required>
+      </div>
+
+      <!-- 4. HORÁRIO -->
+      <div class="form-group">
+        <label>⏰ 4. Selecione o Horário</label>
+        <div class="legenda">
+          <div class="legenda-item"><div class="box-legenda box-livre"></div> Livre</div>
+          <div class="legenda-item"><div class="box-legenda box-selecionado"></div> Selecionado</div>
+          <div class="legenda-item"><div class="box-legenda box-ocupado"></div> Ocupado</div>
+        </div>
+        <div class="horarios-grid" id="horariosGrid">
+          <!-- Gerado via JS -->
+        </div>
+      </div>
+
+      <!-- CLIENTE INFO -->
+      <div class="form-group">
+        <label for="nome">👤 Seu Nome</label>
+        <input type="text" id="nome" placeholder="Digite seu nome completo" required>
+      </div>
+
+      <div class="form-group">
+        <label for="whatsapp">📞 Seu WhatsApp</label>
+        <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" required>
+      </div>
+
+      <button type="submit" id="btnAgendar" class="btn-submit">CONFIRMAR AGENDAMENTO</button>
+    </form>
+  </div>
+
+  <script>
+    let horarioSelecionado = null;
+    let listaServicos = [];
+
+    // Definir data mínima como HOJE
+    const inputData = document.getElementById('data');
+    const hoje = new Date().toISOString().split('T')[1] ? new Date().toISOString().split('T')[0] : new Date().toLocaleDateString('en-CA');
+    inputData.min = hoje;
+    inputData.value = hoje;
+
+    // 1. Carregar Serviços
+    async function carregarServicos() {
+      const selectServico = document.getElementById('servico');
+      try {
+        const res = await fetch('/api/servicos');
+        listaServicos = await res.json();
+
+        if (listaServicos && listaServicos.length > 0) {
+          selectServico.innerHTML = '<option value="">Selecione um serviço...</option>';
+          listaServicos.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            const precoFormatado = Number(s.preco || s.valor || 0).toFixed(2).replace('.', ',');
+            option.textContent = `${s.nome} - R$ ${precoFormatado}`;
+            selectServico.appendChild(option);
+          });
+        } else {
+          selectServico.innerHTML = '<option value="">Nenhum serviço cadastrado</option>';
+        }
+      } catch (err) {
+        console.error('Erro ao carregar serviços:', err);
+        selectServico.innerHTML = '<option value="">Erro ao carregar serviços</option>';
+      }
+    }
+
+    // 2. Carregar Profissionais
+    async function carregarProfissionais() {
+      const selectBarbeiro = document.getElementById('barbeiro');
+      try {
+        const res = await fetch('/api/profissionais');
+        const profissionais = await res.json();
+
+        if (profissionais && profissionais.length > 0) {
+          selectBarbeiro.innerHTML = '<option value="">Selecione o profissional...</option>';
+          profissionais.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.nome;
+            option.textContent = p.nome;
+            selectBarbeiro.appendChild(option);
+          });
+        } else {
+          selectBarbeiro.innerHTML = '<option value="">Nenhum profissional cadastrado</option>';
+        }
+      } catch (err) {
+        console.error('Erro ao carregar profissionais:', err);
+        selectBarbeiro.innerHTML = '<option value="">Erro ao carregar profissionais</option>';
+      }
+    }
+
+    // 3. Renderizar Grade de Horários
+    async function carregarHorarios() {
+      const grid = document.getElementById('horariosGrid');
+      grid.innerHTML = '';
+      horarioSelecionado = null;
+
+      const dataVal = inputData.value;
+      if (!dataVal) return;
+
+      const horasBase = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+      let agendamentosOcupados = [];
+
+      try {
+        const res = await fetch(`/api/agendamentos?data=${dataVal}`);
+        const agendamentos = await res.json();
+        agendamentosOcupados = agendamentos.map(a => a.horario || a.hora);
+      } catch (err) {
+        console.error('Erro ao buscar horários ocupados:', err);
+      }
+
+      horasBase.forEach(hora => {
+        const btn = document.createElement('div');
+        btn.classList.add('horario-btn');
+        btn.textContent = hora;
+
+        if (agendamentosOcupados.includes(hora)) {
+          btn.classList.add('ocupado');
+        } else {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            horarioSelecionado = hora;
+          });
+        }
+
+        grid.appendChild(btn);
       });
     }
-  } catch (err) {
-    console.error('Erro ao carregar lista de profissionais:', err);
-  }
-}
 
-// Chamar ao carregar a página
-document.addEventListener('DOMContentLoaded', () => {
-  carregarProfissionaisSelect();
-});
+    // Eventos
+    inputData.addEventListener('change', carregarHorarios);
+
+    // Form Submit
+    document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!horarioSelecionado) {
+        alert('Por favor, selecione um horário disponível!');
+        return;
+      }
+
+      const servicoId = document.getElementById('servico').value;
+      const servicoObj = listaServicos.find(s => s.id == servicoId);
+      const barbeiro = document.getElementById('barbeiro').value;
+      const data = document.getElementById('data').value;
+      const nome = document.getElementById('nome').value;
+      const whatsapp = document.getElementById('whatsapp').value;
+
+      const btnSubmit = document.getElementById('btnAgendar');
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'PROCESSANDO...';
+
+      const payload = {
+        cliente: nome,
+        clienteNome: nome,
+        whatsapp: whatsapp,
+        servico: servicoObj ? servicoObj.nome : 'Serviço',
+        servicoId: servicoId,
+        barbeiro: barbeiro,
+        data: data,
+        horario: horarioSelecionado,
+        preco: servicoObj ? (servicoObj.preco || servicoObj.valor || 0) : 0
+      };
+
+      try {
+        const res = await fetch('/api/agendamentos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const dataRes = await res.json();
+
+        if (res.ok) {
+          alert('Agendamento realizado com sucesso!');
+          location.reload();
+        } else {
+          alert('Erro ao agendar: ' + (dataRes.error || 'Erro desconhecido'));
+        }
+      } catch (err) {
+        alert('Erro de conexão com o servidor.');
+        console.error(err);
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'CONFIRMAR AGENDAMENTO';
+      }
+    });
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarServicos();
+      carregarProfissionais();
+      carregarHorarios();
+    });
+  </script>
+</body>
+</html>
