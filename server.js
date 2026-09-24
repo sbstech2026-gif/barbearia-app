@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir arquivos estáticos da pasta 'public'
+// Servir ficheiros estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Conectar ao Banco de Dados SQLite
@@ -21,19 +21,15 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas necessárias no banco de dados
+// Criar tabelas e garantir migração/compatibilidade de todas as colunas
 db.serialize(() => {
-  // Tabela de agendamentos
+  // 1. Criar tabela de agendamentos base caso não exista
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente TEXT,
-      clienteNome TEXT,
-      nome TEXT,
       whatsapp TEXT,
-      clienteWhatsapp TEXT,
       servico TEXT,
-      servicoId INTEGER,
       barbeiro TEXT,
       data TEXT,
       horario TEXT,
@@ -42,7 +38,29 @@ db.serialize(() => {
     )
   `);
 
-  // Tabela de serviços
+  // 2. Garante que colunas novas/opcionais sejam adicionadas automaticamente se o banco for antigo
+  const colunasGarantidas = [
+    'cliente TEXT',
+    'clienteNome TEXT',
+    'nome TEXT',
+    'whatsapp TEXT',
+    'clienteWhatsapp TEXT',
+    'servico TEXT',
+    'servicoId INTEGER',
+    'barbeiro TEXT',
+    'data TEXT',
+    'horario TEXT',
+    'status TEXT DEFAULT "Agendado"',
+    'preco REAL'
+  ];
+
+  colunasGarantidas.forEach((coluna) => {
+    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
+      // Silencia o erro caso a coluna já exista
+    });
+  });
+
+  // 3. Tabela de serviços
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +69,7 @@ db.serialize(() => {
     )
   `);
 
-  // Tabela de profissionais (Barbeiros)
+  // 4. Tabela de profissionais (Barbeiros)
   db.run(`
     CREATE TABLE IF NOT EXISTS profissionais (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +79,7 @@ db.serialize(() => {
 });
 
 // ==========================================
-// ROTAS DA API DE SERVIÇOS (Corrigido)
+// ROTAS DA API DE SERVIÇOS
 // ==========================================
 
 app.get('/api/servicos', (req, res) => {
@@ -281,7 +299,7 @@ app.delete('/api/agendamentos', (req, res) => {
 });
 
 // ==========================================
-// ROTA DA API DE ESTATÍSTICAS (Para Gráficos)
+// ROTA DA API DE ESTATÍSTICAS (Gráficos)
 // ==========================================
 
 app.get('/api/estatisticas', (req, res) => {
@@ -324,6 +342,20 @@ app.get('/api/estatisticas', (req, res) => {
 });
 
 // ==========================================
+// ROTA DE RESET DO BANCO DE DADOS
+// ==========================================
+
+app.get('/reset-db', (req, res) => {
+  const fs = require('fs');
+  db.close(() => {
+    if (fs.existsSync('./barbearia.db')) {
+      fs.unlinkSync('./barbearia.db');
+    }
+    res.send('Banco de dados redefinido com sucesso! Recarregue a aplicação.');
+  });
+});
+
+// ==========================================
 // ROTAS DE NAVEGAÇÃO DAS PÁGINAS
 // ==========================================
 
@@ -349,5 +381,5 @@ app.get('*', (req, res) => {
 
 // Inicializar Servidor
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor a rodar na porta ${PORT}`);
 });
