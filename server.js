@@ -14,32 +14,15 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   else console.log('Conectado ao banco de dados SQLite.');
 });
 
-// INICIALIZAÇÃO LIMPA DO BANCO DE DADOS
+// Inicialização e Ajustes na Tabela
 db.serialize(() => {
-  // Tabela de Serviços
-  db.run(`
-    CREATE TABLE IF NOT EXISTS servicos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      preco TEXT NOT NULL
-    )
-  `);
-
-  // Tabela de Profissionais
-  db.run(`
-    CREATE TABLE IF NOT EXISTS profissionais (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL
-    )
-  `);
-
-  // Tabela de Agendamentos (Cria se não existir)
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente TEXT,
       whatsapp TEXT,
       servico TEXT,
+      servicoId INTEGER,
       barbeiro TEXT,
       data TEXT,
       horario TEXT,
@@ -48,13 +31,29 @@ db.serialize(() => {
     )
   `);
 
-  // Garante que a coluna 'cliente' exista caso a tabela seja de versão antiga
+  // Adiciona colunas se a tabela foi criada numa versão antiga
+  db.run(`ALTER TABLE agendamentos ADD COLUMN servicoId INTEGER`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN cliente TEXT`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN servico TEXT`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN barbeiro TEXT`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN status TEXT DEFAULT 'Agendado'`, () => {});
   db.run(`ALTER TABLE agendamentos ADD COLUMN preco REAL DEFAULT 0`, () => {});
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS servicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      preco TEXT NOT NULL
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS profissionais (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL
+    )
+  `);
 });
 
 // ==========================================
@@ -69,9 +68,7 @@ app.get('/api/servicos', (req, res) => {
 
 app.post('/api/servicos', (req, res) => {
   const { nome, preco } = req.body;
-  if (!nome || !preco) {
-    return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
-  }
+  if (!nome || !preco) return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
 
   db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nome, preco], function (err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -99,9 +96,7 @@ app.get('/api/profissionais', (req, res) => {
 
 app.post('/api/profissionais', (req, res) => {
   const { nome } = req.body;
-  if (!nome) {
-    return res.status(400).json({ error: 'Nome do profissional é obrigatório.' });
-  }
+  if (!nome) return res.status(400).json({ error: 'Nome do profissional é obrigatório.' });
 
   db.run('INSERT INTO profissionais (nome) VALUES (?)', [nome], function (err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -150,24 +145,49 @@ app.post('/api/agendamentos', (req, res) => {
   const cliente = body.cliente || body.clienteNome || body.nome || 'Cliente';
   const whatsapp = body.whatsapp || body.clienteWhatsapp || '';
   const servico = body.servico || body.servicoNome || 'Serviço';
+  const servicoId = parseInt(body.servicoId) || 1; // Garante que nunca vá NULL
   const barbeiro = body.barbeiro || body.barbeiroNome || 'Barbeiro';
   const horario = body.horario || body.hora || '--:--';
   const data = body.data || new Date().toISOString().split('T')[0];
   const preco = parseFloat(body.preco) || 0;
   const status = body.status || 'Agendado';
 
-  const sql = `INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, preco, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-  
-  db.run(sql, [cliente, whatsapp, servico, barbeiro, data, horario, preco, status], function (err) {
-    if (err) {
-      console.error("Erro no INSERT de agendamento:", err.message);
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ id: this.lastID, status, success: true });
+  // Descobre a estrutura real do banco para inserir exatamente onde for necessário
+  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const colNames = columns.map(c => c.name);
+    const campos = [];
+    const valores = [];
+
+    const valoresMapeados = {
+      cliente, nome: cliente, clienteNome: cliente,
+      whatsapp, clienteWhatsapp: whatsapp,
+      servico, servicoNome: servico,
+      servicoId, servico_id: servicoId,
+      barbeiro, barbeiroNome: barbeiro,
+      data, horario, hora: horario,
+      preco, status
+    };
+
+    colNames.forEach(col => {
+      if (col === 'id') return;
+      if (valoresMapeados.hasOwnProperty(col)) {
+        campos.push(col);
+        valores.push(valoresMapeados[col]);
+      }
+    });
+
+    const placeholders = campos.map(() => '?').join(', ');
+    const sql = `INSERT INTO agendamentos (${campos.join(', ')}) VALUES (${placeholders})`;
+
+    db.run(sql, valores, function (errInsert) {
+      if (errInsert) return res.status(500).json({ error: errInsert.message });
+      res.json({ id: this.lastID, status, success: true });
+    });
   });
 });
 
-// ALTERAR STATUS (CONCLUIR / CANCELAR)
 const atualizarStatus = (req, res) => {
   const targetId = req.params.id || req.body.id;
   const novoStatus = req.body.status || 'Concluido';
