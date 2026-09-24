@@ -16,7 +16,7 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   else console.log('Conectado ao banco de dados SQLite.');
 });
 
-// Inicialização e adequação automática das tabelas
+// Inicialização segura das tabelas
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
@@ -27,24 +27,6 @@ db.serialize(() => {
       horario TEXT
     )
   `);
-
-  // Adiciona colunas se não existirem
-  const colunasParaAdicionar = [
-    'cliente TEXT',
-    'clienteNome TEXT',
-    'nome TEXT',
-    'whatsapp TEXT',
-    'clienteWhatsapp TEXT',
-    'servicoId INTEGER DEFAULT 1',
-    'status TEXT DEFAULT "Agendado"',
-    'preco REAL DEFAULT 0'
-  ];
-
-  colunasParaAdicionar.forEach((coluna) => {
-    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
-      // Ignora erro se a coluna já existir
-    });
-  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
@@ -63,7 +45,83 @@ db.serialize(() => {
 });
 
 // ==========================================
-// ROTAS DA API DE AGENDAMENTOS
+// ROTA DE INSERÇÃO DEFINITIVA E ULTRA RESILIENTE
+// ==========================================
+
+app.post('/api/agendamentos', (req, res) => {
+  const body = req.body || {};
+
+  // Extração inteligente de todos os campos possíveis enviados pelo front-end
+  const vNome = body.cliente || body.clienteNome || body.nome || 'Cliente';
+  const vWhatsapp = body.whatsapp || body.clienteWhatsapp || '';
+  const vServico = body.servico || body.servicoNome || 'Serviço';
+  const vBarbeiro = body.barbeiro || body.barbeiroNome || 'Barbeiro';
+  const vHorario = body.horario || body.hora || '--:--';
+  const vData = body.data || new Date().toISOString().split('T')[0];
+  const vPreco = parseFloat(body.preco) || 0;
+  const vServicoId = parseInt(body.servicoId, 10) || 1;
+  const vStatus = body.status || 'Agendado';
+
+  // Mapeamento universal de padrões para evitar QUALQUER erro de NOT NULL
+  const valoresPadrao = {
+    cliente: vNome,
+    clienteNome: vNome,
+    nome: vNome,
+    whatsapp: vWhatsapp,
+    clienteWhatsapp: vWhatsapp,
+    servico: vServico,
+    servicoNome: vServico,
+    servicoId: vServicoId,
+    barbeiro: vBarbeiro,
+    barbeiroNome: vBarbeiro,
+    data: vData,
+    horario: vHorario,
+    hora: vHorario,
+    status: vStatus,
+    preco: vPreco
+  };
+
+  // Inspeciona quais colunas a tabela de agendamentos no Render realmente possui
+  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const dadosParaInserir = {};
+
+    // Preenche TODAS as colunas existentes na tabela para nunca deixar passar NOT NULL zerado
+    columns.forEach(col => {
+      const nomeColuna = col.name;
+      if (nomeColuna === 'id') return; // ID é AUTOINCREMENT
+
+      if (valoresPadrao.hasOwnProperty(nomeColuna)) {
+        dadosParaInserir[nomeColuna] = valoresPadrao[nomeColuna];
+      } else {
+        // Fallback genérico caso exista alguma outra coluna antiga na tabela
+        if (col.type.toUpperCase().includes('INT') || col.type.toUpperCase().includes('REAL') || col.type.toUpperCase().includes('NUM')) {
+          dadosParaInserir[nomeColuna] = 0;
+        } else {
+          dadosParaInserir[nomeColuna] = '-';
+        }
+      }
+    });
+
+    const chaves = Object.keys(dadosParaInserir);
+    const valores = Object.values(dadosParaInserir);
+    const placeholders = chaves.map(() => '?').join(', ');
+
+    const sql = `INSERT INTO agendamentos (${chaves.join(', ')}) VALUES (${placeholders})`;
+
+    db.run(sql, valores, function (errInsert) {
+      if (errInsert) {
+        console.error('Erro ao inserir agendamento:', errInsert.message);
+        return res.status(500).json({ error: errInsert.message });
+      }
+      res.json({ id: this.lastID, status: 'Agendado', success: true });
+    });
+  });
+});
+
+// ==========================================
+// DEMAIS ROTAS DA API
 // ==========================================
 
 app.get('/api/agendamentos', (req, res) => {
@@ -90,62 +148,6 @@ app.get('/api/agendamentos', (req, res) => {
       res.json(rows || []);
     });
   }
-});
-
-// Inserção Dinâmica e Ultra Resiliente
-app.post('/api/agendamentos', (req, res) => {
-  const {
-    cliente, clienteNome, nome,
-    whatsapp, clienteWhatsapp,
-    servico, servicoNome, servicoId,
-    barbeiro, barbeiroNome,
-    data, horario, hora,
-    preco
-  } = req.body;
-
-  const vNome = cliente || clienteNome || nome || 'Cliente';
-  const vWhatsapp = whatsapp || clienteWhatsapp || '';
-  const vServico = servico || servicoNome || 'Serviço';
-  const vBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
-  const vHorario = horario || hora || '--:--';
-  const vPreco = preco || 0;
-  const vServicoId = parseInt(servicoId, 10) || 1;
-
-  // Consulta as colunas reais da tabela no momento do insert
-  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
-    if (err) return res.status(500).json({ error: err.message });
-
-    const colunasExistentes = columns.map(c => c.name);
-
-    // Mapeamento de campos disponíveis
-    const dadosParaInserir = {};
-    if (colunasExistentes.includes('cliente')) dadosParaInserir.cliente = vNome;
-    if (colunasExistentes.includes('clienteNome')) dadosParaInserir.clienteNome = vNome;
-    if (colunasExistentes.includes('nome')) dadosParaInserir.nome = vNome;
-    if (colunasExistentes.includes('whatsapp')) dadosParaInserir.whatsapp = vWhatsapp;
-    if (colunasExistentes.includes('clienteWhatsapp')) dadosParaInserir.clienteWhatsapp = vWhatsapp;
-    if (colunasExistentes.includes('servico')) dadosParaInserir.servico = vServico;
-    if (colunasExistentes.includes('servicoId')) dadosParaInserir.servicoId = vServicoId;
-    if (colunasExistentes.includes('barbeiro')) dadosParaInserir.barbeiro = vBarbeiro;
-    if (colunasExistentes.includes('data')) dadosParaInserir.data = data;
-    if (colunasExistentes.includes('horario')) dadosParaInserir.horario = vHorario;
-    if (colunasExistentes.includes('status')) dadosParaInserir.status = 'Agendado';
-    if (colunasExistentes.includes('preco')) dadosParaInserir.preco = vPreco;
-
-    const chaves = Object.keys(dadosParaInserir);
-    const valores = Object.values(dadosParaInserir);
-    const placeholders = chaves.map(() => '?').join(', ');
-
-    const sql = `INSERT INTO agendamentos (${chaves.join(', ')}) VALUES (${placeholders})`;
-
-    db.run(sql, valores, function (errInsert) {
-      if (errInsert) {
-        console.error('Erro ao inserir agendamento:', errInsert.message);
-        return res.status(500).json({ error: errInsert.message });
-      }
-      res.json({ id: this.lastID, status: 'Agendado', success: true });
-    });
-  });
 });
 
 const atualizarStatusHandler = (req, res) => {
@@ -188,10 +190,7 @@ app.delete('/api/agendamentos', (req, res) => {
   }
 });
 
-// ==========================================
-// ROTAS DA API DE SERVIÇOS E PROFISSIONAIS
-// ==========================================
-
+// Rotas de Serviços
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -216,6 +215,7 @@ app.delete('/api/servicos/:id', (req, res) => {
   });
 });
 
+// Rotas de Profissionais
 app.get('/api/profissionais', (req, res) => {
   db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -244,6 +244,7 @@ app.delete('/api/profissionais/:id', (req, res) => {
 app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'servicos.html')));
 app.get('/profissionais', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profissionais.html')));
+app.get('/financeiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'financeiro.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
