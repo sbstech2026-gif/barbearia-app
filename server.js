@@ -17,13 +17,13 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) {
     console.error('Erro ao conectar ao SQLite:', err.message);
   } else {
-    console.log('Conectado ao banco de dados SQLite.');
+    console.log('Conectado ao banco de dados SQLite com sucesso.');
   }
 });
 
-// Criar tabelas e garantir migração/compatibilidade de todas as colunas
+// Inicialização e Migração Automática e Segura do Banco de Dados
 db.serialize(() => {
-  // 1. Criar tabela de agendamentos base caso não exista
+  // 1. Tabela de agendamentos base
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,25 +38,31 @@ db.serialize(() => {
     )
   `);
 
-  // 2. Garante que colunas novas/opcionais sejam adicionadas automaticamente se o banco for antigo
-  const colunasGarantidas = [
-    'cliente TEXT',
-    'clienteNome TEXT',
-    'nome TEXT',
-    'whatsapp TEXT',
-    'clienteWhatsapp TEXT',
-    'servico TEXT',
-    'servicoId INTEGER',
-    'barbeiro TEXT',
-    'data TEXT',
-    'horario TEXT',
-    'status TEXT DEFAULT "Agendado"',
-    'preco REAL'
-  ];
+  // 2. Migração automática: adiciona colunas ausentes sem quebrar tabelas existentes
+  db.all(`PRAGMA table_info(agendamentos)`, [], (err, columns) => {
+    if (err) {
+      console.error('Erro ao verificar estrutura da tabela agendamentos:', err.message);
+      return;
+    }
 
-  colunasGarantidas.forEach((coluna) => {
-    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {
-      // Silencia o erro caso a coluna já exista
+    const colunasExistentes = columns.map(c => c.name);
+    const colunasDesejadas = [
+      { name: 'clienteNome', type: 'TEXT' },
+      { name: 'nome', type: 'TEXT' },
+      { name: 'clienteWhatsapp', type: 'TEXT' },
+      { name: 'servicoId', type: 'INTEGER' }
+    ];
+
+    colunasDesejadas.forEach(col => {
+      if (!colunasExistentes.includes(col.name)) {
+        db.run(`ALTER TABLE agendamentos ADD COLUMN ${col.name} ${col.type}`, (err) => {
+          if (err) {
+            console.error(`Erro ao adicionar coluna ${col.name}:`, err.message);
+          } else {
+            console.log(`Coluna ${col.name} adicionada com sucesso na tabela agendamentos.`);
+          }
+        });
+      }
     });
   });
 
@@ -219,34 +225,37 @@ app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
     whatsapp, clienteWhatsapp,
-    servico, servicoNome, servicoId,
+    servico, servicoNome,
     barbeiro, barbeiroNome,
     data, horario, hora,
     preco
   } = req.body;
 
+  // Garante a extração do valor independentemente da nomenclatura vinda do front-end
   const valorNome = cliente || clienteNome || nome || 'Cliente';
   const valorWhatsapp = whatsapp || clienteWhatsapp || '';
   const valorServico = servico || servicoNome || 'Serviço';
-  const valorServicoId = servicoId || 1;
   const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const valorHorario = horario || hora || '--:--';
   const valorPreco = preco || 0;
 
+  // Usa apenas as colunas padrão que sempre existiram na tabela base para garantir compatibilidade 100%
   const query = `
     INSERT INTO agendamentos 
-    (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, servicoId, barbeiro, data, horario, status, preco)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
+    (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
   `;
 
   db.run(
     query,
     [
-      valorNome, valorNome, valorNome,
-      valorWhatsapp, valorWhatsapp,
-      valorServico, valorServicoId,
+      valorNome,
+      valorWhatsapp,
+      valorServico,
       valorBarbeiro,
-      data, valorHorario, valorPreco
+      data,
+      valorHorario,
+      valorPreco
     ],
     function (err) {
       if (err) {
@@ -338,20 +347,6 @@ app.get('/api/estatisticas', (req, res) => {
         });
       });
     });
-  });
-});
-
-// ==========================================
-// ROTA DE RESET DO BANCO DE DADOS
-// ==========================================
-
-app.get('/reset-db', (req, res) => {
-  const fs = require('fs');
-  db.close(() => {
-    if (fs.existsSync('./barbearia.db')) {
-      fs.unlinkSync('./barbearia.db');
-    }
-    res.send('Banco de dados redefinido com sucesso! Recarregue a aplicação.');
   });
 });
 
