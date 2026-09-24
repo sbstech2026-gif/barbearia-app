@@ -125,15 +125,27 @@
           const valorFormatado = item.preco ? `R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')}` : 'R$ 0,00';
           const status = item.status || 'Agendado';
 
+          const statusLower = status.toLowerCase();
+          const isConcluido = statusLower.includes('conclu') || statusLower.includes('atend');
+          const isCancelado = statusLower.includes('cancel');
+
           let badgeStatus = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
-          
-          if (status.toLowerCase().includes('conclu') || status.toLowerCase().includes('atend')) {
+
+          if (isConcluido) {
             badgeStatus = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
-          } else if (status.toLowerCase().includes('cancel')) {
+          } else if (isCancelado) {
             badgeStatus = '<span class="bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
           }
 
           const linkWhats = whatsapp ? `https://wa.me/55${whatsapp.replace(/\D/g, '')}` : '#';
+
+          const botaoConcluir = isConcluido
+            ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed" title="Já concluído">✅ Concluído</button>`
+            : `<button type="button" onclick="alterarStatusPorIndice(${index}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">Concluir</button>`;
+
+          const botaoCancelar = isCancelado
+            ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed" title="Já cancelado">❌ Cancelado</button>`
+            : `<button type="button" onclick="alterarStatusPorIndice(${index}, 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">Cancelar</button>`;
 
           return `
             <tr class="hover:bg-gray-800/40 transition">
@@ -151,13 +163,8 @@
                 <div class="flex items-center justify-center gap-1.5">
                   ${whatsapp ? `<a href="https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
                   
-                  <button type="button" onclick="alterarStatusPorIndice(${index}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">
-                    Concluir
-                  </button>
-                  
-                  <button type="button" onclick="alterarStatusPorIndice(${index}, 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">
-                    Cancelar
-                  </button>
+                  ${botaoConcluir}
+                  ${botaoCancelar}
                 </div>
               </td>
             </tr>
