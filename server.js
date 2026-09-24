@@ -71,7 +71,7 @@ db.serialize(() => {
 
 // 1. Listar Serviços
 app.get('/api/servicos', (req, res) => {
-  db.all('SELECT rowid as id, * FROM servicos ORDER BY rowid DESC', [], (err, rows) => {
+  db.all('SELECT *, rowid as id FROM servicos ORDER BY rowid DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -87,7 +87,7 @@ app.post('/api/servicos', (req, res) => {
 
   const nomeFormatado = nome.trim();
 
-  db.get('SELECT rowid as id, * FROM servicos WHERE LOWER(nome) = LOWER(?)', [nomeFormatado], (err, row) => {
+  db.get('SELECT *, rowid as id FROM servicos WHERE LOWER(nome) = LOWER(?)', [nomeFormatado], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
 
     if (row) {
@@ -133,7 +133,7 @@ app.delete('/api/servicos/:id', (req, res) => {
 // ==========================================
 
 app.get('/api/profissionais', (req, res) => {
-  db.all('SELECT rowid as id, * FROM profissionais ORDER BY rowid DESC', [], (err, rows) => {
+  db.all('SELECT *, rowid as id FROM profissionais ORDER BY rowid DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -165,7 +165,7 @@ app.delete('/api/profissionais/:id', (req, res) => {
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
-  let query = 'SELECT rowid as id, * FROM agendamentos';
+  let query = 'SELECT *, rowid as id FROM agendamentos';
   let params = [];
 
   if (data) {
