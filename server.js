@@ -49,7 +49,7 @@ db.serialize(() => {
 // ROTAS DE SERVIÇOS
 // ==========================================
 app.get('/api/servicos', (req, res) => {
-  db.all('SELECT rowid as id, * FROM servicos ORDER BY id DESC', [], (err, rows) => {
+  db.all('SELECT rowid as id, * FROM servicos ORDER BY rowid DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -62,10 +62,7 @@ app.post('/api/servicos', (req, res) => {
   }
 
   db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nome, preco], function (err) {
-    if (err) {
-      console.error('Erro ao inserir serviço:', err.message);
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, nome, preco, success: true });
   });
 });
@@ -82,7 +79,7 @@ app.delete('/api/servicos/:id', (req, res) => {
 // ROTAS DE PROFISSIONAIS
 // ==========================================
 app.get('/api/profissionais', (req, res) => {
-  db.all('SELECT rowid as id, * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+  db.all('SELECT rowid as id, * FROM profissionais ORDER BY rowid DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -95,10 +92,7 @@ app.post('/api/profissionais', (req, res) => {
   }
 
   db.run('INSERT INTO profissionais (nome) VALUES (?)', [nome], function (err) {
-    if (err) {
-      console.error('Erro ao inserir profissional:', err.message);
-      return res.status(500).json({ error: err.message });
-    }
+    if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, nome, success: true });
   });
 });
@@ -114,56 +108,29 @@ app.delete('/api/profissionais/:id', (req, res) => {
 // ==========================================
 // ROTAS DE AGENDAMENTOS E ATUALIZAÇÃO DE STATUS
 // ==========================================
-const atualizarStatusDefinitivo = (req, res) => {
-  const targetId = req.params.id || req.body.id;
-  const novoStatus = req.body.status || 'Concluido';
+app.get('/api/agendamentos', (req, res) => {
+  const { data } = req.query;
 
-  if (!targetId || targetId === 'undefined' || targetId === 'null') {
-    return res.status(400).json({ error: 'ID inválido fornecido.' });
+  let query = 'SELECT rowid as id, * FROM agendamentos';
+  let params = [];
+
+  if (data) {
+    let dataBR = data;
+    if (data.includes('-')) {
+      const partes = data.split('-');
+      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    query += ' WHERE data = ? OR data = ? ORDER BY horario ASC';
+    params = [data, dataBR];
+  } else {
+    query += ' ORDER BY data DESC, horario ASC';
   }
 
-  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
+  db.all(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-
-    const nomesColunas = columns.map(c => c.name);
-    const camposParaAtualizar = [];
-    const valores = [];
-
-    if (nomesColunas.includes('status')) {
-      camposParaAtualizar.push('status = ?');
-      valores.push(novoStatus);
-    }
-    if (nomesColunas.includes('situacao')) {
-      camposParaAtualizar.push('situacao = ?');
-      valores.push(novoStatus);
-    }
-    if (nomesColunas.includes('estado')) {
-      camposParaAtualizar.push('estado = ?');
-      valores.push(novoStatus);
-    }
-
-    if (camposParaAtualizar.length === 0) {
-      camposParaAtualizar.push('status = ?');
-      valores.push(novoStatus);
-    }
-
-    valores.push(targetId, targetId);
-    const sql = `UPDATE agendamentos SET ${camposParaAtualizar.join(', ')} WHERE rowid = ? OR id = ?`;
-
-    db.run(sql, valores, function (errUpdate) {
-      if (errUpdate) {
-        console.error('Erro ao atualizar status:', errUpdate.message);
-        return res.status(500).json({ error: errUpdate.message });
-      }
-
-      res.json({ success: true, id: targetId, status: novoStatus, changes: this.changes });
-    });
+    res.json(rows || []);
   });
-};
-
-app.put('/api/agendamentos/:id', atualizarStatusDefinitivo);
-app.patch('/api/agendamentos/:id/status', atualizarStatusDefinitivo);
-app.patch('/api/agendamentos/:id', atualizarStatusDefinitivo);
+});
 
 app.post('/api/agendamentos', (req, res) => {
   const body = req.body || {};
@@ -175,80 +142,43 @@ app.post('/api/agendamentos', (req, res) => {
   const vHorario = body.horario || body.hora || '--:--';
   const vData = body.data || new Date().toISOString().split('T')[0];
   const vPreco = parseFloat(body.preco) || 0;
-  const vServicoId = parseInt(body.servicoId, 10) || 1;
   const vStatus = body.status || 'Agendado';
 
-  const valoresPadrao = {
-    cliente: vNome, clienteNome: vNome, nome: vNome,
-    whatsapp: vWhatsapp, clienteWhatsapp: vWhatsapp,
-    servico: vServico, servicoNome: vServico, servicoId: vServicoId,
-    barbeiro: vBarbeiro, barbeiroNome: vBarbeiro,
-    data: vData, horario: vHorario, hora: vHorario,
-    status: vStatus, preco: vPreco
-  };
+  const sql = `INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, preco, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  const params = [vNome, vWhatsapp, vServico, vBarbeiro, vData, vHorario, vPreco, vStatus];
 
-  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
+  db.run(sql, params, function (err) {
     if (err) return res.status(500).json({ error: err.message });
-
-    const dadosParaInserir = {};
-    columns.forEach(col => {
-      const nomeColuna = col.name;
-      if (nomeColuna === 'id') return;
-
-      if (valoresPadrao.hasOwnProperty(nomeColuna)) {
-        dadosParaInserir[nomeColuna] = valoresPadrao[nomeColuna];
-      } else {
-        if (col.type.toUpperCase().includes('INT') || col.type.toUpperCase().includes('REAL') || col.type.toUpperCase().includes('NUM')) {
-          dadosParaInserir[nomeColuna] = 0;
-        } else {
-          dadosParaInserir[nomeColuna] = '-';
-        }
-      }
-    });
-
-    const chaves = Object.keys(dadosParaInserir);
-    const valores = Object.values(dadosParaInserir);
-    const placeholders = chaves.map(() => '?').join(', ');
-
-    const sql = `INSERT INTO agendamentos (${chaves.join(', ')}) VALUES (${placeholders})`;
-
-    db.run(sql, valores, function (errInsert) {
-      if (errInsert) {
-        console.error('Erro ao inserir agendamento:', errInsert.message);
-        return res.status(500).json({ error: errInsert.message });
-      }
-      res.json({ id: this.lastID, status: 'Agendado', success: true });
-    });
+    res.json({ id: this.lastID, status: vStatus, success: true });
   });
 });
 
-app.get('/api/agendamentos', (req, res) => {
-  const { data } = req.query;
+// ATUALIZAR STATUS DE FORMA RESILIENTE (Por ID, RowID ou Dados)
+const atualizarStatus = (req, res) => {
+  const targetId = req.params.id || req.body.id;
+  const novoStatus = req.body.status || 'Concluido';
+  const { cliente, data, horario } = req.body;
 
-  const selectSql = 'SELECT rowid as id, * FROM agendamentos';
-
-  if (data) {
-    let dataBR = data;
-    if (data.includes('-')) {
-      const partes = data.split('-');
-      if (partes.length === 3) dataBR = `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    db.all(
-      `${selectSql} WHERE data = ? OR data = ? ORDER BY horario ASC`,
-      [data, dataBR],
-      (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows || []);
-      }
-    );
-  } else {
-    db.all(`${selectSql} ORDER BY data DESC, horario ASC`, [], (err, rows) => {
+  if (targetId && targetId !== 'undefined' && targetId !== 'null') {
+    const sql = `UPDATE agendamentos SET status = ? WHERE rowid = ? OR id = ?`;
+    db.run(sql, [novoStatus, targetId, targetId], function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows || []);
+      return res.json({ success: true, status: novoStatus, changes: this.changes });
     });
+  } else if (cliente && data && horario) {
+    const sql = `UPDATE agendamentos SET status = ? WHERE cliente = ? AND data = ? AND horario = ?`;
+    db.run(sql, [novoStatus, cliente, data, horario], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      return res.json({ success: true, status: novoStatus, changes: this.changes });
+    });
+  } else {
+    return res.status(400).json({ error: 'Parâmetros insuficientes para atualizar.' });
   }
-});
+};
+
+app.put('/api/agendamentos/:id', atualizarStatus);
+app.put('/api/agendamentos', atualizarStatus);
+app.patch('/api/agendamentos/:id', atualizarStatus);
 
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
@@ -262,7 +192,7 @@ app.delete('/api/agendamentos', (req, res) => {
 
     db.run('DELETE FROM agendamentos WHERE data = ? OR data = ?', [data, dataBR], function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Agendamentos da data removidos com sucesso', deleted: this.changes });
+      res.json({ message: 'Agendamentos removidos', deleted: this.changes });
     });
   } else {
     db.run('DELETE FROM agendamentos', [], function (err) {
@@ -273,7 +203,7 @@ app.delete('/api/agendamentos', (req, res) => {
 });
 
 // ==========================================
-// NAVEGAÇÃO DE PÁGINAS
+// ROTAS DE NAVEGAÇÃO DE PÁGINAS
 // ==========================================
 app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'servicos.html')));
@@ -281,6 +211,4 @@ app.get('/profissionais', (req, res) => res.sendFile(path.join(__dirname, 'publi
 app.get('/financeiro', (req, res) => res.sendFile(path.join(__dirname, 'public', 'financeiro.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
