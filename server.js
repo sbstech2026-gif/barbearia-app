@@ -14,7 +14,26 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   else console.log('Conectado ao banco de dados SQLite.');
 });
 
+// INICIALIZAÇÃO LIMPA DO BANCO DE DADOS
 db.serialize(() => {
+  // Tabela de Serviços
+  db.run(`
+    CREATE TABLE IF NOT EXISTS servicos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      preco TEXT NOT NULL
+    )
+  `);
+
+  // Tabela de Profissionais
+  db.run(`
+    CREATE TABLE IF NOT EXISTS profissionais (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL
+    )
+  `);
+
+  // Tabela de Agendamentos (Cria se não existir)
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,25 +43,18 @@ db.serialize(() => {
       barbeiro TEXT,
       data TEXT,
       horario TEXT,
-      preco REAL,
+      preco REAL DEFAULT 0,
       status TEXT DEFAULT 'Agendado'
     )
   `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS servicos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      preco TEXT NOT NULL
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS profissionais (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL
-    )
-  `);
+  // Garante que a coluna 'cliente' exista caso a tabela seja de versão antiga
+  db.run(`ALTER TABLE agendamentos ADD COLUMN cliente TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN servico TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN barbeiro TEXT`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN status TEXT DEFAULT 'Agendado'`, () => {});
+  db.run(`ALTER TABLE agendamentos ADD COLUMN preco REAL DEFAULT 0`, () => {});
 });
 
 // ==========================================
@@ -106,7 +118,7 @@ app.delete('/api/profissionais/:id', (req, res) => {
 });
 
 // ==========================================
-// ROTAS DE AGENDAMENTOS E ATUALIZAÇÃO DE STATUS
+// ROTAS DE AGENDAMENTOS
 // ==========================================
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
@@ -135,29 +147,30 @@ app.get('/api/agendamentos', (req, res) => {
 app.post('/api/agendamentos', (req, res) => {
   const body = req.body || {};
 
-  const vNome = body.cliente || body.clienteNome || body.nome || 'Cliente';
-  const vWhatsapp = body.whatsapp || body.clienteWhatsapp || '';
-  const vServico = body.servico || body.servicoNome || 'Serviço';
-  const vBarbeiro = body.barbeiro || body.barbeiroNome || 'Barbeiro';
-  const vHorario = body.horario || body.hora || '--:--';
-  const vData = body.data || new Date().toISOString().split('T')[0];
-  const vPreco = parseFloat(body.preco) || 0;
-  const vStatus = body.status || 'Agendado';
+  const cliente = body.cliente || body.clienteNome || body.nome || 'Cliente';
+  const whatsapp = body.whatsapp || body.clienteWhatsapp || '';
+  const servico = body.servico || body.servicoNome || 'Serviço';
+  const barbeiro = body.barbeiro || body.barbeiroNome || 'Barbeiro';
+  const horario = body.horario || body.hora || '--:--';
+  const data = body.data || new Date().toISOString().split('T')[0];
+  const preco = parseFloat(body.preco) || 0;
+  const status = body.status || 'Agendado';
 
   const sql = `INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, preco, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-  const params = [vNome, vWhatsapp, vServico, vBarbeiro, vData, vHorario, vPreco, vStatus];
-
-  db.run(sql, params, function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, status: vStatus, success: true });
+  
+  db.run(sql, [cliente, whatsapp, servico, barbeiro, data, horario, preco, status], function (err) {
+    if (err) {
+      console.error("Erro no INSERT de agendamento:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id: this.lastID, status, success: true });
   });
 });
 
-// ATUALIZAR STATUS DE FORMA RESILIENTE (Por ID, RowID ou Dados)
+// ALTERAR STATUS (CONCLUIR / CANCELAR)
 const atualizarStatus = (req, res) => {
   const targetId = req.params.id || req.body.id;
   const novoStatus = req.body.status || 'Concluido';
-  const { cliente, data, horario } = req.body;
 
   if (targetId && targetId !== 'undefined' && targetId !== 'null') {
     const sql = `UPDATE agendamentos SET status = ? WHERE rowid = ? OR id = ?`;
@@ -165,14 +178,8 @@ const atualizarStatus = (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
       return res.json({ success: true, status: novoStatus, changes: this.changes });
     });
-  } else if (cliente && data && horario) {
-    const sql = `UPDATE agendamentos SET status = ? WHERE cliente = ? AND data = ? AND horario = ?`;
-    db.run(sql, [novoStatus, cliente, data, horario], function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      return res.json({ success: true, status: novoStatus, changes: this.changes });
-    });
   } else {
-    return res.status(400).json({ error: 'Parâmetros insuficientes para atualizar.' });
+    return res.status(400).json({ error: 'ID do agendamento não informado.' });
   }
 };
 
@@ -202,9 +209,7 @@ app.delete('/api/agendamentos', (req, res) => {
   }
 });
 
-// ==========================================
-// ROTAS DE NAVEGAÇÃO DE PÁGINAS
-// ==========================================
+// ROTAS DE PÁGINAS HTML
 app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'servicos.html')));
 app.get('/profissionais', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profissionais.html')));
