@@ -28,7 +28,7 @@
 
   <div class="max-w-7xl mx-auto px-4 py-8">
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-cardBg p-6 rounded-2xl border border-gold/20 shadow-xl">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-cardBg p-6 rounded-2xl border border-gold/20 shadow-xl">
       <div class="flex items-center gap-4">
         <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-14 h-14 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
         <div>
@@ -39,6 +39,7 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <a href="index.html" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-3 py-2 rounded-lg text-xs sm:text-sm transition">➕ Novo Agendamento</a>
         <a href="servicos.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">⚙️ Serviços</a>
         <a href="profissionais.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">💈 Profissionais</a>
         <a href="financeiro.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">📊 Financeiro</a>
@@ -46,23 +47,63 @@
       </div>
     </div>
 
-    <div class="bg-cardBg p-4 rounded-xl border border-gold/20 mb-6 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="text-lg">📅</span>
-        <h2 class="font-bold text-gray-200">Atendimentos</h2>
+    <!-- Resumo do Dia -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+        <span class="text-[11px] text-gray-400 font-semibold block">⏱️ Agendados</span>
+        <span id="resumoAgendados" class="text-2xl font-bold text-amber-400">0</span>
       </div>
-      <div class="flex items-center gap-2">
-        <input type="date" id="filtroData" class="bg-gray-900 border border-gray-700 text-gold rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
-        <button type="button" onclick="carregarAgendamentos()" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition">Filtrar</button>
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+        <span class="text-[11px] text-gray-400 font-semibold block">✅ Concluídos</span>
+        <span id="resumoConcluidos" class="text-2xl font-bold text-emerald-400">0</span>
+      </div>
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+        <span class="text-[11px] text-gray-400 font-semibold block">❌ Cancelados</span>
+        <span id="resumoCancelados" class="text-2xl font-bold text-red-400">0</span>
+      </div>
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+        <span class="text-[11px] text-gray-400 font-semibold block">💰 Faturamento do Dia</span>
+        <span id="resumoFaturamento" class="text-2xl font-bold text-gold">R$ 0,00</span>
       </div>
     </div>
 
-    <div class="bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
+    <div class="bg-cardBg p-4 rounded-xl border border-gold/20 mb-6 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">📅</span>
+          <h2 class="font-bold text-gray-200">Atendimentos</h2>
+          <span id="badgeHoje" class="hidden bg-gold/20 text-gold text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Hoje</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <input type="date" id="filtroData" class="bg-gray-900 border border-gray-700 text-gold rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+          <button type="button" onclick="irParaHoje()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold px-3 py-2 rounded-lg text-sm transition">Hoje</button>
+          <button type="button" onclick="carregarAgendamentos()" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition">Filtrar</button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-800">
+        <input type="text" id="filtroBusca" placeholder="🔎 Buscar por cliente ou WhatsApp..." class="flex-1 min-w-[200px] bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold placeholder:text-gray-500">
+        <select id="filtroStatus" class="bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+          <option value="">Todos os status</option>
+          <option value="agendado">⏱️ Agendado</option>
+          <option value="concluido">✅ Concluído</option>
+          <option value="cancelado">❌ Cancelado</option>
+        </select>
+        <select id="filtroBarbeiro" class="bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+          <option value="">Todos os barbeiros</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabela (telas médias/grandes) -->
+    <div class="hidden sm:block bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm text-gray-300">
           <thead class="bg-gray-900/80 text-gold uppercase text-xs tracking-wider border-b border-gold/20">
             <tr>
-              <th class="py-3 px-4">Horário</th>
+              <th class="py-3 px-4 cursor-pointer select-none hover:text-amber-300" onclick="alternarOrdenacao()">
+                Horário <span id="setaOrdenacao">▲</span>
+              </th>
               <th class="py-3 px-4">Data</th>
               <th class="py-3 px-4">Cliente</th>
               <th class="py-3 px-4">WhatsApp</th>
@@ -82,16 +123,42 @@
       </div>
     </div>
 
+    <!-- Cards (telas pequenas / celular) -->
+    <div id="cardsMobile" class="sm:hidden space-y-3">
+      <div class="text-center py-6 text-gray-500 bg-cardBg rounded-xl border border-gold/20">Carregando agendamentos...</div>
+    </div>
+
   </div>
 
   <script>
     let listaAgendamentosMemoria = [];
+    let listaFiltradaAtual = [];
+    let ordemHorarioAsc = true;
 
     document.addEventListener('DOMContentLoaded', () => {
-      const hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('filtroData').value = hoje;
+      irParaHoje(false);
       carregarAgendamentos();
+
+      document.getElementById('filtroBusca').addEventListener('input', aplicarFiltros);
+      document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
+      document.getElementById('filtroBarbeiro').addEventListener('change', aplicarFiltros);
+      document.getElementById('filtroData').addEventListener('change', atualizarBadgeHoje);
     });
+
+    function hojeISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function irParaHoje(recarregar = true) {
+      document.getElementById('filtroData').value = hojeISO();
+      atualizarBadgeHoje();
+      if (recarregar) carregarAgendamentos();
+    }
+
+    function atualizarBadgeHoje() {
+      const data = document.getElementById('filtroData').value;
+      document.getElementById('badgeHoje').classList.toggle('hidden', data !== hojeISO());
+    }
 
     function mostrarToast(mensagem, tipo = 'sucesso') {
       const toast = document.getElementById('toast');
@@ -103,78 +170,224 @@
       setTimeout(() => toast.classList.add('hidden'), 3000);
     }
 
+    function normalizarStatus(status) {
+      const s = (status || 'Agendado').toLowerCase();
+      if (s.includes('conclu') || s.includes('atend')) return 'concluido';
+      if (s.includes('cancel')) return 'cancelado';
+      return 'agendado';
+    }
+
     async function carregarAgendamentos() {
       const data = document.getElementById('filtroData').value;
+      atualizarBadgeHoje();
       const tabela = document.getElementById('tabelaCorpo');
+      const cards = document.getElementById('cardsMobile');
 
       try {
         const url = data ? `/api/agendamentos?data=${data}` : '/api/agendamentos';
         const response = await fetch(url);
         listaAgendamentosMemoria = await response.json();
 
-        if (!Array.isArray(listaAgendamentosMemoria) || listaAgendamentosMemoria.length === 0) {
-          tabela.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">Nenhum agendamento encontrado para esta data.</td></tr>`;
-          return;
-        }
+        if (!Array.isArray(listaAgendamentosMemoria)) listaAgendamentosMemoria = [];
 
-        tabela.innerHTML = listaAgendamentosMemoria.map((item, index) => {
-          const nomeCliente = item.cliente || item.clienteNome || item.nome || 'Cliente';
-          const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
-          const servico = item.servico || item.servicoNome || '-';
-          const barbeiro = item.barbeiro || item.barbeiroNome || '-';
-          const valorFormatado = item.preco ? `R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')}` : 'R$ 0,00';
-          const status = item.status || 'Agendado';
-
-          const statusLower = status.toLowerCase();
-          const isConcluido = statusLower.includes('conclu') || statusLower.includes('atend');
-          const isCancelado = statusLower.includes('cancel');
-
-          let badgeStatus = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
-
-          if (isConcluido) {
-            badgeStatus = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
-          } else if (isCancelado) {
-            badgeStatus = '<span class="bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
-          }
-
-          const linkWhats = whatsapp ? `https://wa.me/55${whatsapp.replace(/\D/g, '')}` : '#';
-
-          const botaoConcluir = isConcluido
-            ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed" title="Já concluído">✅ Concluído</button>`
-            : `<button type="button" onclick="alterarStatusPorIndice(${index}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">Concluir</button>`;
-
-          const botaoCancelar = isCancelado
-            ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed" title="Já cancelado">❌ Cancelado</button>`
-            : `<button type="button" onclick="alterarStatusPorIndice(${index}, 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">Cancelar</button>`;
-
-          return `
-            <tr class="hover:bg-gray-800/40 transition">
-              <td class="py-3 px-4 font-bold text-gold">${item.horario || '--:--'}</td>
-              <td class="py-3 px-4 text-xs text-gray-400">${item.data}</td>
-              <td class="py-3 px-4 font-semibold text-white uppercase">${nomeCliente}</td>
-              <td class="py-3 px-4">
-                ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs flex items-center gap-1">📱 ${whatsapp}</a>` : '-'}
-              </td>
-              <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase">${servico}</td>
-              <td class="py-3 px-4 font-bold text-emerald-400 text-xs">${valorFormatado}</td>
-              <td class="py-3 px-4 text-xs text-gray-300 uppercase">${barbeiro}</td>
-              <td class="py-3 px-4">${badgeStatus}</td>
-              <td class="py-3 px-4">
-                <div class="flex items-center justify-center gap-1.5">
-                  ${whatsapp ? `<a href="https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
-                  
-                  ${botaoConcluir}
-                  ${botaoCancelar}
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        popularFiltroBarbeiros();
+        atualizarResumo();
+        aplicarFiltros();
 
       } catch (err) {
         console.error(err);
         tabela.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-red-400">Erro ao carregar os agendamentos.</td></tr>`;
+        cards.innerHTML = `<div class="text-center py-6 text-red-400 bg-cardBg rounded-xl border border-gold/20">Erro ao carregar os agendamentos.</div>`;
       }
+    }
+
+    function popularFiltroBarbeiros() {
+      const select = document.getElementById('filtroBarbeiro');
+      const valorAtual = select.value;
+
+      const nomes = [...new Set(listaAgendamentosMemoria.map(item => item.barbeiro || item.barbeiroNome).filter(Boolean))].sort();
+
+      select.innerHTML = '<option value="">Todos os barbeiros</option>' +
+        nomes.map(nome => `<option value="${nome}">${nome}</option>`).join('');
+
+      if (nomes.includes(valorAtual)) select.value = valorAtual;
+    }
+
+    function atualizarResumo() {
+      let agendados = 0, concluidos = 0, cancelados = 0, faturamento = 0;
+
+      listaAgendamentosMemoria.forEach(item => {
+        const st = normalizarStatus(item.status);
+        if (st === 'agendado') agendados++;
+        else if (st === 'concluido') {
+          concluidos++;
+          faturamento += parseFloat(item.preco) || 0;
+        } else if (st === 'cancelado') cancelados++;
+      });
+
+      document.getElementById('resumoAgendados').innerText = agendados;
+      document.getElementById('resumoConcluidos').innerText = concluidos;
+      document.getElementById('resumoCancelados').innerText = cancelados;
+      document.getElementById('resumoFaturamento').innerText = `R$ ${faturamento.toFixed(2).replace('.', ',')}`;
+    }
+
+    function alternarOrdenacao() {
+      ordemHorarioAsc = !ordemHorarioAsc;
+      document.getElementById('setaOrdenacao').innerText = ordemHorarioAsc ? '▲' : '▼';
+      aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+      const termoBusca = document.getElementById('filtroBusca').value.trim().toLowerCase();
+      const termoBuscaDigits = termoBusca.replace(/\D/g, '');
+      const statusSelecionado = document.getElementById('filtroStatus').value;
+      const barbeiroSelecionado = document.getElementById('filtroBarbeiro').value;
+
+      let filtrada = listaAgendamentosMemoria.filter(item => {
+        const nomeCliente = (item.cliente || item.clienteNome || item.nome || '').toLowerCase();
+        const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
+        const barbeiro = item.barbeiro || item.barbeiroNome || '';
+        const status = normalizarStatus(item.status);
+
+        if (termoBusca) {
+          const bateNome = nomeCliente.includes(termoBusca);
+          const bateWhats = termoBuscaDigits && whatsapp.replace(/\D/g, '').includes(termoBuscaDigits);
+          if (!bateNome && !bateWhats) return false;
+        }
+        if (statusSelecionado && status !== statusSelecionado) return false;
+        if (barbeiroSelecionado && barbeiro !== barbeiroSelecionado) return false;
+        return true;
+      });
+
+      filtrada.sort((a, b) => {
+        const ha = a.horario || '';
+        const hb = b.horario || '';
+        return ordemHorarioAsc ? ha.localeCompare(hb) : hb.localeCompare(ha);
+      });
+
+      listaFiltradaAtual = filtrada;
+      renderizarLista(filtrada);
+    }
+
+    function contarOcorrenciasWhatsapp(lista) {
+      const contagem = {};
+      lista.forEach(item => {
+        const w = (item.whatsapp || item.clienteWhatsapp || '').replace(/\D/g, '');
+        if (!w) return;
+        contagem[w] = (contagem[w] || 0) + 1;
+      });
+      return contagem;
+    }
+
+    function renderizarLista(lista) {
+      const tabela = document.getElementById('tabelaCorpo');
+      const cards = document.getElementById('cardsMobile');
+      const ocorrenciasWhatsapp = contarOcorrenciasWhatsapp(listaAgendamentosMemoria);
+
+      if (lista.length === 0) {
+        const msgVazio = listaAgendamentosMemoria.length === 0
+          ? 'Nenhum agendamento encontrado para esta data.'
+          : 'Nenhum agendamento corresponde aos filtros aplicados.';
+        tabela.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">${msgVazio}</td></tr>`;
+        cards.innerHTML = `<div class="text-center py-8 text-gray-500 bg-cardBg rounded-xl border border-gold/20">${msgVazio}</div>`;
+        return;
+      }
+
+      const linhasTabela = [];
+      const cartoesMobile = [];
+
+      lista.forEach((item) => {
+        const indexReal = listaAgendamentosMemoria.indexOf(item);
+        const nomeCliente = item.cliente || item.clienteNome || item.nome || 'Cliente';
+        const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
+        const whatsappDigits = whatsapp.replace(/\D/g, '');
+        const servico = item.servico || item.servicoNome || '-';
+        const barbeiro = item.barbeiro || item.barbeiroNome || '-';
+        const valorFormatado = item.preco ? `R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')}` : 'R$ 0,00';
+        const status = normalizarStatus(item.status);
+        const isConcluido = status === 'concluido';
+        const isCancelado = status === 'cancelado';
+        const isFinalizado = isConcluido || isCancelado;
+        const recorrente = whatsappDigits && ocorrenciasWhatsapp[whatsappDigits] > 1;
+
+        let badgeStatus = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
+        if (isConcluido) {
+          badgeStatus = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
+        } else if (isCancelado) {
+          badgeStatus = '<span class="bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
+        }
+
+        const badgeRecorrente = recorrente
+          ? '<span class="ml-1.5 bg-purple-500/10 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded text-[10px] font-semibold align-middle">🔁 Recorrente</span>'
+          : '';
+
+        const linkWhats = whatsapp ? `https://wa.me/55${whatsappDigits}` : '#';
+        const linkLembrete = whatsapp ? `https://wa.me/55${whatsappDigits}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!` : '';
+
+        const botaoConcluir = isConcluido
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed" title="Já concluído">✅ Concluído</button>`
+          : `<button type="button" onclick="alterarStatusPorIndice(${indexReal}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">Concluir</button>`;
+
+        const botaoCancelar = isCancelado
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed" title="Já cancelado">❌ Cancelado</button>`
+          : `<button type="button" onclick="confirmarCancelamento(${indexReal})" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">Cancelar</button>`;
+
+        const classeLinha = isFinalizado ? 'hover:bg-gray-800/40 transition opacity-60' : 'hover:bg-gray-800/40 transition';
+
+        linhasTabela.push(`
+          <tr class="${classeLinha}">
+            <td class="py-3 px-4 font-bold text-gold">${item.horario || '--:--'}</td>
+            <td class="py-3 px-4 text-xs text-gray-400">${item.data}</td>
+            <td class="py-3 px-4 font-semibold text-white uppercase">${nomeCliente}${badgeRecorrente}</td>
+            <td class="py-3 px-4">
+              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs flex items-center gap-1">📱 ${whatsapp}</a>` : '-'}
+            </td>
+            <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase">${servico}</td>
+            <td class="py-3 px-4 font-bold text-emerald-400 text-xs">${valorFormatado}</td>
+            <td class="py-3 px-4 text-xs text-gray-300 uppercase">${barbeiro}</td>
+            <td class="py-3 px-4">${badgeStatus}</td>
+            <td class="py-3 px-4">
+              <div class="flex items-center justify-center gap-1.5">
+                ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
+                ${botaoConcluir}
+                ${botaoCancelar}
+              </div>
+            </td>
+          </tr>
+        `);
+
+        cartoesMobile.push(`
+          <div class="bg-cardBg rounded-xl border border-gold/20 p-4 ${isFinalizado ? 'opacity-60' : ''}">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-bold text-gold text-lg">${item.horario || '--:--'}</p>
+                <p class="font-semibold text-white uppercase text-sm">${nomeCliente}${badgeRecorrente}</p>
+              </div>
+              ${badgeStatus}
+            </div>
+            <div class="text-xs text-gray-400 space-y-1 mb-3">
+              <p>💈 ${servico} · ${barbeiro}</p>
+              <p class="font-bold text-emerald-400 text-sm">${valorFormatado}</p>
+              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline flex items-center gap-1">📱 ${whatsapp}</a>` : ''}
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
+              ${botaoConcluir}
+              ${botaoCancelar}
+            </div>
+          </div>
+        `);
+      });
+
+      tabela.innerHTML = linhasTabela.join('');
+      cards.innerHTML = cartoesMobile.join('');
+    }
+
+    function confirmarCancelamento(index) {
+      const item = listaAgendamentosMemoria[index];
+      const nome = item ? (item.cliente || item.clienteNome || item.nome || 'este cliente') : 'este cliente';
+      if (!confirm(`Cancelar o atendimento de ${nome} às ${item ? (item.horario || '') : ''}?`)) return;
+      alterarStatusPorIndice(index, 'Cancelado');
     }
 
     async function alterarStatusPorIndice(index, novoStatus) {
