@@ -56,11 +56,14 @@
         </div>
       </div>
       
-      <div class="w-full sm:w-auto flex justify-end gap-2">
+      <div class="w-full sm:w-auto flex flex-wrap justify-end gap-2">
         <a href="servicos.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
           ⚙️ Serviços
         </a>
-        <a href="financeiro.html" target="_blank" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
+        <a href="profissionais.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
+          💈 Profissionais
+        </a>
+        <a href="financeiro.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5">
           📊 Financeiro
         </a>
         <button onclick="limparAgenda()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-1.5">
@@ -106,8 +109,12 @@
   </div>
 
   <script>
-    // Inicializa o input com a data de hoje (YYYY-MM-DD)
-    document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+    // Inicializa o input com a data local de hoje (YYYY-MM-DD)
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    document.getElementById('filtroData').value = `${ano}-${mes}-${dia}`;
 
     function extrairOuMapearPreco(servicoStr, precoBanco) {
       if (precoBanco && !isNaN(Number(precoBanco)) && Number(precoBanco) > 0) {
@@ -196,15 +203,15 @@
           const dataFormatada = dataItem.includes('-') ? dataItem.split('-').reverse().join('/') : dataItem;
 
           const textoLembrete = 
-            `\u{1F488} *SMARTBARBER*\n` +
+            `💈 *SMARTBARBER*\n` +
             `----------------------------------------\n` +
-            `\u{1F44B} Ol\u00E1, *${cliente}*!\n\n` +
+            `👋 Olá, *${cliente}*!\n\n` +
             `Passando para lembrar do seu agendamento:\n\n` +
-            `\u{1F4C5} *Data:* ${dataFormatada}\n` +
-            `\u{23F0} *Hor\u00E1rio:* ${horario}\n` +
-            `\u{2702}\u{FE0F} *Servi\u00E7o:* ${servico}\n` +
-            `\u{1F468}\u{200D}\u{1F488} *Barbeiro:* ${barbeiro}\n\n` +
-            `Te esperamos aqui! \u{1F680}\n` +
+            `📅 *Data:* ${dataFormatada}\n` +
+            `⏰ *Horário:* ${horario}\n` +
+            `✂️ *Serviço:* ${servico}\n` +
+            `💈 *Barbeiro:* ${barbeiro}\n\n` +
+            `Te esperamos aqui! 🚀\n` +
             `----------------------------------------`;
 
           const msgLembrete = encodeURIComponent(textoLembrete);
@@ -253,7 +260,6 @@
     async function alterarStatus(id, novoStatus) {
       if (!id) return;
       try {
-        // Envia requisição via PUT para corresponder com as rotas do backend em server.js
         const res = await fetch(`/api/agendamentos/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
