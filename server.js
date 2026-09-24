@@ -46,10 +46,10 @@ db.serialize(() => {
 });
 
 // ==========================================
-// ROTAS DE SERVIÇOS (CADASTRO, LISTAGEM, EXCLUSÃO)
+// ROTAS DE SERVIÇOS
 // ==========================================
 app.get('/api/servicos', (req, res) => {
-  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
+  db.all('SELECT rowid as id, * FROM servicos ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -72,17 +72,17 @@ app.post('/api/servicos', (req, res) => {
 
 app.delete('/api/servicos/:id', (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
+  db.run('DELETE FROM servicos WHERE rowid = ? OR id = ?', [id, id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, message: 'Serviço removido.' });
   });
 });
 
 // ==========================================
-// ROTAS DE PROFISSIONAIS (CADASTRO, LISTAGEM, EXCLUSÃO)
+// ROTAS DE PROFISSIONAIS
 // ==========================================
 app.get('/api/profissionais', (req, res) => {
-  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+  db.all('SELECT rowid as id, * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
   });
@@ -105,18 +105,22 @@ app.post('/api/profissionais', (req, res) => {
 
 app.delete('/api/profissionais/:id', (req, res) => {
   const { id } = req.params;
-  db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
+  db.run('DELETE FROM profissionais WHERE rowid = ? OR id = ?', [id, id], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true, message: 'Profissional removido.' });
   });
 });
 
 // ==========================================
-// ROTAS DE AGENDAMENTOS E STATUS
+// ROTAS DE AGENDAMENTOS E ATUALIZAÇÃO DE STATUS
 // ==========================================
 const atualizarStatusDefinitivo = (req, res) => {
-  const { id } = req.params;
+  const targetId = req.params.id || req.body.id;
   const novoStatus = req.body.status || 'Concluido';
+
+  if (!targetId || targetId === 'undefined' || targetId === 'null') {
+    return res.status(400).json({ error: 'ID inválido fornecido.' });
+  }
 
   db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -143,8 +147,8 @@ const atualizarStatusDefinitivo = (req, res) => {
       valores.push(novoStatus);
     }
 
-    valores.push(id);
-    const sql = `UPDATE agendamentos SET ${camposParaAtualizar.join(', ')} WHERE id = ?`;
+    valores.push(targetId, targetId);
+    const sql = `UPDATE agendamentos SET ${camposParaAtualizar.join(', ')} WHERE rowid = ? OR id = ?`;
 
     db.run(sql, valores, function (errUpdate) {
       if (errUpdate) {
@@ -152,7 +156,7 @@ const atualizarStatusDefinitivo = (req, res) => {
         return res.status(500).json({ error: errUpdate.message });
       }
 
-      res.json({ success: true, id, status: novoStatus, changes: this.changes });
+      res.json({ success: true, id: targetId, status: novoStatus, changes: this.changes });
     });
   });
 };
@@ -221,6 +225,8 @@ app.post('/api/agendamentos', (req, res) => {
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
+  const selectSql = 'SELECT rowid as id, * FROM agendamentos';
+
   if (data) {
     let dataBR = data;
     if (data.includes('-')) {
@@ -229,7 +235,7 @@ app.get('/api/agendamentos', (req, res) => {
     }
 
     db.all(
-      'SELECT * FROM agendamentos WHERE data = ? OR data = ? ORDER BY horario ASC',
+      `${selectSql} WHERE data = ? OR data = ? ORDER BY horario ASC`,
       [data, dataBR],
       (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -237,7 +243,7 @@ app.get('/api/agendamentos', (req, res) => {
       }
     );
   } else {
-    db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
+    db.all(`${selectSql} ORDER BY data DESC, horario ASC`, [], (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json(rows || []);
     });

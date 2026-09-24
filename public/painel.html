@@ -30,6 +30,7 @@
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-cardBg p-6 rounded-2xl border border-gold/20 shadow-xl">
       <div class="flex items-center gap-4">
+        <!-- LOGO MANTIDA DA FOTO DA BARBEARIA -->
         <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-14 h-14 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
         
         <div>
@@ -129,8 +130,9 @@
           return;
         }
 
-        tabela.innerHTML = lista.map(item => {
-          const id = item.id || item.rowid || item.ID;
+        tabela.innerHTML = lista.map((item) => {
+          // Captura garantida de ID do SQLite
+          const itemRealId = item.id || item.rowid || item.ID || item.ROWID;
           const nomeCliente = item.cliente || item.clienteNome || item.nome || 'Cliente';
           const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
           const servico = item.servico || item.servicoNome || '-';
@@ -149,7 +151,7 @@
           const linkWhats = whatsapp ? `https://wa.me/55${whatsapp.replace(/\D/g, '')}` : '#';
 
           return `
-            <tr class="hover:bg-gray-800/40 transition" id="row-${id}">
+            <tr class="hover:bg-gray-800/40 transition">
               <td class="py-3 px-4 font-bold text-gold">${item.horario || item.hora || '--:--'}</td>
               <td class="py-3 px-4 text-xs text-gray-400">${item.data}</td>
               <td class="py-3 px-4 font-semibold text-white uppercase">${nomeCliente}</td>
@@ -159,16 +161,16 @@
               <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase">${servico}</td>
               <td class="py-3 px-4 font-bold text-emerald-400 text-xs">${valorFormatado}</td>
               <td class="py-3 px-4 text-xs text-gray-300 uppercase">${barbeiro}</td>
-              <td class="py-3 px-4 status-col">${badgeStatus}</td>
+              <td class="py-3 px-4">${badgeStatus}</td>
               <td class="py-3 px-4">
                 <div class="flex items-center justify-center gap-1.5">
                   ${whatsapp ? `<a href="https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
                   
-                  <button onclick="alterarStatus('${id}', 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">
+                  <button onclick="alterarStatus('${itemRealId}', 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">
                     Concluir
                   </button>
                   
-                  <button onclick="alterarStatus('${id}', 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">
+                  <button onclick="alterarStatus('${itemRealId}', 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">
                     Cancelar
                   </button>
                 </div>
@@ -184,28 +186,23 @@
     }
 
     async function alterarStatus(id, novoStatus) {
-      if (!id || id === 'undefined') {
-        mostrarToast('ID do agendamento inválido.', 'erro');
+      if (!id || id === 'undefined' || id === 'null') {
+        mostrarToast('Erro ao obter ID do agendamento.', 'erro');
         return;
       }
 
       try {
-        // Envia requisição para a rota PUT
         const response = await fetch(`/api/agendamentos/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: novoStatus })
+          body: JSON.stringify({ status: novoStatus, id: id })
         });
 
         const resData = await response.json();
 
-        if (response.ok) {
+        if (response.ok && resData.success) {
           mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
-          
-          // Força recarregamento da lista para refletir do banco
-          setTimeout(() => {
-            carregarAgendamentos();
-          }, 300);
+          carregarAgendamentos();
         } else {
           mostrarToast('Erro ao atualizar no banco de dados', 'erro');
         }
