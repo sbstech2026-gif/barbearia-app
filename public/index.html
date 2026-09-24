@@ -38,10 +38,29 @@
       width: 100%;
       max-width: 480px;
       background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 20px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
       border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    /* BANNER DA LOGO RETANGULAR E ESTILIZADO */
+    .banner-container {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      border: 2px solid #ffffff20;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      background: #000;
+    }
+
+    .banner-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
     }
 
     .header {
@@ -51,14 +70,18 @@
 
     .header h1 {
       color: var(--primary);
-      font-size: 24px;
+      font-size: 20px;
       letter-spacing: 1px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .header p {
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .form-group {
@@ -174,7 +197,7 @@
     .box-selecionado { background-color: var(--primary); }
     .box-ocupado { background-color: #442222; }
 
-    /* ESTILOS DO MODAL PERSONALIZADO */
+    /* MODAL DE CONFIRMAÇÃO */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -308,9 +331,14 @@
 <body>
 
   <div class="container">
+    <!-- BANNER COM A LOGO ESTILIZADA DO SMARTBARBER -->
+    <div class="banner-container">
+      <img src="logo.png" alt="SmartBarber" class="banner-img" onerror="this.src='https://via.placeholder.com/480x180/1a1a1a/d4af37?text=SMARTBARBER'">
+    </div>
+
     <div class="header">
-      <h1>SMARTBARBER</h1>
-      <p>Agende o seu horário de forma rápida e simples</p>
+      <h1>✂️ BARBEARIA STYLE</h1>
+      <p>Seu estilo. Seu momento.</p>
     </div>
 
     <form id="formAgendamento">
@@ -389,7 +417,6 @@
     let horarioSelecionado = null;
     let listaServicos = [];
 
-    // Definir data mínima como HOJE
     const inputData = document.getElementById('data');
     const hoje = new Date().toISOString().split('T')[0];
     inputData.min = hoje;
@@ -402,7 +429,6 @@
       setTimeout(() => { toast.style.display = 'none'; }, 4000);
     }
 
-    // 1. Carregar Serviços
     async function carregarServicos() {
       const selectServico = document.getElementById('servico');
       try {
@@ -427,7 +453,6 @@
       }
     }
 
-    // 2. Carregar Profissionais
     async function carregarProfissionais() {
       const selectBarbeiro = document.getElementById('barbeiro');
       try {
@@ -451,7 +476,6 @@
       }
     }
 
-    // 3. Renderizar Grade de Horários
     async function carregarHorarios() {
       const grid = document.getElementById('horariosGrid');
       grid.innerHTML = '';
@@ -490,10 +514,8 @@
       });
     }
 
-    // Eventos
     inputData.addEventListener('change', carregarHorarios);
 
-    // Form Submit
     document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -537,7 +559,6 @@
         const dataRes = await res.json();
 
         if (res.ok) {
-          // Preencher dados no Modal
           const [ano, mes, dia] = data.split('-');
           document.getElementById('resCliente').textContent = nome;
           document.getElementById('resServico').textContent = servicoObj ? servicoObj.nome : 'Serviço';
@@ -545,7 +566,6 @@
           document.getElementById('resDataHora').textContent = `${dia}/${mes}/${ano} às ${horarioSelecionado}`;
           document.getElementById('resValor').textContent = `R$ ${Number(precoCalculado).toFixed(2).replace('.', ',')}`;
 
-          // Exibir Modal
           document.getElementById('modalSucesso').classList.add('active');
         } else {
           mostrarErro('Erro ao agendar: ' + (dataRes.error || 'Erro desconhecido'));
@@ -564,7 +584,6 @@
       location.reload();
     }
 
-    // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
       carregarServicos();
       carregarProfissionais();
