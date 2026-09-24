@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir arquivos estáticos da pasta 'public'
+// Servir ficheiros estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Conectar ao Banco de Dados SQLite
@@ -21,9 +21,8 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Inicialização e Correção Automática de Estrutura do Banco de Dados
+// Inicialização e Garantia de Compatibilidade da Tabela
 db.serialize(() => {
-  // Criar tabela se não existir com a estrutura COMPLETA
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +32,7 @@ db.serialize(() => {
       whatsapp TEXT,
       clienteWhatsapp TEXT,
       servico TEXT,
-      servicoId INTEGER,
+      servicoId INTEGER DEFAULT 1,
       barbeiro TEXT,
       data TEXT,
       horario TEXT,
@@ -41,30 +40,6 @@ db.serialize(() => {
       preco REAL
     )
   `);
-
-  // Verificar se a tabela existente precisa de atualização de colunas (caso seja um banco antigo)
-  db.all("PRAGMA table_info(agendamentos)", [], (err, columns) => {
-    if (!err && columns && columns.length > 0) {
-      const nomesColunas = columns.map(c => c.name);
-      
-      // Se a tabela for antiga e não tiver a coluna 'cliente'
-      if (!nomesColunas.includes('cliente')) {
-        console.log('Tabela antiga de agendamentos detectada. Adequando estrutura...');
-        db.run("ALTER TABLE agendamentos ADD COLUMN cliente TEXT", () => {});
-      }
-      if (!nomesColunas.includes('clienteNome')) db.run("ALTER TABLE agendamentos ADD COLUMN clienteNome TEXT", () => {});
-      if (!nomesColunas.includes('nome')) db.run("ALTER TABLE agendamentos ADD COLUMN nome TEXT", () => {});
-      if (!nomesColunas.includes('whatsapp')) db.run("ALTER TABLE agendamentos ADD COLUMN whatsapp TEXT", () => {});
-      if (!nomesColunas.includes('clienteWhatsapp')) db.run("ALTER TABLE agendamentos ADD COLUMN clienteWhatsapp TEXT", () => {});
-      if (!nomesColunas.includes('servico')) db.run("ALTER TABLE agendamentos ADD COLUMN servico TEXT", () => {});
-      if (!nomesColunas.includes('servicoId')) db.run("ALTER TABLE agendamentos ADD COLUMN servicoId INTEGER", () => {});
-      if (!nomesColunas.includes('barbeiro')) db.run("ALTER TABLE agendamentos ADD COLUMN barbeiro TEXT", () => {});
-      if (!nomesColunas.includes('data')) db.run("ALTER TABLE agendamentos ADD COLUMN data TEXT", () => {});
-      if (!nomesColunas.includes('horario')) db.run("ALTER TABLE agendamentos ADD COLUMN horario TEXT", () => {});
-      if (!nomesColunas.includes('status')) db.run("ALTER TABLE agendamentos ADD COLUMN status TEXT DEFAULT 'Agendado'", () => {});
-      if (!nomesColunas.includes('preco')) db.run("ALTER TABLE agendamentos ADD COLUMN preco REAL", () => {});
-    }
-  });
 
   // Tabela de serviços
   db.run(`
@@ -234,45 +209,41 @@ app.post('/api/agendamentos', (req, res) => {
   const valorNome = cliente || clienteNome || nome || 'Cliente';
   const valorWhatsapp = whatsapp || clienteWhatsapp || '';
   const valorServico = servico || servicoNome || 'Serviço';
-  const valorServicoId = servicoId || 1;
+  
+  // Trata servicoId para GARANTIR um valor inteiro válido e evitar erro NOT NULL
+  let valorServicoId = parseInt(servicoId, 10);
+  if (isNaN(valorServicoId) || !valorServicoId) {
+    valorServicoId = 1; 
+  }
+
   const valorBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const valorHorario = horario || hora || '--:--';
   const valorPreco = preco || 0;
 
-  // Primeiro faz a tentativa de inserir na estrutura com fallback flexível
   const sqlInsert = `
     INSERT INTO agendamentos 
-    (cliente, clienteNome, nome, whatsapp, clienteWhatsapp, servico, servicoId, barbeiro, data, horario, status, preco)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
+    (cliente, whatsapp, servico, servicoId, barbeiro, data, horario, status, preco)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'Agendado', ?)
   `;
 
   db.run(
     sqlInsert,
     [
-      valorNome, valorNome, valorNome,
-      valorWhatsapp, valorWhatsapp,
-      valorServico, valorServicoId,
+      valorNome,
+      valorWhatsapp,
+      valorServico,
+      valorServicoId,
       valorBarbeiro,
-      data, valorHorario, valorPreco
+      data,
+      valorHorario,
+      valorPreco
     ],
     function (err) {
       if (err) {
-        // Fallback de segurança se a tabela no Render ainda estiver em estado antigo
-        console.warn('Iniciando fallback de inserção:', err.message);
-        
-        db.run(
-          `INSERT INTO agendamentos (servico, barbeiro, data, horario) VALUES (?, ?, ?, ?)`,
-          [valorServico, valorBarbeiro, data, valorHorario],
-          function (errFallback) {
-            if (errFallback) {
-              return res.status(500).json({ error: errFallback.message });
-            }
-            res.json({ id: this.lastID, status: 'Agendado', success: true });
-          }
-        );
-      } else {
-        res.json({ id: this.lastID, status: 'Agendado', success: true });
+        console.error('Erro ao agendar:', err.message);
+        return res.status(500).json({ error: err.message });
       }
+      res.json({ id: this.lastID, status: 'Agendado', success: true });
     }
   );
 });
@@ -386,5 +357,5 @@ app.get('*', (req, res) => {
 
 // Inicializar Servidor
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor a rodar na porta ${PORT}`);
 });
