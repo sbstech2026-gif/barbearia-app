@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 // Servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conectar/Criar Banco de Dados SQLite
+// Conectar ao Banco de Dados SQLite
 const db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) {
     console.error('Erro ao conectar ao SQLite:', err.message);
@@ -21,9 +21,9 @@ const db = new sqlite3.Database('./barbearia.db', (err) => {
   }
 });
 
-// Criar tabelas e garantir compatibilidade de colunas
+// Inicialização e compatibilização do banco de dados existente
 db.serialize(() => {
-  // Tabela Agendamentos
+  // Criar tabelas se não existirem
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,21 +34,11 @@ db.serialize(() => {
       data TEXT,
       horario TEXT,
       status TEXT DEFAULT 'Agendado',
-      preco REAL
+      preco REAL DEFAULT 0,
+      servicoId INTEGER DEFAULT 1
     )
   `);
 
-  const colunasAgendamentos = [
-    'cliente TEXT', 'whatsapp TEXT', 'servico TEXT', 
-    'barbeiro TEXT', 'data TEXT', 'horario TEXT', 
-    'status TEXT DEFAULT "Agendado"', 'preco REAL'
-  ];
-
-  colunasAgendamentos.forEach((coluna) => {
-    db.run(`ALTER TABLE agendamentos ADD COLUMN ${coluna}`, () => {});
-  });
-
-  // Tabela Serviços (com compatibilidade para preco e valor)
   db.run(`
     CREATE TABLE IF NOT EXISTS servicos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,22 +48,24 @@ db.serialize(() => {
     )
   `);
 
-  db.run(`ALTER TABLE servicos ADD COLUMN preco REAL DEFAULT 0`, () => {});
-  db.run(`ALTER TABLE servicos ADD COLUMN valor REAL DEFAULT 0`, () => {});
-
-  // Tabela Profissionais
   db.run(`
     CREATE TABLE IF NOT EXISTS profissionais (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL
     )
   `);
+
+  // Tentar adicionar a coluna servicoId caso o banco antigo não a possua
+  db.run(`ALTER TABLE agendamentos ADD COLUMN servicoId INTEGER DEFAULT 1`, () => {});
+  db.run(`ALTER TABLE servicos ADD COLUMN preco REAL DEFAULT 0`, () => {});
+  db.run(`ALTER TABLE servicos ADD COLUMN valor REAL DEFAULT 0`, () => {});
 });
 
 // ==========================================
 // 1. ROTAS DE AGENDAMENTOS
 // ==========================================
 
+// Listar agendamentos
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -89,17 +81,18 @@ app.get('/api/agendamentos', (req, res) => {
       [data, dataBR],
       (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
+        res.json(rows || []);
       }
     );
   } else {
     db.all('SELECT * FROM agendamentos ORDER BY data DESC, horario ASC', [], (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
+      res.json(rows || []);
     });
   }
 });
 
+// Criar novo agendamento (Garantindo que servicoId JAMAIS seja NULL)
 app.post('/api/agendamentos', (req, res) => {
   const {
     cliente, clienteNome, nome,
@@ -115,27 +108,39 @@ app.post('/api/agendamentos', (req, res) => {
   const nomeServico = servico || servicoNome || 'Serviço';
   const nomeBarbeiro = barbeiro || barbeiroNome || 'Barbeiro';
   const horaAgendamento = horario || hora || '--:--';
-  const idServico = servicoId || 1;
+  const valorPreco = parseFloat(preco) || 0;
+  
+  // Tratamento rigoroso para NUNCA passar null ou undefined no servicoId
+  let idServicoValido = 1;
+  if (servicoId !== undefined && servicoId !== null && servicoId !== '' && !isNaN(servicoId)) {
+    idServicoValido = parseInt(servicoId);
+  }
 
-  const queryComServicoId = `
+  const query = `
     INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco, servicoId)
     VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?, ?)
   `;
 
   db.run(
-    queryComServicoId,
-    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0, idServico],
+    query,
+    [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, valorPreco, idServicoValido],
     function (err) {
       if (err) {
-        const querySemServicoId = `
+        console.error('Erro na primeira tentativa de inserção:', err.message);
+        
+        // Segunda tentativa (fallback) omitindo servicoId se for coluna sem NOT NULL
+        const queryFallback = `
           INSERT INTO agendamentos (cliente, whatsapp, servico, barbeiro, data, horario, status, preco)
           VALUES (?, ?, ?, ?, ?, ?, 'Agendado', ?)
         `;
         db.run(
-          querySemServicoId,
-          [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, preco || 0],
+          queryFallback,
+          [nomeCliente, telWhatsapp, nomeServico, nomeBarbeiro, data, horaAgendamento, valorPreco],
           function (err2) {
-            if (err2) return res.status(500).json({ error: err2.message });
+            if (err2) {
+              console.error('Erro no fallback de agendamento:', err2.message);
+              return res.status(500).json({ error: err2.message });
+            }
             res.json({ id: this.lastID, status: 'Agendado', success: true });
           }
         );
@@ -146,6 +151,7 @@ app.post('/api/agendamentos', (req, res) => {
   );
 });
 
+// Atualizar status
 const atualizarStatusHandler = (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -162,6 +168,7 @@ app.put('/api/agendamentos/:id', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
 app.patch('/api/agendamentos/:id', atualizarStatusHandler);
 
+// Limpar / Deletar agendamentos
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -174,7 +181,7 @@ app.delete('/api/agendamentos', (req, res) => {
 
     db.run('DELETE FROM agendamentos WHERE data = ? OR data = ?', [data, dataBR], function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Agendamentos limpos com sucesso', deleted: this.changes });
+      res.json({ message: 'Agendamentos da data removidos com sucesso', deleted: this.changes });
     });
   } else {
     db.run('DELETE FROM agendamentos', [], function (err) {
@@ -286,18 +293,8 @@ app.delete('/api/profissionais/:id', (req, res) => {
 });
 
 // ==========================================
-// 4. ROTAS DE UTILITÁRIOS E PÁGINAS
+// 4. ROTAS DE PÁGINAS
 // ==========================================
-
-app.get('/reset-db', (req, res) => {
-  const fs = require('fs');
-  db.close(() => {
-    if (fs.existsSync('./barbearia.db')) {
-      fs.unlinkSync('./barbearia.db');
-    }
-    res.send('Banco de dados zerado com sucesso! Recarregue o site para recriar a estrutura.');
-  });
-});
 
 app.get('/painel', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'painel.html'));
