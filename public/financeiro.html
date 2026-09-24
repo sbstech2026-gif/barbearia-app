@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Financeiro | SmartBarber</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -14,9 +15,6 @@
         }
       }
     }
-  </script>
-
-}
   </script>
 
   <!-- Configuração PWA (App Instalável) -->
@@ -33,71 +31,109 @@
       });
     }
   </script>
-
-</head>
-<body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
-
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6">
   <div class="max-w-7xl mx-auto w-full space-y-6">
-    
+
     <!-- Header com Logo -->
-    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4">
+    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-gray-800 pb-4">
       <div class="flex items-center gap-3">
         <img src="logo-barbearia.jpeg" alt="SmartBarber" style="width: 50px; height: 50px; object-fit: cover;" class="rounded-xl border border-gray-800 shrink-0" onerror="this.style.display='none'">
         <div>
           <span class="text-[10px] font-bold text-gold uppercase tracking-wider block">SmartBarber</span>
           <h1 class="text-2xl font-bold text-gold">Relatório Financeiro</h1>
-          <p class="text-gray-400 text-xs sm:text-sm">Faturamento de atendimentos Concluídos por dia e Profissional.</p>
+          <p class="text-gray-400 text-xs sm:text-sm">Faturamento de atendimentos Concluídos por período, barbeiro e serviço.</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <label for="filtroData" class="text-xs text-gray-400">Data:</label>
-        <input type="date" id="filtroData" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold [color-scheme:dark]">
-        <button onclick="carregarFinanceiro()" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer">
-          Filtrar
-        </button>
+      <div class="flex flex-col gap-2 w-full lg:w-auto">
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="text-xs text-gray-400">De:</label>
+          <input type="date" id="filtroDataInicio" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold [color-scheme:dark]">
+          <label class="text-xs text-gray-400">Até:</label>
+          <input type="date" id="filtroDataFim" class="bg-darkCard border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-gold [color-scheme:dark]">
+          <button onclick="carregarFinanceiro()" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer">
+            Filtrar
+          </button>
+          <button onclick="exportarCSV()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 font-bold px-3 py-1.5 rounded-lg text-xs transition cursor-pointer">
+            ⬇️ Exportar CSV
+          </button>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5" id="presetsContainer">
+          <button data-preset="hoje" class="preset-btn">Hoje</button>
+          <button data-preset="ontem" class="preset-btn">Ontem</button>
+          <button data-preset="7dias" class="preset-btn">7 dias</button>
+          <button data-preset="mes" class="preset-btn">Este mês</button>
+          <button data-preset="mesPassado" class="preset-btn">Mês passado</button>
+        </div>
       </div>
     </header>
 
-    <!-- Cards de Indicadores do Dia -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <!-- Cards de Indicadores do Período -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento na Data Selecionada</span>
-        <h2 id="fatDia" class="text-3xl font-bold text-emerald-400">R$ 0,00</h2>
-        <span class="text-[11px] text-gray-500 mt-1 block">Apenas serviços concluídos do dia</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">💰 Faturamento no Período</span>
+        <h2 id="fatPeriodo" class="text-3xl font-bold text-emerald-400">R$ 0,00</h2>
+        <span id="comparativoPeriodo" class="text-[11px] mt-1 block text-gray-500">vs. período anterior</span>
       </div>
 
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Atendimentos Concluídos (Dia)</span>
-        <h2 id="qtdDia" class="text-3xl font-bold text-gold">0</h2>
-        <span class="text-[11px] text-gray-500 mt-1 block">Atendimentos finalizados na data</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">✅ Atendimentos Concluídos</span>
+        <h2 id="qtdPeriodo" class="text-3xl font-bold text-gold">0</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Finalizados no período selecionado</span>
       </div>
 
       <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
-        <span class="text-gray-400 text-xs font-semibold block mb-1">Faturamento Acumulado (Total Geral)</span>
+        <span class="text-gray-400 text-xs font-semibold block mb-1">🎯 Ticket Médio</span>
+        <h2 id="ticketMedio" class="text-3xl font-bold text-purple-400">R$ 0,00</h2>
+        <span class="text-[11px] text-gray-500 mt-1 block">Faturamento ÷ atendimentos</span>
+      </div>
+
+      <div class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
+        <span class="text-gray-400 text-xs font-semibold block mb-1">📈 Faturamento Acumulado (Total Geral)</span>
         <h2 id="fatAcumulado" class="text-3xl font-bold text-blue-400">R$ 0,00</h2>
         <span class="text-[11px] text-gray-500 mt-1 block">Soma histórica no sistema</span>
       </div>
     </div>
 
-    <!-- Seção de Faturamento por Barbeiro -->
+    <!-- Gráfico de Tendência -->
     <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-3">
-      <h3 class="text-sm font-bold text-gold uppercase tracking-wider">✂️ Desempenho por Barbeiro (Na Data)</h3>
-      <div id="barbeirosContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <!-- Renderizado dinamicamente via JS -->
+      <h3 class="text-sm font-bold text-gold uppercase tracking-wider">📊 Faturamento por Dia (No Período)</h3>
+      <div class="relative" style="height: 260px;">
+        <canvas id="chartReceita"></canvas>
+      </div>
+      <div id="chartEmptyState" class="text-center py-6 text-gray-500 text-xs" style="display:none;">
+        Sem dados suficientes para exibir o gráfico neste período.
       </div>
     </section>
 
-    <!-- Tabela de Serviços Concluídos no Dia -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Seção de Faturamento por Barbeiro -->
+      <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-3">
+        <h3 class="text-sm font-bold text-gold uppercase tracking-wider">✂️ Desempenho por Barbeiro</h3>
+        <div id="barbeirosContainer" class="space-y-2.5">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+      </section>
+
+      <!-- Seção de Top Serviços -->
+      <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-3">
+        <h3 class="text-sm font-bold text-gold uppercase tracking-wider">💈 Serviços Mais Concluídos</h3>
+        <div id="servicosContainer" class="space-y-2.5">
+          <!-- Renderizado dinamicamente via JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Tabela de Serviços Concluídos no Período -->
     <section class="bg-darkCard p-5 rounded-xl border border-gray-800 space-y-4">
       <h3 class="text-sm font-bold text-gray-200">📋 Descritivo dos Atendimentos Concluídos</h3>
-      
+
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs sm:text-sm">
           <thead>
             <tr class="text-gray-400 border-b border-gray-800 uppercase text-[11px]">
+              <th class="py-2.5 px-3">Data</th>
               <th class="py-2.5 px-3">Horário</th>
               <th class="py-2.5 px-3">Cliente</th>
               <th class="py-2.5 px-3">Serviço</th>
@@ -109,24 +145,120 @@
             <!-- Renderizado dinamicamente via JS -->
           </tbody>
         </table>
-        
+
         <div id="emptyFinanceiro" class="text-center py-6 text-gray-500 text-xs" style="display: none;">
-          Nenhum atendimento concluído para esta data.
+          Nenhum atendimento concluído para este período.
         </div>
       </div>
     </section>
 
   </div>
 
+  <style>
+    .preset-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid rgb(55 65 81);
+      color: rgb(156 163 175);
+      background: transparent;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .preset-btn:hover {
+      border-color: #D4AF37;
+      color: #D4AF37;
+    }
+    .preset-btn.active {
+      background: #D4AF37;
+      border-color: #D4AF37;
+      color: #111111;
+      font-weight: 700;
+    }
+  </style>
+
   <script>
-    const inputFiltroData = document.getElementById('filtroData');
-    
-    // Define a data atual como padrão
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const dia = String(hoje.getDate()).padStart(2, '0');
-    inputFiltroData.value = `${ano}-${mes}-${dia}`;
+    const inputInicio = document.getElementById('filtroDataInicio');
+    const inputFim = document.getElementById('filtroDataFim');
+    let chartInstance = null;
+    let ultimaListaPeriodo = [];
+
+    // ---------- Helpers de data ----------
+    function formatDateISO(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // Aceita tanto "YYYY-MM-DD" quanto "DD/MM/YYYY" (o backend grava nos dois formatos conforme a origem do agendamento)
+    function parseDataFlexivel(str) {
+      if (!str) return null;
+      if (str.includes('-')) {
+        const [y, m, d] = str.split('-').map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+      }
+      if (str.includes('/')) {
+        const [d, m, y] = str.split('/').map(Number);
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+      }
+      return null;
+    }
+
+    function addDays(date, n) {
+      const novo = new Date(date);
+      novo.setDate(novo.getDate() + n);
+      return novo;
+    }
+
+    function diffEmDias(inicio, fim) {
+      const msPorDia = 1000 * 60 * 60 * 24;
+      return Math.round((fim - inicio) / msPorDia) + 1; // inclusive
+    }
+
+    // ---------- Presets rápidos ----------
+    function aplicarPreset(preset) {
+      const hoje = new Date();
+      let inicio, fim;
+
+      if (preset === 'hoje') {
+        inicio = fim = hoje;
+      } else if (preset === 'ontem') {
+        inicio = fim = addDays(hoje, -1);
+      } else if (preset === '7dias') {
+        inicio = addDays(hoje, -6);
+        fim = hoje;
+      } else if (preset === 'mes') {
+        inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        fim = hoje;
+      } else if (preset === 'mesPassado') {
+        inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+      }
+
+      inputInicio.value = formatDateISO(inicio);
+      inputFim.value = formatDateISO(fim);
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.preset === preset);
+      });
+
+      carregarFinanceiro();
+    }
+
+    document.getElementById('presetsContainer').addEventListener('click', (e) => {
+      const btn = e.target.closest('.preset-btn');
+      if (btn) aplicarPreset(btn.dataset.preset);
+    });
+
+    // Limpa o destaque de preset quando o usuário edita as datas manualmente
+    [inputInicio, inputFim].forEach(el => {
+      el.addEventListener('change', () => {
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      });
+    });
 
     function extrairPreco(servicoStr) {
       if (!servicoStr) return 0.00;
@@ -138,8 +270,53 @@
       return 0.00;
     }
 
+    function valorDoItem(item) {
+      return parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
+    }
+
+    // ---------- Exportar CSV ----------
+    function exportarCSV() {
+      if (!ultimaListaPeriodo.length) {
+        alert('Não há atendimentos concluídos neste período para exportar.');
+        return;
+      }
+
+      const linhas = [['Data', 'Horário', 'Cliente', 'WhatsApp', 'Serviço', 'Barbeiro', 'Valor']];
+      ultimaListaPeriodo.forEach(item => {
+        linhas.push([
+          item.data || '',
+          item.horario || item.hora || '',
+          item.clienteNome || item.cliente || item.nome || 'Cliente',
+          item.whatsapp || item.clienteWhatsapp || '',
+          item.servicoNome || item.servico || 'Serviço',
+          item.barbeiroNome || item.barbeiro || 'Barbeiro',
+          valorDoItem(item).toFixed(2).replace('.', ',')
+        ]);
+      });
+
+      const csv = linhas.map(linha =>
+        linha.map(campo => `"${String(campo).replace(/"/g, '""')}"`).join(';')
+      ).join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `financeiro_${inputInicio.value}_a_${inputFim.value}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ---------- Carregamento principal ----------
     async function carregarFinanceiro() {
-      const dataSelecionada = inputFiltroData.value;
+      const dataInicioStr = inputInicio.value;
+      const dataFimStr = inputFim.value;
+      if (!dataInicioStr || !dataFimStr) return;
+
+      const dataInicio = parseDataFlexivel(dataInicioStr);
+      const dataFim = parseDataFlexivel(dataFimStr);
 
       try {
         const res = await fetch('/api/agendamentos');
@@ -152,75 +329,212 @@
         // 1. Filtrar APENAS agendamentos CONCLUÍDOS
         const concluidosGeral = lista.filter(item => {
           const st = (item.status || '').toLowerCase();
-          return st === 'concluído' || st === 'concluido' || st === 'atendido';
+          return st.includes('conclu') || st.includes('atend');
         });
 
-        // 2. Filtrar Concluídos da Data Selecionada
-        const concluidosDoDia = concluidosGeral.filter(item => item.data === dataSelecionada);
+        // 2. Filtrar Concluídos dentro do período selecionado
+        const concluidosPeriodo = concluidosGeral.filter(item => {
+          const d = parseDataFlexivel(item.data);
+          return d && d >= dataInicio && d <= dataFim;
+        });
+        ultimaListaPeriodo = concluidosPeriodo;
 
-        // 3. Cálculos de Faturamento
+        // 3. Período anterior (mesmo número de dias, imediatamente antes) para comparação
+        const totalDias = diffEmDias(dataInicio, dataFim);
+        const inicioAnterior = addDays(dataInicio, -totalDias);
+        const fimAnterior = addDays(dataInicio, -1);
+        const concluidosPeriodoAnterior = concluidosGeral.filter(item => {
+          const d = parseDataFlexivel(item.data);
+          return d && d >= inicioAnterior && d <= fimAnterior;
+        });
+
+        // 4. Cálculos de Faturamento
         let fatTotalAcumulado = 0;
-        concluidosGeral.forEach(i => {
-          fatTotalAcumulado += parseFloat(i.preco) || extrairPreco(i.servicoNome || i.servico);
-        });
+        concluidosGeral.forEach(i => { fatTotalAcumulado += valorDoItem(i); });
 
-        let fatDoDia = 0;
+        let fatPeriodo = 0;
         const porBarbeiro = {};
+        const porServico = {};
+        const porDia = {};
 
-        concluidosDoDia.forEach(item => {
-          const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
-          fatDoDia += valor;
+        concluidosPeriodo.forEach(item => {
+          const valor = valorDoItem(item);
+          fatPeriodo += valor;
 
           const barbeiro = item.barbeiroNome || item.barbeiro || 'Não Especificado';
-          if (!porBarbeiro[barbeiro]) {
-            porBarbeiro[barbeiro] = { total: 0, qtd: 0 };
-          }
+          if (!porBarbeiro[barbeiro]) porBarbeiro[barbeiro] = { total: 0, qtd: 0 };
           porBarbeiro[barbeiro].total += valor;
           porBarbeiro[barbeiro].qtd += 1;
+
+          const servico = item.servicoNome || item.servico || 'Serviço';
+          if (!porServico[servico]) porServico[servico] = { total: 0, qtd: 0 };
+          porServico[servico].total += valor;
+          porServico[servico].qtd += 1;
+
+          const diaKey = item.data;
+          if (!porDia[diaKey]) porDia[diaKey] = 0;
+          porDia[diaKey] += valor;
         });
 
-        // Update Cards
-        document.getElementById('fatDia').innerText = `R$ ${fatDoDia.toFixed(2).replace('.', ',')}`;
-        document.getElementById('qtdDia').innerText = concluidosDoDia.length;
+        let fatPeriodoAnterior = 0;
+        concluidosPeriodoAnterior.forEach(i => { fatPeriodoAnterior += valorDoItem(i); });
+
+        const ticketMedio = concluidosPeriodo.length > 0 ? fatPeriodo / concluidosPeriodo.length : 0;
+
+        // 5. Atualizar Cards
+        document.getElementById('fatPeriodo').innerText = `R$ ${fatPeriodo.toFixed(2).replace('.', ',')}`;
+        document.getElementById('qtdPeriodo').innerText = concluidosPeriodo.length;
+        document.getElementById('ticketMedio').innerText = `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`;
         document.getElementById('fatAcumulado').innerText = `R$ ${fatTotalAcumulado.toFixed(2).replace('.', ',')}`;
 
-        // 4. Renderizar Cards de Barbeiros
+        const comparativoEl = document.getElementById('comparativoPeriodo');
+        if (fatPeriodoAnterior > 0) {
+          const variacao = ((fatPeriodo - fatPeriodoAnterior) / fatPeriodoAnterior) * 100;
+          const sinal = variacao >= 0 ? '▲' : '▼';
+          const cor = variacao >= 0 ? 'text-emerald-400' : 'text-red-400';
+          comparativoEl.innerHTML = `<span class="${cor} font-semibold">${sinal} ${Math.abs(variacao).toFixed(1)}%</span> vs. período anterior (R$ ${fatPeriodoAnterior.toFixed(2).replace('.', ',')})`;
+        } else if (fatPeriodo > 0) {
+          comparativoEl.innerHTML = `<span class="text-emerald-400 font-semibold">Novo</span> — sem faturamento no período anterior`;
+        } else {
+          comparativoEl.innerText = 'Sem dados no período anterior para comparar';
+        }
+
+        // 6. Renderizar Cards de Barbeiros (com % do total e ticket médio)
         const barbeirosContainer = document.getElementById('barbeirosContainer');
         barbeirosContainer.innerHTML = '';
+        const nomesBarbeiros = Object.keys(porBarbeiro).sort((a, b) => porBarbeiro[b].total - porBarbeiro[a].total);
 
-        const nomesBarbeiros = Object.keys(porBarbeiro);
         if (nomesBarbeiros.length === 0) {
-          barbeirosContainer.innerHTML = `<div class="text-gray-500 text-xs col-span-full">Nenhum atendimento finalizado por barbeiro nesta data.</div>`;
+          barbeirosContainer.innerHTML = `<div class="text-gray-500 text-xs">Nenhum atendimento finalizado por barbeiro neste período.</div>`;
         } else {
           nomesBarbeiros.forEach(nome => {
             const dados = porBarbeiro[nome];
-            const div = document.createElement('div');
-            div.className = 'bg-darkBg p-3.5 rounded-lg border border-gray-800 flex justify-between items-center';
+            const pct = fatPeriodo > 0 ? (dados.total / fatPeriodo) * 100 : 0;
+            const ticketBarbeiro = dados.qtd > 0 ? dados.total / dados.qtd : 0;
             const textoAtendimento = dados.qtd === 1 ? 'atendimento' : 'atendimentos';
+            const div = document.createElement('div');
+            div.className = 'bg-darkBg p-3.5 rounded-lg border border-gray-800';
             div.innerHTML = `
-              <div>
-                <p class="font-semibold text-gray-200">${nome}</p>
-                <p class="text-[11px] text-gray-400">${dados.qtd} ${textoAtendimento}</p>
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <p class="font-semibold text-gray-200">${nome}</p>
+                  <p class="text-[11px] text-gray-400">${dados.qtd} ${textoAtendimento} · ticket médio R$ ${ticketBarbeiro.toFixed(2).replace('.', ',')}</p>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-gold text-base block">R$ ${dados.total.toFixed(2).replace('.', ',')}</span>
+                  <span class="text-[11px] text-gray-500">${pct.toFixed(0)}% do total</span>
+                </div>
               </div>
-              <span class="font-bold text-gold text-base">R$ ${dados.total.toFixed(2).replace('.', ',')}</span>
+              <div class="w-full bg-gray-800 rounded-full h-1.5">
+                <div class="bg-gold h-1.5 rounded-full" style="width: ${pct.toFixed(1)}%"></div>
+              </div>
             `;
             barbeirosContainer.appendChild(div);
           });
         }
 
-        // 5. Renderizar Tabela do Dia
+        // 7. Renderizar Top Serviços
+        const servicosContainer = document.getElementById('servicosContainer');
+        servicosContainer.innerHTML = '';
+        const nomesServicos = Object.keys(porServico).sort((a, b) => porServico[b].total - porServico[a].total).slice(0, 6);
+
+        if (nomesServicos.length === 0) {
+          servicosContainer.innerHTML = `<div class="text-gray-500 text-xs">Nenhum serviço concluído neste período.</div>`;
+        } else {
+          nomesServicos.forEach(nome => {
+            const dados = porServico[nome];
+            const pct = fatPeriodo > 0 ? (dados.total / fatPeriodo) * 100 : 0;
+            const textoAtendimento = dados.qtd === 1 ? 'vez' : 'vezes';
+            const div = document.createElement('div');
+            div.className = 'bg-darkBg p-3.5 rounded-lg border border-gray-800 flex justify-between items-center';
+            div.innerHTML = `
+              <div>
+                <p class="font-semibold text-gray-200">${nome}</p>
+                <p class="text-[11px] text-gray-400">${dados.qtd} ${textoAtendimento} · ${pct.toFixed(0)}% do faturamento</p>
+              </div>
+              <span class="font-bold text-gold text-base">R$ ${dados.total.toFixed(2).replace('.', ',')}</span>
+            `;
+            servicosContainer.appendChild(div);
+          });
+        }
+
+        // 8. Renderizar Gráfico de Faturamento por Dia
+        const canvas = document.getElementById('chartReceita');
+        const chartEmptyState = document.getElementById('chartEmptyState');
+        const diasOrdenados = Object.keys(porDia).sort((a, b) => (parseDataFlexivel(a) - parseDataFlexivel(b)));
+
+        if (diasOrdenados.length === 0) {
+          canvas.style.display = 'none';
+          chartEmptyState.style.display = 'block';
+        } else {
+          canvas.style.display = 'block';
+          chartEmptyState.style.display = 'none';
+
+          const labels = diasOrdenados.map(d => {
+            const dt = parseDataFlexivel(d);
+            return dt ? `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}` : d;
+          });
+          const valores = diasOrdenados.map(d => porDia[d]);
+
+          if (chartInstance) chartInstance.destroy();
+          chartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Faturamento (R$)',
+                data: valores,
+                backgroundColor: '#D4AF37',
+                borderRadius: 4,
+                maxBarThickness: 42
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => `R$ ${ctx.parsed.y.toFixed(2).replace('.', ',')}`
+                  }
+                }
+              },
+              scales: {
+                x: { grid: { display: false }, ticks: { color: '#9ca3af' } },
+                y: {
+                  grid: { color: '#1f2937' },
+                  ticks: {
+                    color: '#9ca3af',
+                    callback: (v) => `R$ ${v}`
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        // 9. Renderizar Tabela do Período
         const tbody = document.getElementById('tabelaFinanceiroBody');
         const emptyState = document.getElementById('emptyFinanceiro');
         tbody.innerHTML = '';
 
-        if (concluidosDoDia.length === 0) {
+        if (concluidosPeriodo.length === 0) {
           emptyState.style.display = 'block';
         } else {
           emptyState.style.display = 'none';
-          concluidosDoDia.forEach(item => {
-            const valor = parseFloat(item.preco) || extrairPreco(item.servicoNome || item.servico);
+          // Mais recentes primeiro
+          const ordenados = [...concluidosPeriodo].sort((a, b) => {
+            const da = parseDataFlexivel(a.data), db = parseDataFlexivel(b.data);
+            if (da - db !== 0) return db - da;
+            return (b.horario || '').localeCompare(a.horario || '');
+          });
+
+          ordenados.forEach(item => {
+            const valor = valorDoItem(item);
             const tr = document.createElement('tr');
             tr.innerHTML = `
+              <td class="py-2.5 px-3 text-gray-400">${item.data || ''}</td>
               <td class="py-2.5 px-3 font-semibold text-gold">${item.horario || item.hora || '--:--'}</td>
               <td class="py-2.5 px-3">${item.clienteNome || item.cliente || item.nome || 'Cliente'}</td>
               <td class="py-2.5 px-3">${item.servicoNome || item.servico || 'Serviço'}</td>
@@ -236,7 +550,8 @@
       }
     }
 
-    carregarFinanceiro();
+    // Inicialização: período padrão = hoje
+    aplicarPreset('hoje');
   </script>
 </body>
 </html>
