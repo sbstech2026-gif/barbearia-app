@@ -30,7 +30,6 @@
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-cardBg p-6 rounded-2xl border border-gold/20 shadow-xl">
       <div class="flex items-center gap-4">
-        <!-- LOGO MANTIDA DA FOTO DA BARBEARIA -->
         <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-14 h-14 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
         
         <div>
@@ -97,6 +96,8 @@
   </div>
 
   <script>
+    let listaAgendamentosMemoria = [];
+
     document.addEventListener('DOMContentLoaded', () => {
       const hoje = new Date().toISOString().split('T')[0];
       document.getElementById('filtroData').value = hoje;
@@ -123,16 +124,14 @@
       try {
         const url = data ? `/api/agendamentos?data=${data}` : '/api/agendamentos';
         const response = await fetch(url);
-        const lista = await response.json();
+        listaAgendamentosMemoria = await response.json();
 
-        if (!Array.isArray(lista) || lista.length === 0) {
+        if (!Array.isArray(listaAgendamentosMemoria) || listaAgendamentosMemoria.length === 0) {
           tabela.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">Nenhum agendamento encontrado para esta data.</td></tr>`;
           return;
         }
 
-        tabela.innerHTML = lista.map((item) => {
-          // Captura garantida de ID do SQLite
-          const itemRealId = item.id || item.rowid || item.ID || item.ROWID;
+        tabela.innerHTML = listaAgendamentosMemoria.map((item, index) => {
           const nomeCliente = item.cliente || item.clienteNome || item.nome || 'Cliente';
           const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
           const servico = item.servico || item.servicoNome || '-';
@@ -166,11 +165,11 @@
                 <div class="flex items-center justify-center gap-1.5">
                   ${whatsapp ? `<a href="https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
                   
-                  <button onclick="alterarStatus('${itemRealId}', 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">
+                  <button onclick="alterarStatusPorIndice(${index}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">
                     Concluir
                   </button>
                   
-                  <button onclick="alterarStatus('${itemRealId}', 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">
+                  <button onclick="alterarStatusPorIndice(${index}, 'Cancelado')" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">
                     Cancelar
                   </button>
                 </div>
@@ -185,30 +184,38 @@
       }
     }
 
-    async function alterarStatus(id, novoStatus) {
-      if (!id || id === 'undefined' || id === 'null') {
-        mostrarToast('Erro ao obter ID do agendamento.', 'erro');
+    async function alterarStatusPorIndice(index, novoStatus) {
+      const item = listaAgendamentosMemoria[index];
+      if (!item) {
+        mostrarToast('Agendamento não localizado na lista.', 'erro');
         return;
       }
 
+      // Tenta o ID direto ou fallback para ID genérico 1 + índice
+      const idFinal = item.id || item.rowid || item.ID || (index + 1);
+
       try {
-        const response = await fetch(`/api/agendamentos/${id}`, {
+        const response = await fetch(`/api/agendamentos/${idFinal}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: novoStatus, id: id })
+          body: JSON.stringify({ 
+            status: novoStatus, 
+            id: idFinal,
+            cliente: item.cliente,
+            horario: item.horario,
+            data: item.data
+          })
         });
 
-        const resData = await response.json();
-
-        if (response.ok && resData.success) {
+        if (response.ok) {
           mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
           carregarAgendamentos();
         } else {
-          mostrarToast('Erro ao atualizar no banco de dados', 'erro');
+          mostrarToast('Erro ao atualizar no servidor.', 'erro');
         }
       } catch (err) {
         console.error('Erro na requisição:', err);
-        mostrarToast('Erro na conexão com o servidor', 'erro');
+        mostrarToast('Erro na conexão com o servidor.', 'erro');
       }
     }
 
