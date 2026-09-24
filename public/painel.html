@@ -22,19 +22,17 @@
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen font-sans">
 
-  <!-- TOAST / NOTIFICAÇÃO -->
   <div id="toast" class="fixed top-5 right-5 z-50 hidden bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm transition-all duration-300">
     Mensagem aqui!
   </div>
 
   <div class="max-w-7xl mx-auto px-4 py-8">
 
-    <!-- CABEÇALHO -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-cardBg p-6 rounded-2xl border border-gold/20 shadow-xl">
       <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-xl bg-gold/10 border border-gold/40 flex items-center justify-center text-2xl font-bold text-gold">
-          ✂️
-        </div>
+        <!-- LOGO ATUALIZADA -->
+        <img src="logo-barbearia.jpeg" alt="Logo Barbearia" class="w-14 h-14 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
+        
         <div>
           <p class="text-xs uppercase tracking-widest text-gold font-semibold">SMARTBARBER</p>
           <h1 class="text-2xl font-bold text-gold">Agenda de Atendimentos</h1>
@@ -42,7 +40,6 @@
         </div>
       </div>
 
-      <!-- BOTÕES DE NAVEGAÇÃO -->
       <div class="flex flex-wrap items-center gap-2">
         <a href="servicos.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5">
           ⚙️ Serviços
@@ -59,7 +56,6 @@
       </div>
     </div>
 
-    <!-- FILTRO POR DATA -->
     <div class="bg-cardBg p-4 rounded-xl border border-gold/20 mb-6 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <span class="text-lg">📅</span>
@@ -73,7 +69,6 @@
       </div>
     </div>
 
-    <!-- TABELA DE ATENDIMENTOS -->
     <div class="bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm text-gray-300">
@@ -102,7 +97,6 @@
   </div>
 
   <script>
-    // Inicializa a data de hoje no filtro
     document.addEventListener('DOMContentLoaded', () => {
       const hoje = new Date().toISOString().split('T')[0];
       document.getElementById('filtroData').value = hoje;
@@ -142,12 +136,13 @@
           const servico = item.servico || item.servicoNome || '-';
           const barbeiro = item.barbeiro || item.barbeiroNome || '-';
           const valorFormatado = item.preco ? `R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')}` : 'R$ 0,00';
-          const status = item.status || 'Agendado';
+          const status = item.status || item.situacao || item.estado || 'Agendado';
 
           let badgeStatus = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
-          if (status === 'Concluido' || status === 'Concluído' || status === 'Atendido') {
+          
+          if (status.toLowerCase().includes('conclu') || status.toLowerCase().includes('atend')) {
             badgeStatus = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
-          } else if (status === 'Cancelado') {
+          } else if (status.toLowerCase().includes('cancel')) {
             badgeStatus = '<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
           }
 
@@ -196,27 +191,17 @@
           body: JSON.stringify({ status: novoStatus })
         });
 
-        if (response.ok) {
-          mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
-          await carregarAgendamentos(); // Atualiza a tabela na tela imediatamente
-        } else {
-          // Tenta via PATCH como fallback
-          const respPatch = await fetch(`/api/agendamentos/${id}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: novoStatus })
-          });
+        const resData = await response.json();
 
-          if (respPatch.ok) {
-            mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
-            await carregarAgendamentos();
-          } else {
-            mostrarToast('Erro ao atualizar status', 'erro');
-          }
+        if (response.ok && resData.success) {
+          mostrarToast(novoStatus === 'Concluido' ? 'Atendimento concluído!' : 'Atendimento cancelado!');
+          await carregarAgendamentos();
+        } else {
+          mostrarToast('Erro ao atualizar no banco de dados', 'erro');
         }
       } catch (err) {
         console.error(err);
-        mostrarToast('Erro ao conectar ao servidor', 'erro');
+        mostrarToast('Erro na requisição ao servidor', 'erro');
       }
     }
 

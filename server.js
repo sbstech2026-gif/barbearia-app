@@ -5,26 +5,27 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conectar ao Banco de Dados SQLite
 const db = new sqlite3.Database('./barbearia.db', (err) => {
   if (err) console.error('Erro ao conectar ao SQLite:', err.message);
   else console.log('Conectado ao banco de dados SQLite.');
 });
 
-// Inicialização segura das tabelas
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS agendamentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente TEXT,
+      whatsapp TEXT,
       servico TEXT,
       barbeiro TEXT,
       data TEXT,
-      horario TEXT
+      horario TEXT,
+      preco REAL,
+      status TEXT DEFAULT 'Agendado'
     )
   `);
 
@@ -44,14 +45,58 @@ db.serialize(() => {
   `);
 });
 
-// ==========================================
-// ROTA DE INSERÇÃO DEFINITIVA E ULTRA RESILIENTE
-// ==========================================
+// ROTA DINÂMICA DE ATUALIZAÇÃO DE STATUS (PUT / PATCH)
+const atualizarStatusDefinitivo = (req, res) => {
+  const { id } = req.params;
+  const novoStatus = req.body.status || 'Concluido';
 
+  db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const nomesColunas = columns.map(c => c.name);
+    const camposParaAtualizar = [];
+    const valores = [];
+
+    if (nomesColunas.includes('status')) {
+      camposParaAtualizar.push('status = ?');
+      valores.push(novoStatus);
+    }
+    if (nomesColunas.includes('situacao')) {
+      camposParaAtualizar.push('situacao = ?');
+      valores.push(novoStatus);
+    }
+    if (nomesColunas.includes('estado')) {
+      camposParaAtualizar.push('estado = ?');
+      valores.push(novoStatus);
+    }
+
+    if (camposParaAtualizar.length === 0) {
+      camposParaAtualizar.push('status = ?');
+      valores.push(novoStatus);
+    }
+
+    valores.push(id);
+    const sql = `UPDATE agendamentos SET ${camposParaAtualizar.join(', ')} WHERE id = ?`;
+
+    db.run(sql, valores, function (errUpdate) {
+      if (errUpdate) {
+        console.error('Erro ao atualizar status:', errUpdate.message);
+        return res.status(500).json({ error: errUpdate.message });
+      }
+
+      res.json({ success: true, id, status: novoStatus, changes: this.changes });
+    });
+  });
+};
+
+app.put('/api/agendamentos/:id', atualizarStatusDefinitivo);
+app.patch('/api/agendamentos/:id/status', atualizarStatusDefinitivo);
+app.patch('/api/agendamentos/:id', atualizarStatusDefinitivo);
+
+// ROTAS DA API DE AGENDAMENTOS
 app.post('/api/agendamentos', (req, res) => {
   const body = req.body || {};
 
-  // Extração inteligente de todos os campos possíveis enviados pelo front-end
   const vNome = body.cliente || body.clienteNome || body.nome || 'Cliente';
   const vWhatsapp = body.whatsapp || body.clienteWhatsapp || '';
   const vServico = body.servico || body.servicoNome || 'Serviço';
@@ -62,40 +107,26 @@ app.post('/api/agendamentos', (req, res) => {
   const vServicoId = parseInt(body.servicoId, 10) || 1;
   const vStatus = body.status || 'Agendado';
 
-  // Mapeamento universal de padrões para evitar QUALQUER erro de NOT NULL
   const valoresPadrao = {
-    cliente: vNome,
-    clienteNome: vNome,
-    nome: vNome,
-    whatsapp: vWhatsapp,
-    clienteWhatsapp: vWhatsapp,
-    servico: vServico,
-    servicoNome: vServico,
-    servicoId: vServicoId,
-    barbeiro: vBarbeiro,
-    barbeiroNome: vBarbeiro,
-    data: vData,
-    horario: vHorario,
-    hora: vHorario,
-    status: vStatus,
-    preco: vPreco
+    cliente: vNome, clienteNome: vNome, nome: vNome,
+    whatsapp: vWhatsapp, clienteWhatsapp: vWhatsapp,
+    servico: vServico, servicoNome: vServico, servicoId: vServicoId,
+    barbeiro: vBarbeiro, barbeiroNome: vBarbeiro,
+    data: vData, horario: vHorario, hora: vHorario,
+    status: vStatus, preco: vPreco
   };
 
-  // Inspeciona quais colunas a tabela de agendamentos no Render realmente possui
   db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
     if (err) return res.status(500).json({ error: err.message });
 
     const dadosParaInserir = {};
-
-    // Preenche TODAS as colunas existentes na tabela para nunca deixar passar NOT NULL zerado
     columns.forEach(col => {
       const nomeColuna = col.name;
-      if (nomeColuna === 'id') return; // ID é AUTOINCREMENT
+      if (nomeColuna === 'id') return;
 
       if (valoresPadrao.hasOwnProperty(nomeColuna)) {
         dadosParaInserir[nomeColuna] = valoresPadrao[nomeColuna];
       } else {
-        // Fallback genérico caso exista alguma outra coluna antiga na tabela
         if (col.type.toUpperCase().includes('INT') || col.type.toUpperCase().includes('REAL') || col.type.toUpperCase().includes('NUM')) {
           dadosParaInserir[nomeColuna] = 0;
         } else {
@@ -119,10 +150,6 @@ app.post('/api/agendamentos', (req, res) => {
     });
   });
 });
-
-// ==========================================
-// DEMAIS ROTAS DA API
-// ==========================================
 
 app.get('/api/agendamentos', (req, res) => {
   const { data } = req.query;
@@ -150,24 +177,6 @@ app.get('/api/agendamentos', (req, res) => {
   }
 });
 
-const atualizarStatusHandler = (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!status) {
-    return res.status(400).json({ error: 'Status é obrigatório.' });
-  }
-
-  db.run('UPDATE agendamentos SET status = ? WHERE id = ?', [status, id], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id, status, updated: this.changes, success: true });
-  });
-};
-
-app.put('/api/agendamentos/:id', atualizarStatusHandler);
-app.patch('/api/agendamentos/:id/status', atualizarStatusHandler);
-app.patch('/api/agendamentos/:id', atualizarStatusHandler);
-
 app.delete('/api/agendamentos', (req, res) => {
   const { data } = req.query;
 
@@ -190,7 +199,7 @@ app.delete('/api/agendamentos', (req, res) => {
   }
 });
 
-// Rotas de Serviços
+// ROTAS AUXILIARES
 app.get('/api/servicos', (req, res) => {
   db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -198,24 +207,6 @@ app.get('/api/servicos', (req, res) => {
   });
 });
 
-app.post('/api/servicos', (req, res) => {
-  const { nome, preco } = req.body;
-  if (!nome || !preco) return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
-
-  db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nome.trim(), preco], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ id: this.lastID, nome: nome.trim(), preco });
-  });
-});
-
-app.delete('/api/servicos/:id', (req, res) => {
-  db.run('DELETE FROM servicos WHERE id = ?', [req.params.id], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Serviço removido com sucesso', deleted: this.changes });
-  });
-});
-
-// Rotas de Profissionais
 app.get('/api/profissionais', (req, res) => {
   db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -223,24 +214,7 @@ app.get('/api/profissionais', (req, res) => {
   });
 });
 
-app.post('/api/profissionais', (req, res) => {
-  const { nome } = req.body;
-  if (!nome) return res.status(400).json({ error: 'Nome é obrigatório.' });
-
-  db.run('INSERT INTO profissionais (nome) VALUES (?)', [nome.trim()], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ id: this.lastID, nome: nome.trim() });
-  });
-});
-
-app.delete('/api/profissionais/:id', (req, res) => {
-  db.run('DELETE FROM profissionais WHERE id = ?', [req.params.id], function (err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Profissional removido com sucesso', deleted: this.changes });
-  });
-});
-
-// Rotas de Páginas
+// NAVEGAÇÃO DE PÁGINAS
 app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'servicos.html')));
 app.get('/profissionais', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profissionais.html')));
