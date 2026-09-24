@@ -45,7 +45,75 @@ db.serialize(() => {
   `);
 });
 
-// ROTA DINÂMICA DE ATUALIZAÇÃO DE STATUS (PUT / PATCH)
+// ==========================================
+// ROTAS DE SERVIÇOS (CADASTRO, LISTAGEM, EXCLUSÃO)
+// ==========================================
+app.get('/api/servicos', (req, res) => {
+  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows || []);
+  });
+});
+
+app.post('/api/servicos', (req, res) => {
+  const { nome, preco } = req.body;
+  if (!nome || !preco) {
+    return res.status(400).json({ error: 'Nome e preço são obrigatórios.' });
+  }
+
+  db.run('INSERT INTO servicos (nome, preco) VALUES (?, ?)', [nome, preco], function (err) {
+    if (err) {
+      console.error('Erro ao inserir serviço:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id: this.lastID, nome, preco, success: true });
+  });
+});
+
+app.delete('/api/servicos/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM servicos WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: 'Serviço removido.' });
+  });
+});
+
+// ==========================================
+// ROTAS DE PROFISSIONAIS (CADASTRO, LISTAGEM, EXCLUSÃO)
+// ==========================================
+app.get('/api/profissionais', (req, res) => {
+  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows || []);
+  });
+});
+
+app.post('/api/profissionais', (req, res) => {
+  const { nome } = req.body;
+  if (!nome) {
+    return res.status(400).json({ error: 'Nome do profissional é obrigatório.' });
+  }
+
+  db.run('INSERT INTO profissionais (nome) VALUES (?)', [nome], function (err) {
+    if (err) {
+      console.error('Erro ao inserir profissional:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id: this.lastID, nome, success: true });
+  });
+});
+
+app.delete('/api/profissionais/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM profissionais WHERE id = ?', [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, message: 'Profissional removido.' });
+  });
+});
+
+// ==========================================
+// ROTAS DE AGENDAMENTOS E STATUS
+// ==========================================
 const atualizarStatusDefinitivo = (req, res) => {
   const { id } = req.params;
   const novoStatus = req.body.status || 'Concluido';
@@ -93,7 +161,6 @@ app.put('/api/agendamentos/:id', atualizarStatusDefinitivo);
 app.patch('/api/agendamentos/:id/status', atualizarStatusDefinitivo);
 app.patch('/api/agendamentos/:id', atualizarStatusDefinitivo);
 
-// ROTAS DA API DE AGENDAMENTOS
 app.post('/api/agendamentos', (req, res) => {
   const body = req.body || {};
 
@@ -199,22 +266,9 @@ app.delete('/api/agendamentos', (req, res) => {
   }
 });
 
-// ROTAS AUXILIARES
-app.get('/api/servicos', (req, res) => {
-  db.all('SELECT * FROM servicos ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
-});
-
-app.get('/api/profissionais', (req, res) => {
-  db.all('SELECT * FROM profissionais ORDER BY id DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows || []);
-  });
-});
-
+// ==========================================
 // NAVEGAÇÃO DE PÁGINAS
+// ==========================================
 app.get('/painel', (req, res) => res.sendFile(path.join(__dirname, 'public', 'painel.html')));
 app.get('/servicos', (req, res) => res.sendFile(path.join(__dirname, 'public', 'servicos.html')));
 app.get('/profissionais', (req, res) => res.sendFile(path.join(__dirname, 'public', 'profissionais.html')));
