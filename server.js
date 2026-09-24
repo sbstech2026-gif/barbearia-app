@@ -200,6 +200,7 @@ app.post('/api/agendamentos', (req, res) => {
   const data = body.data || new Date().toISOString().split('T')[0];
   const preco = parseFloat(body.preco) || 0;
   const status = body.status || 'Agendado';
+  const criadoEm = new Date().toISOString();
 
   // Consulta a estrutura exata da tabela no banco
   db.all('PRAGMA table_info(agendamentos)', [], (err, columns) => {
@@ -217,7 +218,8 @@ app.post('/api/agendamentos', (req, res) => {
       barbeiro, barbeiroNome: barbeiro,
       barbeiroId, barbeiro_id: barbeiroId,
       data, horario, hora: horario,
-      preco, status
+      preco, status,
+      criadoEm, created_at: criadoEm, createdAt: criadoEm
     };
 
     colNames.forEach(col => {
@@ -225,6 +227,11 @@ app.post('/api/agendamentos', (req, res) => {
       if (valoresMapeados.hasOwnProperty(col)) {
         campos.push(col);
         valores.push(valoresMapeados[col]);
+      } else {
+        // Coluna existente no banco mas não mapeada (schema legado):
+        // envia string vazia em vez de deixar de fora, evitando erro de NOT NULL
+        campos.push(col);
+        valores.push('');
       }
     });
 
