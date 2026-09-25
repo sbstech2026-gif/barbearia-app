@@ -116,7 +116,7 @@
     <!-- Tabela (telas médias/grandes) -->
     <div class="hidden sm:block bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-300">
+        <table class="w-full min-w-[1050px] text-left text-sm text-gray-300">
           <thead class="bg-gray-900/80 text-gold uppercase text-xs tracking-wider border-b border-gold/20">
             <tr>
               <th class="py-3 px-4 cursor-pointer select-none hover:text-amber-300" onclick="alternarOrdenacao()">
@@ -328,45 +328,45 @@
         const isFinalizado = isConcluido || isCancelado;
         const recorrente = whatsappDigits && ocorrenciasWhatsapp[whatsappDigits] > 1;
 
-        let badgeStatus = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
+        let badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
         if (isConcluido) {
-          badgeStatus = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
+          badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
         } else if (isCancelado) {
-          badgeStatus = '<span class="bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
+          badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
         }
 
         const badgeRecorrente = recorrente
-          ? '<span class="ml-1.5 bg-purple-500/10 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded text-[10px] font-semibold align-middle">🔁 Recorrente</span>'
+          ? '<span class="inline-flex items-center whitespace-nowrap ml-1.5 bg-purple-500/10 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded text-[10px] font-semibold align-middle">🔁 Recorrente</span>'
           : '';
 
         const linkWhats = whatsapp ? `https://wa.me/55${whatsappDigits}` : '#';
         const linkLembrete = whatsapp ? `https://wa.me/55${whatsappDigits}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!` : '';
 
         const botaoConcluir = isConcluido
-          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed" title="Já concluído">✅ Concluído</button>`
-          : `<button type="button" onclick="alterarStatusPorIndice(${indexReal}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold">Concluir</button>`;
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed whitespace-nowrap" title="Já concluído">✅ Concluído</button>`
+          : `<button type="button" onclick="alterarStatusPorIndice(${indexReal}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold whitespace-nowrap">Concluir</button>`;
 
         const botaoCancelar = isCancelado
-          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed" title="Já cancelado">❌ Cancelado</button>`
-          : `<button type="button" onclick="confirmarCancelamento(${indexReal})" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer">Cancelar</button>`;
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed whitespace-nowrap" title="Já cancelado">❌ Cancelado</button>`
+          : `<button type="button" onclick="confirmarCancelamento(${indexReal})" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer whitespace-nowrap">Cancelar</button>`;
 
         const classeLinha = isFinalizado ? 'hover:bg-gray-800/40 transition opacity-60' : 'hover:bg-gray-800/40 transition';
 
         linhasTabela.push(`
           <tr class="${classeLinha}">
-            <td class="py-3 px-4 font-bold text-gold">${item.horario || '--:--'}</td>
-            <td class="py-3 px-4 text-xs text-gray-400">${item.data}</td>
-            <td class="py-3 px-4 font-semibold text-white uppercase">${nomeCliente}${badgeRecorrente}</td>
-            <td class="py-3 px-4">
-              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs flex items-center gap-1">📱 ${whatsapp}</a>` : '-'}
+            <td class="py-3 px-4 font-bold text-gold whitespace-nowrap">${item.horario || '--:--'}</td>
+            <td class="py-3 px-4 text-xs text-gray-400 whitespace-nowrap">${item.data}</td>
+            <td class="py-3 px-4 font-semibold text-white uppercase whitespace-nowrap">${nomeCliente}${badgeRecorrente}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs inline-flex items-center gap-1">📱 ${whatsapp}</a>` : '-'}
             </td>
-            <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase">${servico}</td>
-            <td class="py-3 px-4 font-bold text-emerald-400 text-xs">${valorFormatado}</td>
-            <td class="py-3 px-4 text-xs text-gray-300 uppercase">${barbeiro}</td>
-            <td class="py-3 px-4">${badgeStatus}</td>
-            <td class="py-3 px-4">
+            <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase whitespace-nowrap">${servico}</td>
+            <td class="py-3 px-4 font-bold text-emerald-400 text-xs whitespace-nowrap">${valorFormatado}</td>
+            <td class="py-3 px-4 text-xs text-gray-300 uppercase whitespace-nowrap">${barbeiro}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${badgeStatus}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
               <div class="flex items-center justify-center gap-1.5">
-                ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
+                ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition whitespace-nowrap">📅 Lembrete</a>` : ''}
                 ${botaoConcluir}
                 ${botaoCancelar}
               </div>
