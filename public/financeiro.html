@@ -17,6 +17,20 @@
     }
   </script>
 
+  <style>
+    .nav-tab {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      color: #9ca3af;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { color: #D4AF37; background: rgba(212,175,55,0.08); }
+    .nav-tab-active { background: #D4AF37; color: #111111; pointer-events: none; }
+  </style>
+
   <!-- Configuração PWA (App Instalável) -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#111111">
@@ -68,6 +82,14 @@
         </div>
       </div>
     </header>
+
+    <!-- Navegação entre painéis -->
+    <nav class="flex flex-wrap items-center gap-1 bg-darkCard p-1.5 rounded-xl border border-gray-800 w-fit">
+      <a href="painel.html" class="nav-tab">🏠 Agenda</a>
+      <a href="servicos.html" class="nav-tab">⚙️ Serviços</a>
+      <a href="profissionais.html" class="nav-tab">💈 Profissionais</a>
+      <span class="nav-tab nav-tab-active">📊 Financeiro</span>
+    </nav>
 
     <!-- Cards de Indicadores do Período -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

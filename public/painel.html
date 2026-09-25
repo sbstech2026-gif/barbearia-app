@@ -19,6 +19,19 @@
       }
     }
   </script>
+  <style>
+    .nav-tab {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      color: #9ca3af;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { color: #D4AF37; background: rgba(212,175,55,0.08); }
+    .nav-tab-active { background: #D4AF37; color: #121212; pointer-events: none; }
+  </style>
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen font-sans">
 
@@ -40,12 +53,17 @@
 
       <div class="flex flex-wrap items-center gap-2">
         <a href="index.html" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-3 py-2 rounded-lg text-xs sm:text-sm transition">➕ Novo Agendamento</a>
-        <a href="servicos.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">⚙️ Serviços</a>
-        <a href="profissionais.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">💈 Profissionais</a>
-        <a href="financeiro.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition">📊 Financeiro</a>
         <button type="button" onclick="limparAgenda()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">🗑️ Limpar Agenda</button>
       </div>
     </div>
+
+    <!-- Navegação entre painéis -->
+    <nav class="flex flex-wrap items-center gap-1 bg-cardBg p-1.5 rounded-xl border border-gold/20 mb-6 w-fit">
+      <span class="nav-tab nav-tab-active">🏠 Agenda</span>
+      <a href="servicos.html" class="nav-tab">⚙️ Serviços</a>
+      <a href="profissionais.html" class="nav-tab">💈 Profissionais</a>
+      <a href="financeiro.html" class="nav-tab">📊 Financeiro</a>
+    </nav>
 
     <!-- Resumo do Dia -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

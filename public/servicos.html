@@ -15,6 +15,19 @@
       }
     }
   </script>
+  <style>
+    .nav-tab {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      color: #9ca3af;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { color: #D4AF37; background: rgba(212,175,55,0.08); }
+    .nav-tab-active { background: #D4AF37; color: #111111; pointer-events: none; }
+  </style>
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen p-4 sm:p-6 relative">
 
@@ -36,14 +49,19 @@
       
       <!-- Navegação rápida -->
       <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-        <a href="profissionais.html" class="bg-amber-500/10 hover:bg-amber-500/20 text-gold border border-gold/40 font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1">
-          💈 Profissionais
-        </a>
-        <a href="painel.html" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1">
-          ← Voltar ao Painel
+        <a href="index.html" class="bg-gold hover:bg-yellow-600 text-black font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1">
+          ➕ Novo Agendamento
         </a>
       </div>
     </header>
+
+    <!-- Navegação entre painéis -->
+    <nav class="flex flex-wrap items-center gap-1 bg-darkCard p-1.5 rounded-xl border border-gray-800 w-fit">
+      <a href="painel.html" class="nav-tab">🏠 Agenda</a>
+      <span class="nav-tab nav-tab-active">⚙️ Serviços</span>
+      <a href="profissionais.html" class="nav-tab">💈 Profissionais</a>
+      <a href="financeiro.html" class="nav-tab">📊 Financeiro</a>
+    </nav>
 
     <!-- Formulário para Adicionar / Editar Serviço -->
     <section class="bg-darkCard p-5 rounded-xl border border-gray-800 shadow-lg">
