@@ -1,8 +1,8 @@
 {
   "id": "/agenda-app",
   "scope": "/",
-  "short_name": "BarberFlow",
-  "name": "BarberFlow - Gestão de Barbearia",
+  "short_name": "SmartBarber",
+  "name": "SmartBarber - Gestão de Barbearia",
   "icons": [
     {
       "src": "logo-barbearia.jpeg",

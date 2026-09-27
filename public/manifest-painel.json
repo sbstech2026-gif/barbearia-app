@@ -1,5 +1,5 @@
 {
-  "name": "BarberFlow - Painel Admin",
+  "name": "SmartBarber - Painel Admin",
   "short_name": "Painel Barber",
   "start_url": "/painel",
   "display": "standalone",
