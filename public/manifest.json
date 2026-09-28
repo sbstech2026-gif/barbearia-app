@@ -1,34 +1,23 @@
 {
-  "id": "/snapbarber-app",
-  "scope": "/",
-  "name": "SnapBarber",
+  "name": "SnapBarber - Agendamento Rápido",
   "short_name": "SnapBarber",
-  "description": "Agendamento, financeiro e gestão para barbearias.",
-  "start_url": "/index.html",
+  "description": "Agende o seu horário em segundos",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#111111",
-  "orientation": "portrait-primary",
+  "background_color": "#121212",
+  "theme_color": "#121212",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ],
-  "shortcuts": [
     {
-      "name": "Agendar Corte",
-      "short_name": "Agendar",
-      "description": "Agendamento do cliente",
-      "url": "/index.html",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "name": "Agenda do Barbeiro",
-      "short_name": "Agenda",
-      "description": "Painel de atendimentos",
-      "url": "/painel.html",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
