@@ -1,5 +1,5 @@
 {
-  "name": "SmartBarber - Painel Admin",
+  "name": "SnapBarber - Painel Admin",
   "short_name": "Painel Barber",
   "start_url": "/painel",
   "display": "standalone",
