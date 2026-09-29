@@ -90,7 +90,7 @@
         <label for="selectProfissional" class="block text-xs font-bold text-gold uppercase tracking-wider mb-1.5">
           👤 2. Escolha o Profissional
         </label>
-        <select id="selectProfissional" required class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-gold transition">
+        <select id="selectProfissional" required onchange="carregarHorariosDisponiveis()" class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-gold transition">
           <option value="">Carregando profissionais...</option>
         </select>
       </div>
@@ -150,6 +150,22 @@
     const HORARIOS_PADRAO = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
     let servicosCache = [];
     let profissionaisCache = [];
+
+    // ================= UTILITÁRIOS DE PERSISTÊNCIA (COMPARTILHADOS COM O PAINEL) =================
+    // Estas funções garantem que o sistema funcione 100% mesmo sem backend (fallback local),
+    // usando a MESMA chave e estrutura de dados que o painel.html espera.
+
+    function gerarUID() {
+      return 'ag_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+    }
+
+    function getAgendamentosLocais() {
+      return JSON.parse(localStorage.getItem('agendamentos') || '[]');
+    }
+
+    function salvarAgendamentosLocais(lista) {
+      localStorage.setItem('agendamentos', JSON.stringify(lista));
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       // Ajusta data mínima para hoje
@@ -233,10 +249,14 @@
       document.getElementById('labelValorTotal').innerText = `R$ ${preco.toFixed(2).replace('.', ',')}`;
     }
 
-    // Renderiza grid de horários
+    // Renderiza grid de horários — considera DATA + PROFISSIONAL selecionado
     async function carregarHorariosDisponiveis() {
       const grid = document.getElementById('gridHorarios');
       const dataSel = document.getElementById('inputData').value;
+      const selectProfissional = document.getElementById('selectProfissional');
+      const optionProfissional = selectProfissional.options[selectProfissional.selectedIndex];
+      const profissionalSel = optionProfissional ? optionProfissional.getAttribute('data-nome') : '';
+
       document.getElementById('inputHorario').value = '';
 
       if (!dataSel) {
@@ -247,13 +267,27 @@
       let agendamentosDoDia = [];
       try {
         const res = await fetch(`/api/agendamentos?data=${dataSel}`);
-        if (res.ok) agendamentosDoDia = await res.json();
+        if (res.ok) {
+          agendamentosDoDia = await res.json();
+        } else {
+          throw new Error();
+        }
       } catch (e) {
-        agendamentosDoDia = [];
+        // Fallback: filtra do localStorage os agendamentos da data selecionada
+        agendamentosDoDia = getAgendamentosLocais().filter(a => a.data === dataSel);
       }
 
+      if (!Array.isArray(agendamentosDoDia)) agendamentosDoDia = [];
+
+      // Só bloqueia o horário se for o MESMO profissional (ou se nenhum profissional foi selecionado ainda,
+      // bloqueia de forma conservadora considerando qualquer ocupação naquele horário)
       const ocupados = agendamentosDoDia
         .filter(a => (a.status || '').toLowerCase() !== 'cancelado')
+        .filter(a => {
+          if (!profissionalSel) return true; // ainda não escolheu profissional -> mostra ocupação geral
+          const barbeiroAg = a.barbeiro || a.barbeiroNome || '';
+          return barbeiroAg === profissionalSel;
+        })
         .map(a => a.horario);
 
       grid.innerHTML = HORARIOS_PADRAO.map(h => {
@@ -306,15 +340,26 @@
       const selectProfissional = document.getElementById('selectProfissional');
       const optionProfissional = selectProfissional.options[selectProfissional.selectedIndex];
 
+      if (!optionServico || !optionServico.value) {
+        mostrarToast('Selecione um serviço válido!', 'erro');
+        return;
+      }
+      if (!optionProfissional || !optionProfissional.value) {
+        mostrarToast('Selecione um profissional válido!', 'erro');
+        return;
+      }
+
       const novoAgendamento = {
+        id: gerarUID(),
         cliente: document.getElementById('inputNome').value.trim(),
         whatsapp: document.getElementById('inputWhatsapp').value.trim(),
-        servico: optionServico ? optionServico.getAttribute('data-nome') : selectServico.value,
-        preco: optionServico ? parseFloat(optionServico.getAttribute('data-preco') || 0) : 0,
-        barbeiro: optionProfissional ? optionProfissional.getAttribute('data-nome') : selectProfissional.value,
+        servico: optionServico.getAttribute('data-nome') || selectServico.value,
+        preco: parseFloat(optionServico.getAttribute('data-preco') || 0),
+        barbeiro: optionProfissional.getAttribute('data-nome') || selectProfissional.value,
         data: document.getElementById('inputData').value,
         horario: horario,
-        status: 'Agendado'
+        status: 'Agendado',
+        criadoEm: new Date().toISOString()
       };
 
       const btn = document.getElementById('btnConfirmar');
@@ -334,13 +379,17 @@
         setTimeout(() => location.reload(), 1500);
 
       } catch (err) {
-        // Fallback para armazenar localmente caso não haja servidor backend
-        const salvos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+        // Fallback para armazenar localmente caso não haja servidor backend.
+        // Usa a MESMA chave/estrutura que o painel.html lê, garantindo sincronização total.
+        const salvos = getAgendamentosLocais();
         salvos.push(novoAgendamento);
-        localStorage.setItem('agendamentos', JSON.stringify(salvos));
+        salvarAgendamentosLocais(salvos);
 
         mostrarToast('Agendamento realizado com sucesso!');
         setTimeout(() => location.reload(), 1500);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '✅ Confirmar Agendamento';
       }
     }
 

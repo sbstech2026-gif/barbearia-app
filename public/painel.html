@@ -244,6 +244,7 @@
     let listaFiltradaAtual = [];
     let listaClientesGlobal = [];
     let ordemHorarioAsc = true;
+    let usandoFallbackLocal = false; // indica se a API está indisponível e estamos operando via localStorage
 
     document.addEventListener('DOMContentLoaded', () => {
       irParaHoje(false);
@@ -254,6 +255,22 @@
       document.getElementById('filtroBarbeiro').addEventListener('change', aplicarFiltros);
       document.getElementById('filtroData').addEventListener('change', atualizarBadgeHoje);
     });
+
+    // ================= UTILITÁRIOS DE PERSISTÊNCIA (SINCRONIZADOS COM O index.html) =================
+    // Mesma chave 'agendamentos' e mesma estrutura de dados usada no index.html,
+    // garantindo que tudo que for salvo lá apareça aqui, e vice-versa.
+
+    function gerarUID() {
+      return 'ag_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+    }
+
+    function getAgendamentosLocais() {
+      return JSON.parse(localStorage.getItem('agendamentos') || '[]');
+    }
+
+    function salvarAgendamentosLocais(lista) {
+      localStorage.setItem('agendamentos', JSON.stringify(lista));
+    }
 
     function hojeISO() {
       return new Date().toISOString().split('T')[0];
@@ -307,6 +324,8 @@
       }
     }
 
+    // ================= CARREGAMENTO DE AGENDAMENTOS (API + FALLBACK LOCAL) =================
+
     async function carregarAgendamentos() {
       const data = document.getElementById('filtroData').value;
       atualizarBadgeHoje();
@@ -316,19 +335,26 @@
       try {
         const url = data ? `/api/agendamentos?data=${data}` : '/api/agendamentos';
         const response = await fetch(url);
+
+        if (!response.ok) throw new Error('API indisponível');
+
         listaAgendamentosMemoria = await response.json();
+        usandoFallbackLocal = false;
 
         if (!Array.isArray(listaAgendamentosMemoria)) listaAgendamentosMemoria = [];
 
-        popularFiltroBarbeiros();
-        atualizarResumo();
-        aplicarFiltros();
-
       } catch (err) {
-        console.error(err);
-        tabela.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-red-400">Erro ao carregar os agendamentos.</td></tr>`;
-        cards.innerHTML = `<div class="text-center py-6 text-red-400 bg-cardBg rounded-xl border border-gold/20">Erro ao carregar os agendamentos.</div>`;
+        // Fallback: lê do localStorage (mesma chave usada pelo index.html)
+        usandoFallbackLocal = true;
+        const todosLocais = getAgendamentosLocais();
+        listaAgendamentosMemoria = data
+          ? todosLocais.filter(a => a.data === data)
+          : todosLocais;
       }
+
+      popularFiltroBarbeiros();
+      atualizarResumo();
+      aplicarFiltros();
     }
 
     function popularFiltroBarbeiros() {
@@ -526,16 +552,17 @@
 
       try {
         const response = await fetch('/api/agendamentos');
-        if (response.ok) {
-          todosAgendamentos = await response.json();
-        }
+        if (!response.ok) throw new Error('API indisponível');
+        todosAgendamentos = await response.json();
+        if (!Array.isArray(todosAgendamentos)) throw new Error('Formato inválido');
       } catch (err) {
-        console.warn('Servidor indisponível. Usando memória local.');
-        todosAgendamentos = listaAgendamentosMemoria;
+        // Fallback: usa a mesma chave 'agendamentos' do localStorage (compartilhada com index.html)
+        console.warn('Servidor indisponível. Usando dados do localStorage.');
+        todosAgendamentos = getAgendamentosLocais();
       }
 
       if (!Array.isArray(todosAgendamentos) || todosAgendamentos.length === 0) {
-        todosAgendamentos = listaAgendamentosMemoria;
+        todosAgendamentos = listaAgendamentosMemoria.length ? listaAgendamentosMemoria : getAgendamentosLocais();
       }
 
       const clientesMap = {};
@@ -714,21 +741,44 @@
       item.status = novoStatus;
 
       try {
-        if (item.id) {
-          await fetch(`/api/agendamentos/${item.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: novoStatus })
-          });
-        }
+        if (!item.id) throw new Error('Sem ID (registro local)');
+
+        const response = await fetch(`/api/agendamentos/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: novoStatus })
+        });
+
+        if (!response.ok) throw new Error('Falha ao atualizar na API');
+
         mostrarToast(`Status alterado para ${novoStatus}!`);
       } catch (err) {
-        console.warn('Atualizado apenas localmente.');
-        mostrarToast('Status atualizado na tela!', 'sucesso');
+        // Fallback: sincroniza a alteração diretamente no localStorage
+        // (mesma chave usada pelo index.html), garantindo persistência real.
+        atualizarStatusNoLocalStorage(item, novoStatus);
+        mostrarToast(`Status alterado para ${novoStatus}!`);
       }
 
       atualizarResumo();
       aplicarFiltros();
+    }
+
+    // Localiza o agendamento correspondente no localStorage e atualiza o status.
+    // Usa 'id' quando disponível; caso contrário, tenta casar por data+horario+whatsapp.
+    function atualizarStatusNoLocalStorage(item, novoStatus) {
+      const salvos = getAgendamentosLocais();
+
+      const idx = salvos.findIndex(a => {
+        if (item.id && a.id) return a.id === item.id;
+        return a.data === item.data &&
+               a.horario === item.horario &&
+               (a.whatsapp || a.clienteWhatsapp || '') === (item.whatsapp || item.clienteWhatsapp || '');
+      });
+
+      if (idx !== -1) {
+        salvos[idx].status = novoStatus;
+        salvarAgendamentosLocais(salvos);
+      }
     }
 
     function confirmarCancelamento(index) {
@@ -741,13 +791,20 @@
       if (!confirm('ATENÇÃO: Tem certeza que deseja apagar os agendamentos da data selecionada?')) return;
 
       const data = document.getElementById('filtroData').value;
+
       try {
-        await fetch(`/api/agendamentos?data=${data}`, { method: 'DELETE' });
+        const response = await fetch(`/api/agendamentos?data=${data}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Falha ao limpar via API');
         mostrarToast('Agenda limpa com sucesso!');
-        carregarAgendamentos();
       } catch (err) {
-        mostrarToast('Erro ao limpar agenda.', 'erro');
+        // Fallback: remove do localStorage todos os agendamentos da data selecionada
+        const salvos = getAgendamentosLocais();
+        const restantes = salvos.filter(a => a.data !== data);
+        salvarAgendamentosLocais(restantes);
+        mostrarToast('Agenda limpa com sucesso!');
       }
+
+      carregarAgendamentos();
     }
   </script>
 </body>
