@@ -3,671 +3,528 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SnapBarber - Agendamento Online</title>
-
-  <!-- TAGS PWA SNAPBARBER -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-180.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#121212">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+  <title>SnapBarber - Agendamento</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
   <style>
-    :root {
-      --bg-color: #121212;
-      --card-bg: #1e1e1e;
-      --primary: #d4af37;
-      --primary-hover: #b59226;
-      --text-color: #f5f5f5;
-      --text-muted: #a0a0a0;
-      --input-bg: #2a2a2a;
-      --border-color: #333333;
-      --success: #25d366;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      background-color: #121212;
+      color: #e0e0e0;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
       min-height: 100vh;
-      padding: 20px;
     }
-
-    /* BARRA DE NAVEGAÇÃO / ÁREA DO CLIENTE */
-    .top-bar {
+    .app-container {
       width: 100%;
       max-width: 480px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding: 8px 4px;
-    }
-
-    .btn-cliente {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .btn-cliente:hover {
-      background-color: var(--primary);
-      color: #000;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 480px;
-      background-color: var(--card-bg);
+      background: #1e1e1e;
       border-radius: 16px;
       padding: 20px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border: 1px solid var(--border-color);
-      overflow: hidden;
+      border: 1px solid #2a2a2a;
+      position: relative;
     }
-
-    /* BANNER DA LOGO RETANGULAR E ESTILIZADO */
-    .banner-container {
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      background: #000;
-    }
-
-    .banner-img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      display: block;
-    }
-
     .header {
-      text-align: center;
-      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 20px;
     }
-
-    .header h1 {
-      color: var(--primary);
-      font-size: 20px;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
+    .header-logo {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .header p {
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    select, input {
-      width: 100%;
-      padding: 12px;
-      background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: var(--text-color);
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    select:focus, input:focus {
-      border-color: var(--primary);
-    }
-
-    .horarios-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      margin-top: 10px;
     }
-
-    .horario-btn {
-      padding: 10px 0;
-      background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
-      color: var(--text-color);
-      border-radius: 6px;
-      cursor: pointer;
-      text-align: center;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-
-    .horario-btn.selected {
-      background-color: var(--primary);
-      color: #000;
-      border-color: var(--primary);
-    }
-
-    .horario-btn.ocupado {
-      background-color: #2a1a1a;
-      color: #666;
-      border-color: #442222;
-      cursor: not-allowed;
-      text-decoration: line-through;
-    }
-
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background-color: var(--primary);
-      color: #000;
-      border: none;
+    .header-logo img {
+      height: 38px;
+      width: auto;
       border-radius: 8px;
+      object-fit: cover;
+    }
+    .header-logo span {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 1.1rem;
+      color: #d4af37;
+    }
+    .btn-account {
+      background: transparent;
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
       cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      transition: background-color 0.2s;
-      margin-top: 10px;
-    }
-
-    .btn-submit:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-submit:disabled {
-      background-color: #555;
-      cursor: not-allowed;
-    }
-
-    .legenda {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 12px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .legenda-item {
       display: flex;
       align-items: center;
       gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-account:hover {
+      background: #d4af37;
+      color: #121212;
+    }
+    .card {
+      background: #252525;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #333;
+    }
+    .card-title {
+      color: #d4af37;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .banner-img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .barber-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .barber-info h2 {
+      color: #d4af37;
+      font-size: 1.3rem;
+    }
+    .barber-info p {
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #d4af37;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    select, input {
+      width: 100%;
+      padding: 12px;
+      background: #181818;
+      border: 1px solid #3d3d3d;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+    .grid-slots {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .slot-btn {
+      padding: 10px 4px;
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .slot-btn.selected {
+      background: #d4af37;
+      color: #000;
+      font-weight: bold;
+      border-color: #d4af37;
+    }
+    .slot-btn.occupied {
+      background: #2e1a1a;
+      color: #666;
+      border-color: #442222;
+      cursor: not-allowed;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: #d4af37;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-submit:hover {
+      background: #e5c158;
+    }
+    .pts-badge {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #d4af37;
+      margin: 8px 0;
+    }
+    .hist-item {
+      padding: 10px;
+      background: #181818;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid #d4af37;
+      font-size: 0.85rem;
     }
 
-    .box-legenda {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
-
-    .box-livre { background-color: var(--input-bg); border: 1px solid var(--border-color); }
-    .box-selecionado { background-color: var(--primary); }
-    .box-ocupado { background-color: #442222; }
-
-    /* MODAL DE CONFIRMAÇÃO */
+    /* MODAL DE LOGIN/IDENTIFICAÇÃO */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(5px);
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.75);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-      padding: 20px;
+      z-index: 999;
+      padding: 15px;
     }
-
-    .modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
     .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--primary);
+      background: #222;
+      border: 1px solid #333;
       border-radius: 16px;
-      padding: 28px 24px;
       width: 100%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 12px 32px rgba(212, 175, 55, 0.2);
-      transform: scale(0.8);
-      transition: transform 0.3s ease;
+      max-width: 380px;
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
-
-    .modal-overlay.active .modal-card {
-      transform: scale(1);
-    }
-
-    .modal-icon {
-      width: 60px;
-      height: 60px;
-      background: rgba(212, 175, 55, 0.15);
-      color: var(--primary);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      margin: 0 auto 16px;
-      border: 1px solid var(--primary);
-    }
-
-    .modal-card h2 {
-      color: var(--primary);
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-
-    .modal-card p {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    .modal-detalhes {
-      background: var(--input-bg);
-      border-radius: 10px;
-      padding: 16px;
-      text-align: left;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    .modal-detalhes div {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      border-bottom: 1px dashed var(--border-color);
-      padding-bottom: 6px;
-    }
-
-    .modal-detalhes div:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .modal-detalhes span {
-      color: var(--text-muted);
-    }
-
-    .modal-detalhes strong {
-      color: var(--text-color);
-    }
-
-    .btn-modal-fechar {
-      width: 100%;
-      padding: 12px;
-      background: var(--primary);
-      color: #000;
+    .btn-close-modal {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
       border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 15px;
+      color: #aaa;
+      font-size: 1.4rem;
       cursor: pointer;
-      transition: opacity 0.2s;
+      line-height: 1;
     }
-
-    .btn-modal-fechar:hover {
-      opacity: 0.9;
-    }
-
-    .toast-erro {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #e74c3c;
+    .btn-close-modal:hover {
       color: #fff;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      display: none;
-      z-index: 10000;
     }
   </style>
 </head>
 <body>
 
-  <!-- BARRA DE ACESSO À ÁREA DO CLIENTE -->
-  <div class="top-bar">
-    <span style="font-size: 0.85rem; color: var(--text-muted);" id="saudacaoCliente">SnapBarber</span>
-    <a href="cliente.html" class="btn-cliente">
+<div class="app-container">
+  
+  <!-- CABEÇALHO COM LOGO -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="logo-barbearia.jpeg" alt="Logo SnapBarber" onerror="this.style.display='none'">
+      <span>SnapBarber</span>
+    </div>
+    <button class="btn-account" onclick="abrirMinhaConta()">
       👤 Minha Conta
-    </a>
+    </button>
   </div>
 
-  <div class="container">
-    <!-- BANNER COM O NOME CORRETO DO ARQUIVO -->
-    <div class="banner-container">
-      <img 
-        src="/banner-barbearia.jpeg" 
-        alt="SnapBarber Banner" 
-        class="banner-img" 
-        onerror="this.onerror=null; this.src='/banner-barbearia.jpg';"
-      >
-    </div>
-
-    <div class="header">
-      <h1>✂️ BARBEARIA STYLE</h1>
+  <!-- TELA DE AGENDAMENTO PRINCIPAL -->
+  <div id="telaAgendamento">
+    <img src="banner-barbearia.jpeg" alt="Barbearia" class="banner-img" onerror="this.style.display='none'">
+    
+    <div class="barber-info">
+      <h2>✂️ BARBEARIA STYLE</h2>
       <p>Seu estilo. Seu momento.</p>
     </div>
 
-    <form id="formAgendamento">
-      <!-- 1. SERVIÇO -->
-      <div class="form-group">
-        <label for="servico">💈 1. Escolha o Serviço</label>
-        <select id="servico" required>
-          <option value="">Carregando serviços...</option>
-        </select>
-      </div>
-
-      <!-- 2. PROFISSIONAL -->
-      <div class="form-group">
-        <label for="barbeiro">👤 2. Escolha o Profissional</label>
-        <select id="barbeiro" required>
-          <option value="">Carregando profissionais...</option>
-        </select>
-      </div>
-
-      <!-- 3. DATA -->
-      <div class="form-group">
-        <label for="data">📅 3. Selecione a Data</label>
-        <input type="date" id="data" required>
-      </div>
-
-      <!-- 4. HORÁRIO -->
-      <div class="form-group">
-        <label>⏰ 4. Selecione o Horário</label>
-        <div class="legenda">
-          <div class="legenda-item"><div class="box-legenda box-livre"></div> Livre</div>
-          <div class="legenda-item"><div class="box-legenda box-selecionado"></div> Selecionado</div>
-          <div class="legenda-item"><div class="box-legenda box-ocupado"></div> Ocupado</div>
-        </div>
-        <div class="horarios-grid" id="horariosGrid">
-          <!-- Gerado via JS -->
-        </div>
-      </div>
-
-      <!-- CLIENTE INFO -->
-      <div class="form-group">
-        <label for="nome">👤 Seu Nome</label>
-        <input type="text" id="nome" placeholder="Digite seu nome completo" required>
-      </div>
-
-      <div class="form-group">
-        <label for="whatsapp">📞 Seu WhatsApp</label>
-        <input type="tel" id="whatsapp" placeholder="(00) 00000-0000" required>
-      </div>
-
-      <button type="submit" id="btnAgendar" class="btn-submit">CONFIRMAR AGENDAMENTO</button>
-    </form>
-  </div>
-
-  <!-- MODAL DE CONFIRMAÇÃO ELEGANTE -->
-  <div class="modal-overlay" id="modalSucesso">
-    <div class="modal-card">
-      <div class="modal-icon">✓</div>
-      <h2>Agendamento Confirmado!</h2>
-      <p>Seu horário foi reservado com sucesso.</p>
-
-      <div class="modal-detalhes">
-        <div><span>Cliente:</span> <strong id="resCliente">-</strong></div>
-        <div><span>Serviço:</span> <strong id="resServico">-</strong></div>
-        <div><span>Profissional:</span> <strong id="resBarbeiro">-</strong></div>
-        <div><span>Data & Hora:</span> <strong id="resDataHora">-</strong></div>
-        <div><span>Valor:</span> <strong id="resValor" style="color: var(--primary);">-</strong></div>
-      </div>
-
-      <button class="btn-modal-fechar" onclick="fecharModal()">OK, ENTENDI</button>
+    <div class="form-group">
+      <label>💈 1. ESCOLHA O SERVIÇO</label>
+      <select id="selectServico">
+        <option value="">Carregando serviços...</option>
+      </select>
     </div>
+
+    <div class="form-group">
+      <label>👤 2. ESCOLHA O PROFISSIONAL</label>
+      <select id="selectProfissional">
+        <option value="">Carregando profissionais...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>📅 3. SELECIONE A DATA</label>
+      <input type="date" id="inputData">
+    </div>
+
+    <div class="form-group">
+      <label>⏰ 4. SELECIONE O HORÁRIO</label>
+      <div class="grid-slots" id="gridHorarios">
+        <!-- Horários via JS -->
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 15px;">
+      <label>📱 SEU WHATSAPP (com DDD)</label>
+      <input type="tel" id="inputWhats" placeholder="(00) 90000-0000">
+    </div>
+
+    <div class="form-group">
+      <label>👤 SEU NOME</label>
+      <input type="text" id="inputNome" placeholder="Ex: João Silva">
+    </div>
+
+    <button class="btn-submit" onclick="confirmarAgendamento()">CONFIRMAR AGENDAMENTO</button>
   </div>
 
-  <div class="toast-erro" id="toastErro"></div>
+  <!-- TELA MINHA CONTA -->
+  <div id="telaMinhaConta" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 id="saudacaoCliente">Olá, Cliente</h3>
+      <button onclick="fazerLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:0.85rem;">Sair da Conta</button>
+    </div>
 
-  <script>
-    let horarioSelecionado = null;
-    let listaServicos = [];
+    <!-- PRÓXIMO AGENDAMENTO -->
+    <div class="card">
+      <div class="card-title">Próximo Agendamento</div>
+      <div id="containerProximoAgendamento">
+        <p style="font-size:0.85rem; color:#aaa;">Nenhum agendamento ativo no momento.</p>
+        <button class="btn-submit" style="margin-top:10px;" onclick="voltarParaAgendamento()">Agendar Agora</button>
+      </div>
+    </div>
 
-    const inputData = document.getElementById('data');
+    <!-- CLUBE DE FIDELIDADE -->
+    <div class="card">
+      <div class="card-title">Clube de Fidelidade</div>
+      <p style="font-size: 0.8rem; color: #aaa;">Pontos Acumulados</p>
+      <div class="pts-badge" id="ptsFidelidade">0 pts</div>
+      <p style="font-size: 0.8rem; color: #d4af37;" id="txtMetaFidelidade">Faltam 100 pontos para ganhar 1 Corte Grátis!</p>
+    </div>
+
+    <!-- HISTÓRICO DE CORTES (REAL) -->
+    <div class="card">
+      <div class="card-title">Histórico de Cortes</div>
+      <div id="containerHistoricoReal">
+        <p style="font-size: 0.85rem; color: #aaa;">Nenhum corte realizado até o momento.</p>
+      </div>
+    </div>
+
+    <button class="btn-submit" style="background:#333; color:#fff;" onclick="voltarParaAgendamento()">Voltar para Agendamento</button>
+  </div>
+
+</div>
+
+<!-- MODAL DE IDENTIFICAÇÃO DO CLIENTE -->
+<div class="modal-overlay" id="modalLogin" style="display: none;" onclick="fecharModalLoginSeClicarFora(event)">
+  <div class="modal-card">
+    <button class="btn-close-modal" onclick="fecharModalLogin()">✕</button>
+    <h3 style="color:#d4af37; margin-bottom: 6px;">Bem-vindo ao SnapBarber</h3>
+    <p style="font-size: 0.85rem; color:#aaa; margin-bottom: 20px;">Digite seu telefone para acessar seus agendamentos e histórico.</p>
+
+    <div class="form-group">
+      <label>Seu Nome</label>
+      <input type="text" id="modalNome" placeholder="Ex: João Silva">
+    </div>
+
+    <div class="form-group">
+      <label>Seu Telefone (WhatsApp)</label>
+      <input type="tel" id="modalWhats" placeholder="(00) 90000-0000">
+    </div>
+
+    <button class="btn-submit" onclick="submeterLoginModal()">Entrar / Cadastrar</button>
+  </div>
+</div>
+
+<script>
+  let horarioselecionado = '';
+
+  document.addEventListener('DOMContentLoaded', () => {
     const hoje = new Date().toISOString().split('T')[0];
-    inputData.min = hoje;
-    inputData.value = hoje;
+    document.getElementById('inputData').value = hoje;
+    
+    carregarServicosEProfissionais();
+    renderizarHorarios();
+  });
 
-    function preencherDadosClienteSalvo() {
-      const clienteSalvo = localStorage.getItem('snap_cliente');
-      if (clienteSalvo) {
-        try {
-          const cliente = JSON.parse(clienteSalvo);
-          if (cliente.nome) document.getElementById('nome').value = cliente.nome;
-          if (cliente.fone) document.getElementById('whatsapp').value = cliente.fone;
-          document.getElementById('saudacaoCliente').textContent = `Olá, ${cliente.nome}`;
-        } catch(e) {}
-      }
+  function carregarServicosEProfissionais() {
+    const servicos = JSON.parse(localStorage.getItem('servicos') || '[]');
+    const profissionais = JSON.parse(localStorage.getItem('profissionais') || '[]');
+
+    const selectS = document.getElementById('selectServico');
+    const selectP = document.getElementById('selectProfissional');
+
+    if (servicos.length > 0) {
+      selectS.innerHTML = servicos.map(s => `<option value="${s.nome}">${s.nome} - R$ ${s.preco}</option>`).join('');
+    } else {
+      selectS.innerHTML = '<option value="Cabelo + Barba">Cabelo + Barba - R$ 70,00</option>';
     }
 
-    function mostrarErro(msg) {
-      const toast = document.getElementById('toastErro');
-      toast.textContent = msg;
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    if (profissionais.length > 0) {
+      selectP.innerHTML = profissionais.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+    } else {
+      selectP.innerHTML = '<option value="Carlos">Carlos</option><option value="Mateus">Mateus</option>';
+    }
+  }
+
+  function renderizarHorarios() {
+    const horarios = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    const grid = document.getElementById('gridHorarios');
+    
+    grid.innerHTML = horarios.map(h => `
+      <div class="slot-btn ${horarioselecionado === h ? 'selected' : ''}" onclick="selecionarHorario('${h}')">
+        ${h}
+      </div>
+    `).join('');
+  }
+
+  function selecionarHorario(h) {
+    horarioselecionado = h;
+    renderizarHorarios();
+  }
+
+  function confirmarAgendamento() {
+    const nome = document.getElementById('inputNome').value.trim();
+    const whats = document.getElementById('inputWhats').value.trim();
+    const servico = document.getElementById('selectServico').value;
+    const profissional = document.getElementById('selectProfissional').value;
+    const data = document.getElementById('inputData').value;
+
+    if (!nome || !whats || !horarioselecionado) {
+      alert('Por favor, preencha seu nome, WhatsApp e selecione um horário!');
+      return;
     }
 
-    async function carregarServicos() {
-      const selectServico = document.getElementById('servico');
-      try {
-        const res = await fetch('/api/servicos');
-        listaServicos = await res.json();
+    const novoAgendamento = {
+      id: Date.now(),
+      cliente: nome,
+      whatsapp: whats,
+      servico: servico,
+      profissional: profissional,
+      data: data,
+      horario: horarioselecionado,
+      status: 'Pendente'
+    };
 
-        if (listaServicos && listaServicos.length > 0) {
-          selectServico.innerHTML = '<option value="">Selecione um serviço...</option>';
-          listaServicos.forEach(s => {
-            const option = document.createElement('option');
-            option.value = s.id;
-            const precoFormatado = Number(s.preco || s.valor || 0).toFixed(2).replace('.', ',');
-            option.textContent = `${s.nome} - R$ ${precoFormatado}`;
-            selectServico.appendChild(option);
-          });
-        } else {
-          selectServico.innerHTML = '<option value="">Nenhum serviço cadastrado</option>';
-        }
-      } catch (err) {
-        console.error('Erro ao carregar serviços:', err);
-        selectServico.innerHTML = '<option value="">Erro ao carregar serviços</option>';
-      }
+    const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+    agendamentos.push(novoAgendamento);
+    localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
+
+    localStorage.setItem('usuarioLogado', JSON.stringify({ nome: nome, whatsapp: whats }));
+
+    alert('Agendamento realizado com sucesso!');
+    exibirTelaMinhaConta(whats, nome);
+  }
+
+  /* LÓGICA DO MODAL DE LOGIN */
+  function abrirMinhaConta() {
+    const user = JSON.parse(localStorage.getItem('usuarioLogado') || 'null');
+    if (user && user.whatsapp) {
+      exibirTelaMinhaConta(user.whatsapp, user.nome);
+    } else {
+      document.getElementById('modalLogin').style.display = 'flex';
+    }
+  }
+
+  function fecharModalLogin() {
+    document.getElementById('modalLogin').style.display = 'none';
+  }
+
+  function fecharModalLoginSeClicarFora(e) {
+    if (e.target.id === 'modalLogin') {
+      fecharModalLogin();
+    }
+  }
+
+  function submeterLoginModal() {
+    const nome = document.getElementById('modalNome').value.trim();
+    const whats = document.getElementById('modalWhats').value.trim();
+
+    if (!whats) {
+      alert('Por favor, informe seu telefone!');
+      return;
     }
 
-    async function carregarProfissionais() {
-      const selectBarbeiro = document.getElementById('barbeiro');
-      try {
-        const res = await fetch('/api/profissionais');
-        const profissionais = await res.json();
+    const nomeFinal = nome || 'Cliente';
+    localStorage.setItem('usuarioLogado', JSON.stringify({ nome: nomeFinal, whatsapp: whats }));
+    fecharModalLogin();
+    exibirTelaMinhaConta(whats, nomeFinal);
+  }
 
-        if (profissionais && profissionais.length > 0) {
-          selectBarbeiro.innerHTML = '<option value="">Selecione o profissional...</option>';
-          profissionais.forEach(p => {
-            const option = document.createElement('option');
-            option.value = p.nome;
-            option.textContent = p.nome;
-            selectBarbeiro.appendChild(option);
-          });
-        } else {
-          selectBarbeiro.innerHTML = '<option value="">Nenhum profissional cadastrado</option>';
-        }
-      } catch (err) {
-        console.error('Erro ao carregar profissionais:', err);
-        selectBarbeiro.innerHTML = '<option value="">Erro ao carregar profissionais</option>';
-      }
+  function exibirTelaMinhaConta(whatsapp, nome) {
+    document.getElementById('telaAgendamento').style.display = 'none';
+    document.getElementById('telaMinhaConta').style.display = 'block';
+
+    document.getElementById('saudacaoCliente').innerText = `Olá, ${nome.toUpperCase()}`;
+
+    const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+
+    // Filtrar dados do cliente
+    const meusAgendamentos = agendamentos.filter(a => a.whatsapp === whatsapp || a.cliente.toLowerCase() === nome.toLowerCase());
+
+    // Próximo agendamento ativo
+    const proximo = meusAgendamentos.find(a => a.status !== 'Concluído' && a.status !== 'Cancelado');
+    const containerProximo = document.getElementById('containerProximoAgendamento');
+
+    if (proximo) {
+      containerProximo.innerHTML = `
+        <div style="background:#181818; padding:12px; border-radius:8px;">
+          <strong style="color:#d4af37;">${proximo.servico}</strong><br>
+          <span style="font-size:0.85rem; color:#fff;">📅 ${proximo.data} às ${proximo.horario}</span><br>
+          <span style="font-size:0.8rem; color:#aaa;">Profissional: ${proximo.profissional}</span>
+        </div>
+      `;
+    } else {
+      containerProximo.innerHTML = `
+        <p style="font-size:0.85rem; color:#aaa;">Nenhum agendamento ativo no momento.</p>
+        <button class="btn-submit" style="margin-top:10px;" onclick="voltarParaAgendamento()">Agendar Agora</button>
+      `;
     }
 
-    async function carregarHorarios() {
-      const grid = document.getElementById('horariosGrid');
-      grid.innerHTML = '';
-      horarioSelecionado = null;
+    // Histórico de cortes concluídos
+    const historicoReal = meusAgendamentos.filter(a => a.status === 'Concluído');
+    const containerHist = document.getElementById('containerHistoricoReal');
 
-      const dataVal = inputData.value;
-      if (!dataVal) return;
-
-      const horasBase = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-      let agendamentosOcupados = [];
-
-      try {
-        const res = await fetch(`/api/agendamentos?data=${dataVal}`);
-        const agendamentos = await res.json();
-        agendamentosOcupados = agendamentos.map(a => a.horario || a.hora);
-      } catch (err) {
-        console.error('Erro ao buscar horários ocupados:', err);
-      }
-
-      horasBase.forEach(hora => {
-        const btn = document.createElement('div');
-        btn.classList.add('horario-btn');
-        btn.textContent = hora;
-
-        if (agendamentosOcupados.includes(hora)) {
-          btn.classList.add('ocupado');
-        } else {
-          btn.addEventListener('click', () => {
-            document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            horarioSelecionado = hora;
-          });
-        }
-
-        grid.appendChild(btn);
-      });
+    if (historicoReal.length === 0) {
+      containerHist.innerHTML = `<p style="font-size:0.85rem; color:#aaa;">Nenhum corte realizado até o momento.</p>`;
+    } else {
+      containerHist.innerHTML = historicoReal.map(item => `
+        <div class="hist-item">
+          <strong>${item.servico}</strong><br>
+          <span style="color:#aaa;">${item.data} às ${item.horario} com ${item.profissional}</span>
+        </div>
+      `).join('');
     }
 
-    inputData.addEventListener('change', carregarHorarios);
+    // Clube de Fidelidade Dinâmico (10 pts por corte concluído)
+    const pontos = historicoReal.length * 10;
+    const faltam = Math.max(0, 100 - pontos);
 
-    document.getElementById('formAgendamento').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    document.getElementById('ptsFidelidade').innerText = `${pontos} pts`;
+    document.getElementById('txtMetaFidelidade').innerText = faltam > 0 
+      ? `Faltam ${faltam} pontos para ganhar 1 Corte Grátis!` 
+      : `🎉 Parabéns! Você já pode resgatar 1 Corte Grátis!`;
+  }
 
-      if (!horarioSelecionado) {
-        mostrarErro('Por favor, selecione um horário disponível!');
-        return;
-      }
+  function voltarParaAgendamento() {
+    document.getElementById('telaMinhaConta').style.display = 'none';
+    document.getElementById('telaAgendamento').style.display = 'block';
+  }
 
-      const servicoId = document.getElementById('servico').value;
-      const servicoObj = listaServicos.find(s => s.id == servicoId);
-      const barbeiro = document.getElementById('barbeiro').value;
-      const data = document.getElementById('data').value;
-      const nome = document.getElementById('nome').value;
-      const whatsapp = document.getElementById('whatsapp').value;
+  function fazerLogout() {
+    localStorage.removeItem('usuarioLogado');
+    voltarParaAgendamento();
+  }
+</script>
 
-      // Guarda os dados no localStorage para agilizar futuros agendamentos
-      localStorage.setItem('snap_cliente', JSON.stringify({ nome: nome, fone: whatsapp }));
-
-      const btnSubmit = document.getElementById('btnAgendar');
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = 'PROCESSANDO...';
-
-      const precoCalculado = servicoObj ? (servicoObj.preco || servicoObj.valor || 0) : 0;
-
-      const payload = {
-        cliente: nome,
-        clienteNome: nome,
-        whatsapp: whatsapp,
-        servico: servicoObj ? servicoObj.nome : 'Serviço',
-        servicoId: servicoId,
-        barbeiro: barbeiro,
-        data: data,
-        horario: horarioSelecionado,
-        preco: precoCalculado
-      };
-
-      try {
-        const res = await fetch('/api/agendamentos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const dataRes = await res.json();
-
-        if (res.ok) {
-          const [ano, mes, dia] = data.split('-');
-          document.getElementById('resCliente').textContent = nome;
-          document.getElementById('resServico').textContent = servicoObj ? servicoObj.nome : 'Serviço';
-          document.getElementById('resBarbeiro').textContent = barbeiro;
-          document.getElementById('resDataHora').textContent = `${dia}/${mes}/${ano} às ${horarioSelecionado}`;
-          document.getElementById('resValor').textContent = `R$ ${Number(precoCalculado).toFixed(2).replace('.', ',')}`;
-
-          document.getElementById('modalSucesso').classList.add('active');
-        } else {
-          mostrarErro('Erro ao agendar: ' + (dataRes.error || 'Erro desconhecido'));
-        }
-      } catch (err) {
-        mostrarErro('Erro de conexão com o servidor.');
-        console.error(err);
-      } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'CONFIRMAR AGENDAMENTO';
-      }
-    });
-
-    function fecharModal() {
-      document.getElementById('modalSucesso').classList.remove('active');
-      location.reload();
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      preencherDadosClienteSalvo();
-      carregarServicos();
-      carregarProfissionais();
-      carregarHorarios();
-    });
-  </script>
-
-  <!-- REGISTO DO SERVICE WORKER PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('SnapBarber PWA ativo!'))
-          .catch(err => console.error('Erro no Service Worker:', err));
-      });
-    }
-  </script>
 </body>
 </html>
