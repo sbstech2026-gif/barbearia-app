@@ -55,7 +55,7 @@
 
   <main class="w-full max-w-md bg-cardBg rounded-2xl border border-gold/20 p-5 sm:p-6 shadow-2xl relative">
     
-    <!-- Header Barbearia -->
+    <!-- Header Barbearia (Sem o botão do Painel) -->
     <header class="flex items-center justify-between pb-4 mb-5 border-b border-gray-800">
       <div class="flex items-center gap-3">
         <img src="logo-barbearia.jpeg" alt="SmartBarber" class="w-12 h-12 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
@@ -65,9 +65,6 @@
           <p class="text-xs text-gray-400">Seu estilo. Seu momento.</p>
         </div>
       </div>
-      <a href="painel.html" class="text-xs bg-gray-800 hover:bg-gray-700 text-gold border border-gold/30 px-3 py-1.5 rounded-lg transition font-semibold">
-        👤 Painel
-      </a>
     </header>
 
     <!-- Banner Promocional -->
@@ -334,7 +331,7 @@
         if (!response.ok) throw new Error('Erro na API');
 
         mostrarToast('Agendamento realizado com sucesso!');
-        setTimeout(() => window.location.href = 'painel.html', 1500);
+        setTimeout(() => location.reload(), 1500);
 
       } catch (err) {
         // Fallback para armazenar localmente caso não haja servidor backend
@@ -342,8 +339,8 @@
         salvos.push(novoAgendamento);
         localStorage.setItem('agendamentos', JSON.stringify(salvos));
 
-        mostrarToast('Agendamento realizado com sucesso (Local)!');
-        setTimeout(() => window.location.href = 'painel.html', 1500);
+        mostrarToast('Agendamento realizado com sucesso!');
+        setTimeout(() => location.reload(), 1500);
       }
     }
 
