@@ -36,10 +36,41 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
+    }
+
+    /* BARRA DE NAVEGAÇÃO / ÁREA DO CLIENTE */
+    .top-bar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 8px 4px;
+    }
+
+    .btn-cliente {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cliente:hover {
+      background-color: var(--primary);
+      color: #000;
     }
 
     .container {
@@ -338,6 +369,14 @@
 </head>
 <body>
 
+  <!-- BARRA DE ACESSO À ÁREA DO CLIENTE -->
+  <div class="top-bar">
+    <span style="font-size: 0.85rem; color: var(--text-muted);" id="saudacaoCliente">SnapBarber</span>
+    <a href="cliente.html" class="btn-cliente">
+      👤 Minha Conta
+    </a>
+  </div>
+
   <div class="container">
     <!-- BANNER COM O NOME CORRETO DO ARQUIVO -->
     <div class="banner-container">
@@ -434,6 +473,18 @@
     const hoje = new Date().toISOString().split('T')[0];
     inputData.min = hoje;
     inputData.value = hoje;
+
+    function preencherDadosClienteSalvo() {
+      const clienteSalvo = localStorage.getItem('snap_cliente');
+      if (clienteSalvo) {
+        try {
+          const cliente = JSON.parse(clienteSalvo);
+          if (cliente.nome) document.getElementById('nome').value = cliente.nome;
+          if (cliente.fone) document.getElementById('whatsapp').value = cliente.fone;
+          document.getElementById('saudacaoCliente').textContent = `Olá, ${cliente.nome}`;
+        } catch(e) {}
+      }
+    }
 
     function mostrarErro(msg) {
       const toast = document.getElementById('toastErro');
@@ -544,6 +595,9 @@
       const nome = document.getElementById('nome').value;
       const whatsapp = document.getElementById('whatsapp').value;
 
+      // Guarda os dados no localStorage para agilizar futuros agendamentos
+      localStorage.setItem('snap_cliente', JSON.stringify({ nome: nome, fone: whatsapp }));
+
       const btnSubmit = document.getElementById('btnAgendar');
       btnSubmit.disabled = true;
       btnSubmit.textContent = 'PROCESSANDO...';
@@ -598,6 +652,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      preencherDadosClienteSalvo();
       carregarServicos();
       carregarProfissionais();
       carregarHorarios();

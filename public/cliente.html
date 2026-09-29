@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapBarber - Minha Conta</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --gold: #d4af37;
+      --gold-hover: #f1c40f;
+      --text-light: #f5f5f5;
+      --text-muted: #aaa;
+      --border-color: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      padding: 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--gold);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    .info-group {
+      margin-bottom: 10px;
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--gold);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    /* Modal de Login */
+    .modal {
+      display: flex;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0 15px 0;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #2a2a2a;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MODAL DE LOGIN / IDENTIFICAÇÃO -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2 style="color: var(--gold); margin-bottom: 10px;">Bem-vindo ao SnapBarber</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Digite seu telefone para acessar seus agendamentos e histórico.</p>
+      
+      <label class="info-label">Seu Nome</label>
+      <input type="text" id="clienteNome" class="input-field" placeholder="Ex: João Silva">
+
+      <label class="info-label">Seu Telefone (WhatsApp)</label>
+      <input type="tel" id="clienteTelefone" class="input-field" placeholder="(00) 90000-0000">
+
+      <button class="btn" onclick="entrarCliente()">Entrar / Cadastrar</button>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO DA ÁREA DO CLIENTE -->
+  <header>
+    <div class="logo">SnapBarber</div>
+    <span id="nomeHeader" style="font-size: 0.9rem; color: var(--text-muted);"></span>
+  </header>
+
+  <!-- PRÓXIMO AGENDAMENTO -->
+  <div class="card">
+    <div class="card-title">Próximo Agendamento</div>
+    <div id="proximoAgendamento">
+      <p style="color: var(--text-muted);">Nenhum agendamento ativo no momento.</p>
+      <a href="index.html" class="btn">Agendar Agora</a>
+    </div>
+  </div>
+
+  <!-- CARTÃO FIDELIDADE -->
+  <div class="card">
+    <div class="card-title">Clube de Fidelidade</div>
+    <div class="info-group">
+      <span class="info-label">Pontos Acumulados</span>
+      <div class="info-value" style="color: var(--gold); font-size: 1.5rem;">40 pts</div>
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted);">Faltam 60 pontos para ganhar 1 Corte Grátis!</p>
+  </div>
+
+  <!-- HISTÓRICO DE SERVIÇOS -->
+  <div class="card">
+    <div class="card-title">Histórico de Cortes</div>
+    <ul id="historicoLista" style="list-style: none;">
+      <li style="border-bottom: 1px solid #333; padding: 8px 0;">
+        <strong>Cabelo + Barba</strong> - R$ 70,00<br>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">12/09/2026 às 15:00 com Carlos</span>
+      </li>
+    </ul>
+  </div>
+
+  <button class="btn btn-outline" onclick="sair()">Sair da Conta</button>
+
+  <script>
+    function entrarCliente() {
+      const nome = document.getElementById('clienteNome').value;
+      const fone = document.getElementById('clienteTelefone').value;
+
+      if (!nome || !fone) {
+        alert('Por favor, preencha seu nome e telefone.');
+        return;
+      }
+
+      const cliente = { nome, fone };
+      localStorage.setItem('snap_cliente', JSON.stringify(cliente));
+      carregarPerfil();
+    }
+
+    function carregarPerfil() {
+      const clienteSalvo = localStorage.getItem('snap_cliente');
+      if (clienteSalvo) {
+        const cliente = JSON.parse(clienteSalvo);
+        document.getElementById('loginModal').style.display = 'none';
+        document.getElementById('nomeHeader').innerText = `Olá, ${cliente.nome}`;
+      } else {
+        document.getElementById('loginModal').style.display = 'flex';
+      }
+    }
+
+    function sair() {
+      localStorage.removeItem('snap_cliente');
+      location.reload();
+    }
+
+    // Inicializar ao carregar a página
+    carregarPerfil();
+  </script>
+</body>
+</html>
