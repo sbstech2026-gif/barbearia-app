@@ -749,6 +749,130 @@
         mostrarToast('Erro ao limpar agenda.', 'erro');
       }
     }
+
   </script>
+
+<!-- ===================== MODAL: NOVO AGENDAMENTO ===================== -->
+<div id="modalNovoAgendamento"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+     aria-hidden="true" role="dialog" aria-labelledby="tituloModalAgendamento">
+
+  <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl">
+
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+      <div>
+        <h2 id="tituloModalAgendamento" class="text-lg font-semibold text-white">Novo Agendamento</h2>
+        <p class="text-sm text-zinc-400">Cadastre um horário manualmente</p>
+      </div>
+      <button type="button" onclick="fecharModalNovoAgendamento()"
+              class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              aria-label="Fechar">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Formulário -->
+    <form id="formNovoAgendamento" onsubmit="salvarAgendamentoManual(event)" class="px-6 py-5 space-y-4" novalidate>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Cliente -->
+        <div class="sm:col-span-2">
+          <label for="agCliente" class="block text-sm font-medium text-zinc-300 mb-1">Cliente *</label>
+          <input type="text" id="agCliente" name="cliente" required placeholder="Nome do cliente"
+                 class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+        </div>
+
+        <!-- WhatsApp -->
+        <div>
+          <label for="agWhatsapp" class="block text-sm font-medium text-zinc-300 mb-1">WhatsApp *</label>
+          <input type="tel" id="agWhatsapp" name="whatsapp" required placeholder="(00) 00000-0000" maxlength="15"
+                 class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+        </div>
+
+        <!-- Barbeiro -->
+        <div>
+          <label for="agBarbeiro" class="block text-sm font-medium text-zinc-300 mb-1">Barbeiro *</label>
+          <select id="agBarbeiro" name="barbeiro" required
+                  class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+            <option value="">Selecione...</option>
+            <option value="João">João</option>
+            <option value="Carlos">Carlos</option>
+            <option value="Rafael">Rafael</option>
+          </select>
+        </div>
+
+        <!-- Data -->
+        <div>
+          <label for="agData" class="block text-sm font-medium text-zinc-300 mb-1">Data *</label>
+          <input type="date" id="agData" name="data" required
+                 class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent [color-scheme:dark]">
+        </div>
+
+        <!-- Horário -->
+        <div>
+          <label for="agHorario" class="block text-sm font-medium text-zinc-300 mb-1">Horário *</label>
+          <input type="time" id="agHorario" name="horario" required step="900"
+                 class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent [color-scheme:dark]">
+        </div>
+
+        <!-- Serviço -->
+        <div>
+          <label for="agServico" class="block text-sm font-medium text-zinc-300 mb-1">Serviço *</label>
+          <select id="agServico" name="servico" required
+                  class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+            <option value="">Selecione...</option>
+            <option value="Corte" data-valor="40">Corte</option>
+            <option value="Barba" data-valor="30">Barba</option>
+            <option value="Corte + Barba" data-valor="60">Corte + Barba</option>
+            <option value="Sobrancelha" data-valor="15">Sobrancelha</option>
+            <option value="Pigmentação" data-valor="50">Pigmentação</option>
+          </select>
+        </div>
+
+        <!-- Valor -->
+        <div>
+          <label for="agValor" class="block text-sm font-medium text-zinc-300 mb-1">Valor (R$) *</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">R$</span>
+            <input type="number" id="agValor" name="valor" required min="0" step="0.01" placeholder="0,00"
+                   class="w-full rounded-lg bg-zinc-800 border border-zinc-700 pl-10 pr-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="sm:col-span-2">
+          <label for="agStatus" class="block text-sm font-medium text-zinc-300 mb-1">Status *</label>
+          <select id="agStatus" name="status" required
+                  class="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+            <option value="Pendente">Pendente</option>
+            <option value="Confirmado" selected>Confirmado</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mensagem de erro -->
+      <p id="agErro" class="hidden text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></p>
+
+      <!-- Rodapé -->
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-zinc-800">
+        <button type="button" onclick="fecharModalNovoAgendamento()"
+                class="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition">
+          Cancelar
+        </button>
+        <button type="submit"
+                class="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold transition">
+          Salvar Agendamento
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- =================== FIM MODAL: NOVO AGENDAMENTO =================== -->
+
 </body>
 </html>
