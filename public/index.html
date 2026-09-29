@@ -148,12 +148,6 @@
       font-weight: bold;
       border-color: #d4af37;
     }
-    .slot-btn.occupied {
-      background: #2e1a1a;
-      color: #666;
-      border-color: #442222;
-      cursor: not-allowed;
-    }
     .btn-submit {
       width: 100%;
       padding: 14px;
@@ -357,23 +351,48 @@
   });
 
   function carregarServicosEProfissionais() {
-    const servicos = JSON.parse(localStorage.getItem('servicos') || '[]');
-    const profissionais = JSON.parse(localStorage.getItem('profissionais') || '[]');
+    // Procura por múltiplas chaves possíveis no localStorage para garantir compatibilidade com o painel
+    const servicosStr = localStorage.getItem('servicos') || localStorage.getItem('snapbarber_servicos') || localStorage.getItem('barber_servicos');
+    const profissionaisStr = localStorage.getItem('profissionais') || localStorage.getItem('snapbarber_profissionais') || localStorage.getItem('barber_profissionais');
+
+    let servicos = servicosStr ? JSON.parse(servicosStr) : [];
+    let profissionais = profissionaisStr ? JSON.parse(profissionaisStr) : [];
+
+    // Se estiver vazio, define serviços e profissionais padrão dinâmicos e salva no localStorage
+    if (servicos.length === 0) {
+      servicos = [
+        { nome: 'Corte Cabelo', preco: '45,00' },
+        { nome: 'Barba Completa', preco: '35,00' },
+        { nome: 'Cabelo + Barba', preco: '70,00' },
+        { nome: 'Acabamento / Pé', preco: '20,00' }
+      ];
+      localStorage.setItem('servicos', JSON.stringify(servicos));
+    }
+
+    if (profissionais.length === 0) {
+      profissionais = [
+        { nome: 'Carlos (Master)' },
+        { nome: 'Mateus (Barbeiro)' },
+        { nome: 'Lucas (Estilista)' }
+      ];
+      localStorage.setItem('profissionais', JSON.stringify(profissionais));
+    }
 
     const selectS = document.getElementById('selectServico');
     const selectP = document.getElementById('selectProfissional');
 
-    if (servicos.length > 0) {
-      selectS.innerHTML = servicos.map(s => `<option value="${s.nome}">${s.nome} - R$ ${s.preco}</option>`).join('');
-    } else {
-      selectS.innerHTML = '<option value="Cabelo + Barba">Cabelo + Barba - R$ 70,00</option>';
-    }
+    // Preenche os serviços suportando objetos com propriedades 'nome'/'titulo'/'price'/'preco'
+    selectS.innerHTML = servicos.map(s => {
+      const nomeServico = s.nome || s.titulo || s.descricao || 'Serviço';
+      const precoServico = s.preco || s.valor || s.price || '0,00';
+      return `<option value="${nomeServico}">${nomeServico} - R$ ${precoServico}</option>`;
+    }).join('');
 
-    if (profissionais.length > 0) {
-      selectP.innerHTML = profissionais.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
-    } else {
-      selectP.innerHTML = '<option value="Carlos">Carlos</option><option value="Mateus">Mateus</option>';
-    }
+    // Preenche os profissionais
+    selectP.innerHTML = profissionais.map(p => {
+      const nomeProf = typeof p === 'string' ? p : (p.nome || p.name || 'Profissional');
+      return `<option value="${nomeProf}">${nomeProf}</option>`;
+    }).join('');
   }
 
   function renderizarHorarios() {
@@ -467,11 +486,8 @@
     document.getElementById('saudacaoCliente').innerText = `Olá, ${nome.toUpperCase()}`;
 
     const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-
-    // Filtrar dados do cliente
     const meusAgendamentos = agendamentos.filter(a => a.whatsapp === whatsapp || a.cliente.toLowerCase() === nome.toLowerCase());
 
-    // Próximo agendamento ativo
     const proximo = meusAgendamentos.find(a => a.status !== 'Concluído' && a.status !== 'Cancelado');
     const containerProximo = document.getElementById('containerProximoAgendamento');
 
@@ -490,7 +506,6 @@
       `;
     }
 
-    // Histórico de cortes concluídos
     const historicoReal = meusAgendamentos.filter(a => a.status === 'Concluído');
     const containerHist = document.getElementById('containerHistoricoReal');
 
@@ -505,7 +520,6 @@
       `).join('');
     }
 
-    // Clube de Fidelidade Dinâmico (10 pts por corte concluído)
     const pontos = historicoReal.length * 10;
     const faltam = Math.max(0, 100 - pontos);
 
