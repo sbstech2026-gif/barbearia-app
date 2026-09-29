@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SnapBarber - Painel da Agenda</title>
+
+  <!-- Configurações do PWA para o Painel do Barbeiro -->
+  <link rel="manifest" href="/manifest-barbeiro.json">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Snap Barbeiro">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -340,7 +349,7 @@
           : '';
 
         const linkWhats = whatsapp ? `https://wa.me/55${whatsappDigits}` : '#';
-        const linkLembrete = whatsapp ? `https://wa.me/55${whatsappDigits}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!` : '';
+        const linkLembrete = whatsapp ? `https://wa.me/55${whatsappDigits}?text=Ol\%C3\%A1\%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor\%C3\%A1rio%20hoje!` : '';
 
         const botaoConcluir = isConcluido
           ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed whitespace-nowrap" title="Já concluído">✅ Concluído</button>`
@@ -465,6 +474,17 @@
       } catch (err) {
         mostrarToast('Erro ao conectar ao servidor', 'erro');
       }
+    }
+  </script>
+
+  <!-- Registo do Service Worker para suporte PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('Service Worker do Painel registrado:', reg.scope))
+          .catch((err) => console.error('Erro ao registrar Service Worker do Painel:', err));
+      });
     }
   </script>
 </body>
