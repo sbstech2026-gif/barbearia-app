@@ -41,51 +41,6 @@
     }
     .nav-tab:hover { color: #D4AF37; background: rgba(212,175,55,0.08); }
     .nav-tab-active { background: #D4AF37; color: #121212; pointer-events: none; }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(2px);
-      z-index: 60;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal-box {
-      background: #1E1E24;
-      border: 1px solid rgba(212,175,55,0.25);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-    .form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #D4AF37;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .form-input {
-      width: 100%;
-      background: #121212;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      transition: border-color .15s;
-    }
-    .form-input:focus { border-color: #D4AF37; }
-    .form-input option { background: #121212; }
   </style>
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen font-sans">
@@ -102,314 +57,698 @@
         <div>
           <p class="text-xs uppercase tracking-widest text-gold font-semibold">SmartBarber</p>
           <h1 class="text-2xl font-bold text-gold">Agenda & Gestão</h1>
-          <p class="text-xs text-gray-400">Painel administrativo do barbeiro</p>
+          <p class="text-xs text-gray-400">Acompanhe os horários, status, clientes e fluxo de caixa em tempo real.</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button onclick="abrirModalNovoAgendamento()" class="bg-gold hover:bg-goldDark text-darkBg font-bold text-sm px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2">
-          <span class="text-lg leading-none">+</span> Novo Agendamento
-        </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="index.html" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-3 py-2 rounded-lg text-xs sm:text-sm transition">➕ Novo Agendamento</a>
+        <button type="button" onclick="limparAgenda()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 font-semibold px-3 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">🗑️ Limpar Agenda</button>
       </div>
     </div>
 
-    <!-- Navegação por abas -->
-    <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
-      <div class="nav-tab nav-tab-active">Agenda</div>
-      <div class="nav-tab">Clientes</div>
-      <div class="nav-tab">Serviços</div>
-      <div class="nav-tab">Financeiro</div>
-      <div class="nav-tab">Configurações</div>
+    <!-- Navegação entre painéis (Abas) -->
+    <nav class="flex flex-wrap items-center gap-1 bg-cardBg p-1.5 rounded-xl border border-gold/20 mb-6 w-fit">
+      <button type="button" id="tab-btn-agenda" onclick="alternarAba('agenda')" class="nav-tab nav-tab-active">🏠 Agenda</button>
+      <button type="button" id="tab-btn-clientes" onclick="alternarAba('clientes')" class="nav-tab">👥 Clientes</button>
+      <a href="servicos.html" class="nav-tab">⚙️ Serviços</a>
+      <a href="profissionais.html" class="nav-tab">💈 Profissionais</a>
+      <a href="financeiro.html" class="nav-tab">📊 Financeiro</a>
+    </nav>
+
+    <!-- ================= ABA: AGENDA ================= -->
+    <div id="aba-agenda">
+      <!-- Resumo do Dia -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+          <span class="text-[11px] text-gray-400 font-semibold block">⏱️ Agendados</span>
+          <span id="resumoAgendados" class="text-2xl font-bold text-amber-400">0</span>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+          <span class="text-[11px] text-gray-400 font-semibold block">✅ Concluídos</span>
+          <span id="resumoConcluidos" class="text-2xl font-bold text-emerald-400">0</span>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+          <span class="text-[11px] text-gray-400 font-semibold block">❌ Cancelados</span>
+          <span id="resumoCancelados" class="text-2xl font-bold text-red-400">0</span>
+        </div>
+        <div class="bg-cardBg p-4 rounded-xl border border-gold/20">
+          <span class="text-[11px] text-gray-400 font-semibold block">💰 Faturamento do Dia</span>
+          <span id="resumoFaturamento" class="text-2xl font-bold text-gold">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- Filtros da Agenda -->
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20 mb-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📅</span>
+            <h2 class="font-bold text-gray-200">Atendimentos</h2>
+            <span id="badgeHoje" class="hidden bg-gold/20 text-gold text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Hoje</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="date" id="filtroData" class="bg-gray-900 border border-gray-700 text-gold rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+            <button type="button" onclick="irParaHoje()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-semibold px-3 py-2 rounded-lg text-sm transition">Hoje</button>
+            <button type="button" onclick="carregarAgendamentos()" class="bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition">Filtrar</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-800">
+          <input type="text" id="filtroBusca" placeholder="🔎 Buscar por cliente ou WhatsApp..." class="flex-1 min-w-[200px] bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold placeholder:text-gray-500">
+          <select id="filtroStatus" class="bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+            <option value="">Todos os status</option>
+            <option value="agendado">⏱️ Agendado</option>
+            <option value="concluido">✅ Concluído</option>
+            <option value="cancelado">❌ Cancelado</option>
+          </select>
+          <select id="filtroBarbeiro" class="bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold">
+            <option value="">Todos os barbeiros</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabela Agenda (Desktop) -->
+      <div class="hidden sm:block bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[1050px] text-left text-sm text-gray-300">
+            <thead class="bg-gray-900/80 text-gold uppercase text-xs tracking-wider border-b border-gold/20">
+              <tr>
+                <th class="py-3 px-4 cursor-pointer select-none hover:text-amber-300" onclick="alternarOrdenacao()">
+                  Horário <span id="setaOrdenacao">▲</span>
+                </th>
+                <th class="py-3 px-4">Data</th>
+                <th class="py-3 px-4">Cliente</th>
+                <th class="py-3 px-4">WhatsApp</th>
+                <th class="py-3 px-4">Serviço</th>
+                <th class="py-3 px-4">Valor</th>
+                <th class="py-3 px-4">Barbeiro</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaCorpo" class="divide-y divide-gray-800">
+              <tr>
+                <td colspan="9" class="text-center py-6 text-gray-500">Carregando agendamentos...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cards Mobile Agenda -->
+      <div id="cardsMobile" class="sm:hidden space-y-3">
+        <div class="text-center py-6 text-gray-500 bg-cardBg rounded-xl border border-gold/20">Carregando agendamentos...</div>
+      </div>
     </div>
 
-    <!-- Conteúdo da agenda (placeholder) -->
-    <div id="agendaContainer" class="bg-cardBg rounded-2xl border border-gold/10 p-6 min-h-[300px]">
-      <p class="text-gray-400 text-sm">Carregando agendamentos...</p>
+    <!-- ================= ABA: CLIENTES (TABELA DE CLIENTES) ================= -->
+    <div id="aba-clientes" class="hidden">
+      <!-- Filtros / Busca de Clientes -->
+      <div class="bg-cardBg p-4 rounded-xl border border-gold/20 mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">👥</span>
+          <h2 class="font-bold text-gray-200">Lista de Clientes Cadastrados</h2>
+        </div>
+        <div class="flex-1 min-w-[240px] max-w-md">
+          <input type="text" id="buscaClienteInput" oninput="filtrarClientesTabela()" placeholder="🔎 Buscar por cliente ou WhatsApp..." class="w-full bg-gray-900 border border-gray-700 text-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gold placeholder:text-gray-500">
+        </div>
+      </div>
+
+      <!-- Tabela Clientes (Desktop) -->
+      <div class="hidden sm:block bg-cardBg rounded-xl border border-gold/20 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-gray-300">
+            <thead class="bg-gray-900/80 text-gold uppercase text-xs tracking-wider border-b border-gold/20">
+              <tr>
+                <th class="py-3 px-4">Cliente</th>
+                <th class="py-3 px-4">WhatsApp</th>
+                <th class="py-3 px-4 text-center">Total de Cortes</th>
+                <th class="py-3 px-4">Total Gasto</th>
+                <th class="py-3 px-4">Última Visita</th>
+                <th class="py-3 px-4 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaClientesCorpo" class="divide-y divide-gray-800">
+              <tr>
+                <td colspan="6" class="text-center py-6 text-gray-500">Carregando clientes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cards Mobile Clientes -->
+      <div id="cardsClientesMobile" class="sm:hidden space-y-3">
+        <div class="text-center py-6 text-gray-500 bg-cardBg rounded-xl border border-gold/20">Carregando clientes...</div>
+      </div>
     </div>
 
   </div>
 
-  <!-- ===================== MODAL: NOVO AGENDAMENTO ===================== -->
-  <div id="modalNovoAgendamento" class="modal-overlay hidden">
-    <div class="modal-box">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gold/10">
-        <h2 class="text-lg font-bold text-gold">Novo Agendamento</h2>
-        <button onclick="fecharModalNovoAgendamento()" class="text-gray-400 hover:text-gold text-2xl leading-none transition">&times;</button>
+  <!-- ================= MODAL HISTÓRICO DE CLIENTE ================= -->
+  <div id="modalHistorico" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-cardBg border border-gold/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+        <div>
+          <h3 id="modalClienteNome" class="text-xl font-bold text-gold">Histórico do Cliente</h3>
+          <p id="modalClienteWhats" class="text-xs text-emerald-400 mt-0.5"></p>
+        </div>
+        <button type="button" onclick="fecharModalHistorico()" class="text-gray-400 hover:text-white text-xl font-bold p-1">&times;</button>
       </div>
 
-      <form id="formNovoAgendamento" class="px-6 py-5 space-y-4" onsubmit="salvarAgendamentoManual(event)">
-
+      <div class="grid grid-cols-2 gap-3 mb-4 bg-gray-900/60 p-3 rounded-xl border border-gray-800">
         <div>
-          <label class="form-label">Nome do Cliente</label>
-          <input type="text" id="agNomeCliente" class="form-input" placeholder="Ex: João Silva" required>
+          <span class="text-[10px] text-gray-400 uppercase font-semibold block">Total de Atendimentos</span>
+          <span id="modalClienteTotalCortes" class="text-lg font-bold text-purple-400">0</span>
         </div>
-
         <div>
-          <label class="form-label">Telefone / WhatsApp</label>
-          <input type="tel" id="agTelefoneCliente" class="form-input" placeholder="(11) 99999-9999" required>
+          <span class="text-[10px] text-gray-400 uppercase font-semibold block">Total Investido</span>
+          <span id="modalClienteTotalGasto" class="text-lg font-bold text-emerald-400">R$ 0,00</span>
         </div>
+      </div>
 
-        <div>
-          <label class="form-label">Serviço</label>
-          <select id="agServico" class="form-input" required>
-            <option value="">Selecione um serviço</option>
-          </select>
-        </div>
+      <h4 class="text-xs font-semibold text-gray-400 uppercase mb-2">Histórico de Visitas:</h4>
+      
+      <div id="modalHistoricoLista" class="overflow-y-auto flex-1 space-y-2 pr-1">
+        <!-- Lista de histórico renderizada dinamicamente -->
+      </div>
 
-        <div>
-          <label class="form-label">Barbeiro</label>
-          <select id="agBarbeiro" class="form-input" required>
-            <option value="">Selecione um barbeiro</option>
-          </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="form-label">Data</label>
-            <input type="date" id="agData" class="form-input" required>
-          </div>
-          <div>
-            <label class="form-label">Horário</label>
-            <input type="time" id="agHorario" class="form-input" required>
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">Observações (opcional)</label>
-          <textarea id="agObservacoes" class="form-input" rows="2" placeholder="Alguma observação sobre o atendimento..."></textarea>
-        </div>
-
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="fecharModalNovoAgendamento()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold text-sm py-3 rounded-xl transition">
-            Cancelar
-          </button>
-          <button type="submit" class="flex-1 bg-gold hover:bg-goldDark text-darkBg font-bold text-sm py-3 rounded-xl transition">
-            Salvar Agendamento
-          </button>
-        </div>
-
-      </form>
+      <div class="mt-5 pt-3 border-t border-gray-800 text-right">
+        <button type="button" onclick="fecharModalHistorico()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-xs font-semibold transition">Fechar</button>
+      </div>
     </div>
   </div>
-  <!-- =================== FIM MODAL: NOVO AGENDAMENTO =================== -->
 
   <script>
-    // ==========================================================
-    // CONFIGURAÇÕES / DADOS SIMULADOS (troque pela sua API real)
-    // ==========================================================
-    const SERVICOS_DISPONIVEIS = [
-      { id: 1, nome: 'Corte de Cabelo', preco: 40 },
-      { id: 2, nome: 'Barba', preco: 30 },
-      { id: 3, nome: 'Corte + Barba', preco: 60 },
-      { id: 4, nome: 'Sobrancelha', preco: 15 }
-    ];
+    let listaAgendamentosMemoria = [];
+    let listaFiltradaAtual = [];
+    let listaClientesGlobal = [];
+    let ordemHorarioAsc = true;
 
-    const BARBEIROS_DISPONIVEIS = [
-      { id: 1, nome: 'Carlos' },
-      { id: 2, nome: 'Rafael' },
-      { id: 3, nome: 'Bruno' }
-    ];
+    document.addEventListener('DOMContentLoaded', () => {
+      irParaHoje(false);
+      carregarAgendamentos();
 
-    let agendamentos = []; // lista em memória - troque por fetch/localStorage/API
+      document.getElementById('filtroBusca').addEventListener('input', aplicarFiltros);
+      document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
+      document.getElementById('filtroBarbeiro').addEventListener('change', aplicarFiltros);
+      document.getElementById('filtroData').addEventListener('change', atualizarBadgeHoje);
+    });
 
-    // ==========================================================
-    // TOAST DE NOTIFICAÇÃO
-    // ==========================================================
+    function hojeISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function irParaHoje(recarregar = true) {
+      document.getElementById('filtroData').value = hojeISO();
+      atualizarBadgeHoje();
+      if (recarregar) carregarAgendamentos();
+    }
+
+    function atualizarBadgeHoje() {
+      const data = document.getElementById('filtroData').value;
+      document.getElementById('badgeHoje').classList.toggle('hidden', data !== hojeISO());
+    }
+
     function mostrarToast(mensagem, tipo = 'sucesso') {
       const toast = document.getElementById('toast');
-      toast.textContent = mensagem;
-      toast.classList.remove('hidden', 'bg-emerald-600', 'bg-red-600');
-      toast.classList.add(tipo === 'sucesso' ? 'bg-emerald-600' : 'bg-red-600');
+      toast.innerText = mensagem;
+      toast.className = tipo === 'erro' 
+        ? 'fixed top-5 right-5 z-50 bg-red-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm transition-all duration-300'
+        : 'fixed top-5 right-5 z-50 bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm transition-all duration-300';
       toast.classList.remove('hidden');
-
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 3000);
+      setTimeout(() => toast.classList.add('hidden'), 3000);
     }
 
-    // ==========================================================
-    // PREENCHER SELECTS DO MODAL (serviços e barbeiros)
-    // ==========================================================
-    function preencherSelectsModal() {
-      const selectServico = document.getElementById('agServico');
-      const selectBarbeiro = document.getElementById('agBarbeiro');
-
-      selectServico.innerHTML = '<option value="">Selecione um serviço</option>' +
-        SERVICOS_DISPONIVEIS.map(s =>
-          `<option value="${s.id}">${s.nome} - R$ ${s.preco.toFixed(2)}</option>`
-        ).join('');
-
-      selectBarbeiro.innerHTML = '<option value="">Selecione um barbeiro</option>' +
-        BARBEIROS_DISPONIVEIS.map(b =>
-          `<option value="${b.id}">${b.nome}</option>`
-        ).join('');
+    function normalizarStatus(status) {
+      const s = (status || 'Agendado').toLowerCase();
+      if (s.includes('conclu') || s.includes('atend')) return 'concluido';
+      if (s.includes('cancel')) return 'cancelado';
+      return 'agendado';
     }
 
-    // ==========================================================
-    // ABRIR MODAL DE NOVO AGENDAMENTO
-    // ==========================================================
-    function abrirModalNovoAgendamento() {
-      const modal = document.getElementById('modalNovoAgendamento');
-      const form = document.getElementById('formNovoAgendamento');
+    function alternarAba(aba) {
+      const btnAgenda = document.getElementById('tab-btn-agenda');
+      const btnClientes = document.getElementById('tab-btn-clientes');
+      const abaAgenda = document.getElementById('aba-agenda');
+      const abaClientes = document.getElementById('aba-clientes');
 
-      // Reseta o formulário sempre que abrir
-      form.reset();
-
-      // Preenche os selects dinamicamente
-      preencherSelectsModal();
-
-      // Define a data mínima como hoje e já sugere a data atual
-      const hoje = new Date().toISOString().split('T')[0];
-      const inputData = document.getElementById('agData');
-      inputData.min = hoje;
-      inputData.value = hoje;
-
-      // Exibe o modal
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden'; // trava scroll do fundo
-
-      // Foco no primeiro campo
-      setTimeout(() => {
-        document.getElementById('agNomeCliente').focus();
-      }, 100);
-    }
-
-    // ==========================================================
-    // FECHAR MODAL DE NOVO AGENDAMENTO
-    // ==========================================================
-    function fecharModalNovoAgendamento() {
-      const modal = document.getElementById('modalNovoAgendamento');
-      modal.classList.add('hidden');
-      document.body.style.overflow = ''; // libera scroll do fundo
-      document.getElementById('formNovoAgendamento').reset();
-    }
-
-    // Fecha o modal ao clicar fora da caixa (no overlay)
-    document.getElementById('modalNovoAgendamento').addEventListener('click', function (e) {
-      if (e.target === this) {
-        fecharModalNovoAgendamento();
+      if (aba === 'clientes') {
+        btnAgenda.classList.remove('nav-tab-active');
+        btnClientes.classList.add('nav-tab-active');
+        abaAgenda.classList.add('hidden');
+        abaClientes.classList.remove('hidden');
+        processarETabelaClientes();
+      } else {
+        btnClientes.classList.remove('nav-tab-active');
+        btnAgenda.classList.add('nav-tab-active');
+        abaClientes.classList.add('hidden');
+        abaAgenda.classList.remove('hidden');
       }
-    });
-
-    // Fecha o modal ao pressionar ESC
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('modalNovoAgendamento');
-        if (!modal.classList.contains('hidden')) {
-          fecharModalNovoAgendamento();
-        }
-      }
-    });
-
-    // ==========================================================
-    // SALVAR AGENDAMENTO MANUAL (envio do formulário)
-    // ==========================================================
-    function salvarAgendamentoManual(event) {
-      event.preventDefault();
-
-      // Captura os valores do formulário
-      const nomeCliente = document.getElementById('agNomeCliente').value.trim();
-      const telefoneCliente = document.getElementById('agTelefoneCliente').value.trim();
-      const servicoId = document.getElementById('agServico').value;
-      const barbeiroId = document.getElementById('agBarbeiro').value;
-      const data = document.getElementById('agData').value;
-      const horario = document.getElementById('agHorario').value;
-      const observacoes = document.getElementById('agObservacoes').value.trim();
-
-      // Validação básica
-      if (!nomeCliente || !telefoneCliente || !servicoId || !barbeiroId || !data || !horario) {
-        mostrarToast('Preencha todos os campos obrigatórios!', 'erro');
-        return;
-      }
-
-      // Busca os objetos completos de serviço e barbeiro selecionados
-      const servico = SERVICOS_DISPONIVEIS.find(s => s.id === parseInt(servicoId));
-      const barbeiro = BARBEIROS_DISPONIVEIS.find(b => b.id === parseInt(barbeiroId));
-
-      // Monta o objeto do novo agendamento
-      const novoAgendamento = {
-        id: Date.now(), // id único simples baseado em timestamp
-        nomeCliente,
-        telefoneCliente,
-        servico: servico ? servico.nome : '',
-        precoServico: servico ? servico.preco : 0,
-        barbeiro: barbeiro ? barbeiro.nome : '',
-        data,
-        horario,
-        observacoes,
-        status: 'confirmado',
-        criadoManualmente: true,
-        criadoEm: new Date().toISOString()
-      };
-
-      // Adiciona à lista em memória
-      agendamentos.push(novoAgendamento);
-
-      // ---- Aqui você integraria com seu backend real, exemplo: ----
-      // fetch('/api/agendamentos', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(novoAgendamento)
-      // })
-      // .then(res => res.json())
-      // .then(() => {
-      //   mostrarToast('Agendamento criado com sucesso!');
-      //   fecharModalNovoAgendamento();
-      //   renderizarAgenda();
-      // })
-      // .catch(() => mostrarToast('Erro ao salvar agendamento.', 'erro'));
-
-      // Simulação local (sem backend):
-      mostrarToast(`Agendamento de ${nomeCliente} criado com sucesso!`);
-      fecharModalNovoAgendamento();
-      renderizarAgenda();
     }
 
-    // ==========================================================
-    // RENDERIZAR LISTA DE AGENDAMENTOS NA TELA
-    // ==========================================================
-    function renderizarAgenda() {
-      const container = document.getElementById('agendaContainer');
+    async function carregarAgendamentos() {
+      const data = document.getElementById('filtroData').value;
+      atualizarBadgeHoje();
+      const tabela = document.getElementById('tabelaCorpo');
+      const cards = document.getElementById('cardsMobile');
 
-      if (agendamentos.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-sm">Nenhum agendamento cadastrado ainda.</p>';
-        return;
+      try {
+        const url = data ? `/api/agendamentos?data=${data}` : '/api/agendamentos';
+        const response = await fetch(url);
+        listaAgendamentosMemoria = await response.json();
+
+        if (!Array.isArray(listaAgendamentosMemoria)) listaAgendamentosMemoria = [];
+
+        popularFiltroBarbeiros();
+        atualizarResumo();
+        aplicarFiltros();
+
+      } catch (err) {
+        console.error(err);
+        tabela.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-red-400">Erro ao carregar os agendamentos.</td></tr>`;
+        cards.innerHTML = `<div class="text-center py-6 text-red-400 bg-cardBg rounded-xl border border-gold/20">Erro ao carregar os agendamentos.</div>`;
       }
+    }
 
-      // Ordena por data e horário
-      const ordenados = [...agendamentos].sort((a, b) => {
-        return new Date(`${a.data}T${a.horario}`) - new Date(`${b.data}T${b.horario}`);
+    function popularFiltroBarbeiros() {
+      const select = document.getElementById('filtroBarbeiro');
+      const valorAtual = select.value;
+
+      const nomes = [...new Set(listaAgendamentosMemoria.map(item => item.barbeiro || item.barbeiroNome).filter(Boolean))].sort();
+
+      select.innerHTML = '<option value="">Todos os barbeiros</option>' +
+        nomes.map(nome => `<option value="${nome}">${nome}</option>`).join('');
+
+      if (nomes.includes(valorAtual)) select.value = valorAtual;
+    }
+
+    function atualizarResumo() {
+      let agendados = 0, concluidos = 0, cancelados = 0, faturamento = 0;
+
+      listaAgendamentosMemoria.forEach(item => {
+        const st = normalizarStatus(item.status);
+        if (st === 'agendado') agendados++;
+        else if (st === 'concluido') {
+          concluidos++;
+          faturamento += parseFloat(item.preco) || 0;
+        } else if (st === 'cancelado') cancelados++;
       });
 
-      container.innerHTML = ordenados.map(ag => `
-        <div class="flex items-center justify-between bg-darkBg border border-gold/10 rounded-xl p-4 mb-3">
-          <div>
-            <p class="font-bold text-gold">${ag.nomeCliente}</p>
-            <p class="text-xs text-gray-400">${ag.telefoneCliente}</p>
-            <p class="text-sm text-gray-300 mt-1">${ag.servico} • Barbeiro: ${ag.barbeiro}</p>
-            ${ag.observacoes ? `<p class="text-xs text-gray-500 mt-1 italic">"${ag.observacoes}"</p>` : ''}
-          </div>
-          <div class="text-right">
-            <p class="text-sm font-semibold text-white">${formatarData(ag.data)}</p>
-            <p class="text-lg font-bold text-gold">${ag.horario}</p>
-            <p class="text-xs text-emerald-400 font-semibold mt-1">R$ ${ag.precoServico.toFixed(2)}</p>
-          </div>
-        </div>
-      `).join('');
+      document.getElementById('resumoAgendados').innerText = agendados;
+      document.getElementById('resumoConcluidos').innerText = concluidos;
+      document.getElementById('resumoCancelados').innerText = cancelados;
+      document.getElementById('resumoFaturamento').innerText = `R$ ${faturamento.toFixed(2).replace('.', ',')}`;
     }
 
-    function formatarData(dataISO) {
-      const [ano, mes, dia] = dataISO.split('-');
-      return `${dia}/${mes}/${ano}`;
+    function alternarOrdenacao() {
+      ordemHorarioAsc = !ordemHorarioAsc;
+      document.getElementById('setaOrdenacao').innerText = ordemHorarioAsc ? '▲' : '▼';
+      aplicarFiltros();
     }
 
-    // ==========================================================
-    // INICIALIZAÇÃO
-    // ==========================================================
-    document.addEventListener('DOMContentLoaded', () => {
-      renderizarAgenda();
-    });
+    function aplicarFiltros() {
+      const termoBusca = document.getElementById('filtroBusca').value.trim().toLowerCase();
+      const termoBuscaDigits = termoBusca.replace(/\D/g, '');
+      const statusSelecionado = document.getElementById('filtroStatus').value;
+      const barbeiroSelecionado = document.getElementById('filtroBarbeiro').value;
+
+      let filtrada = listaAgendamentosMemoria.filter(item => {
+        const nomeCliente = (item.cliente || item.clienteNome || item.nome || '').toLowerCase();
+        const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
+        const barbeiro = item.barbeiro || item.barbeiroNome || '';
+        const status = normalizarStatus(item.status);
+
+        if (termoBusca) {
+          const bateNome = nomeCliente.includes(termoBusca);
+          const bateWhats = termoBuscaDigits && whatsapp.replace(/\D/g, '').includes(termoBuscaDigits);
+          if (!bateNome && !bateWhats) return false;
+        }
+        if (statusSelecionado && status !== statusSelecionado) return false;
+        if (barbeiroSelecionado && barbeiro !== barbeiroSelecionado) return false;
+        return true;
+      });
+
+      filtrada.sort((a, b) => {
+        const ha = a.horario || '';
+        const hb = b.horario || '';
+        return ordemHorarioAsc ? ha.localeCompare(hb) : hb.localeCompare(ha);
+      });
+
+      listaFiltradaAtual = filtrada;
+      renderizarLista(filtrada);
+    }
+
+    function contarOcorrenciasWhatsapp(lista) {
+      const contagem = {};
+      lista.forEach(item => {
+        const w = (item.whatsapp || item.clienteWhatsapp || '').replace(/\D/g, '');
+        if (!w) return;
+        contagem[w] = (contagem[w] || 0) + 1;
+      });
+      return contagem;
+    }
+
+    function renderizarLista(lista) {
+      const tabela = document.getElementById('tabelaCorpo');
+      const cards = document.getElementById('cardsMobile');
+      const ocorrenciasWhatsapp = contarOcorrenciasWhatsapp(listaAgendamentosMemoria);
+
+      if (lista.length === 0) {
+        const msgVazio = listaAgendamentosMemoria.length === 0
+          ? 'Nenhum agendamento encontrado para esta data.'
+          : 'Nenhum agendamento corresponde aos filtros aplicados.';
+        tabela.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">${msgVazio}</td></tr>`;
+        cards.innerHTML = `<div class="text-center py-8 text-gray-500 bg-cardBg rounded-xl border border-gold/20">${msgVazio}</div>`;
+        return;
+      }
+
+      const linhasTabela = [];
+      const cartoesMobile = [];
+
+      lista.forEach((item) => {
+        const indexReal = listaAgendamentosMemoria.indexOf(item);
+        const nomeCliente = item.cliente || item.clienteNome || item.nome || 'Cliente';
+        const whatsapp = item.whatsapp || item.clienteWhatsapp || '';
+        const whatsappDigits = whatsapp.replace(/\D/g, '');
+        const servico = item.servico || item.servicoNome || '-';
+        const barbeiro = item.barbeiro || item.barbeiroNome || '-';
+        const valorFormatado = item.preco ? `R$ ${parseFloat(item.preco).toFixed(2).replace('.', ',')}` : 'R$ 0,00';
+        const status = normalizarStatus(item.status);
+        const isConcluido = status === 'concluido';
+        const isCancelado = status === 'cancelado';
+        const isFinalizado = isConcluido || isCancelado;
+        const recorrente = whatsappDigits && ocorrenciasWhatsapp[whatsappDigits] > 1;
+
+        let badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">⏱️ Agendado</span>';
+        if (isConcluido) {
+          badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-semibold">✅ Concluído</span>';
+        } else if (isCancelado) {
+          badgeStatus = '<span class="inline-flex items-center gap-1 whitespace-nowrap bg-red-500/10 text-red-400 border border-red-700/30 px-2.5 py-1 rounded-full text-xs font-semibold">❌ Cancelado</span>';
+        }
+
+        const badgeRecorrente = recorrente
+          ? '<span class="inline-flex items-center whitespace-nowrap ml-1.5 bg-purple-500/10 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded text-[10px] font-semibold align-middle">🔁 Recorrente</span>'
+          : '';
+
+        const linkWhats = whatsapp ? `https://wa.me/55${whatsappDigits}` : '#';
+        const linkLembrete = whatsapp ? `https://wa.me/55${whatsappDigits}?text=Ol%C3%A1%20${encodeURIComponent(nomeCliente)},%20confirmamos%20seu%20hor%C3%A1rio%20hoje!` : '';
+
+        const botaoConcluir = isConcluido
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2.5 py-1 rounded text-xs font-semibold cursor-not-allowed whitespace-nowrap" title="Já concluído">✅ Concluído</button>`
+          : `<button type="button" onclick="alterarStatusPorIndice(${indexReal}, 'Concluido')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/40 px-2.5 py-1 rounded text-xs transition cursor-pointer font-semibold whitespace-nowrap">Concluir</button>`;
+
+        const botaoCancelar = isCancelado
+          ? `<button type="button" disabled class="bg-gray-800 text-gray-500 border border-gray-700 px-2 py-1 rounded text-xs cursor-not-allowed whitespace-nowrap" title="Já cancelado">❌ Cancelado</button>`
+          : `<button type="button" onclick="confirmarCancelamento(${indexReal})" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50 px-2 py-1 rounded text-xs transition cursor-pointer whitespace-nowrap">Cancelar</button>`;
+
+        const classeLinha = isFinalizado ? 'hover:bg-gray-800/40 transition opacity-60' : 'hover:bg-gray-800/40 transition';
+
+        linhasTabela.push(`
+          <tr class="${classeLinha}">
+            <td class="py-3 px-4 font-bold text-gold whitespace-nowrap">${item.horario || '--:--'}</td>
+            <td class="py-3 px-4 text-xs text-gray-400 whitespace-nowrap">${item.data}</td>
+            <td class="py-3 px-4 font-semibold text-white uppercase whitespace-nowrap">${nomeCliente}${badgeRecorrente}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs inline-flex items-center gap-1">📱 ${whatsapp}</a>` : '-'}
+            </td>
+            <td class="py-3 px-4 text-xs font-medium text-gray-300 uppercase whitespace-nowrap">${servico}</td>
+            <td class="py-3 px-4 font-bold text-emerald-400 text-xs whitespace-nowrap">${valorFormatado}</td>
+            <td class="py-3 px-4 text-xs text-gray-300 uppercase whitespace-nowrap">${barbeiro}</td>
+            <td class="py-3 px-4 whitespace-nowrap">${badgeStatus}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+              <div class="flex items-center justify-center gap-1.5">
+                ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition whitespace-nowrap">📅 Lembrete</a>` : ''}
+                ${botaoConcluir}
+                ${botaoCancelar}
+              </div>
+            </td>
+          </tr>
+        `);
+
+        cartoesMobile.push(`
+          <div class="bg-cardBg rounded-xl border border-gold/20 p-4 ${isFinalizado ? 'opacity-60' : ''}">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-bold text-gold text-lg">${item.horario || '--:--'}</p>
+                <p class="font-semibold text-white uppercase text-sm">${nomeCliente}${badgeRecorrente}</p>
+              </div>
+              ${badgeStatus}
+            </div>
+            <div class="text-xs text-gray-400 space-y-1 mb-3">
+              <p>💈 ${servico} · ${barbeiro}</p>
+              <p class="font-bold text-emerald-400 text-sm">${valorFormatado}</p>
+              ${whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline flex items-center gap-1">📱 ${whatsapp}</a>` : ''}
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${whatsapp ? `<a href="${linkLembrete}" target="_blank" class="bg-emerald-950/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 px-2 py-1 rounded text-xs transition">📅 Lembrete</a>` : ''}
+              ${botaoConcluir}
+              ${botaoCancelar}
+            </div>
+          </div>
+        `);
+      });
+
+      tabela.innerHTML = linhasTabela.join('');
+      cards.innerHTML = cartoesMobile.join('');
+    }
+
+    // ================= LÓGICA DA TABELA DE CLIENTES =================
+
+    async function processarETabelaClientes() {
+      const tbody = document.getElementById('tabelaClientesCorpo');
+      const cardsMobile = document.getElementById('cardsClientesMobile');
+
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-500">Buscando lista completa de clientes...</td></tr>`;
+      cardsMobile.innerHTML = `<div class="text-center py-6 text-gray-500 bg-cardBg rounded-xl border border-gold/20">Buscando lista completa de clientes...</div>`;
+
+      let todosAgendamentos = [];
+
+      try {
+        const response = await fetch('/api/agendamentos');
+        if (response.ok) {
+          todosAgendamentos = await response.json();
+        }
+      } catch (err) {
+        console.warn('Servidor indisponível. Usando memória local.');
+        todosAgendamentos = listaAgendamentosMemoria;
+      }
+
+      if (!Array.isArray(todosAgendamentos) || todosAgendamentos.length === 0) {
+        todosAgendamentos = listaAgendamentosMemoria;
+      }
+
+      const clientesMap = {};
+
+      todosAgendamentos.forEach(ag => {
+        const nome = ag.cliente || ag.clienteNome || ag.nome || 'Cliente sem nome';
+        const whatsapp = ag.whatsapp || ag.clienteWhatsapp || '';
+        const whatsappDigits = whatsapp.replace(/\D/g, '');
+        const chave = whatsappDigits || nome.toLowerCase().trim();
+
+        if (!chave) return;
+
+        if (!clientesMap[chave]) {
+          clientesMap[chave] = {
+            id: chave,
+            nome: nome,
+            whatsapp: whatsapp,
+            whatsappDigits: whatsappDigits,
+            totalCortes: 0,
+            totalGasto: 0,
+            ultimaVisita: ag.data || '1970-01-01',
+            historico: []
+          };
+        }
+
+        const valor = parseFloat(ag.preco || ag.valor || 0) || 0;
+        const status = normalizarStatus(ag.status);
+
+        if (status !== 'cancelado') {
+          clientesMap[chave].totalCortes += 1;
+          clientesMap[chave].totalGasto += valor;
+        }
+
+        if (ag.data && ag.data >= clientesMap[chave].ultimaVisita) {
+          clientesMap[chave].ultimaVisita = ag.data;
+        }
+
+        clientesMap[chave].historico.push({
+          data: ag.data || '-',
+          horario: ag.horario || '--:--',
+          servico: ag.servico || ag.servicoNome || 'Atendimento',
+          barbeiro: ag.barbeiro || ag.barbeiroNome || '-',
+          valor: valor,
+          status: status
+        });
+      });
+
+      Object.values(clientesMap).forEach(c => {
+        c.historico.sort((a, b) => b.data.localeCompare(a.data));
+      });
+
+      listaClientesGlobal = Object.values(clientesMap).sort((a, b) => b.ultimaVisita.localeCompare(a.ultimaVisita));
+      renderizarTabelaClientes(listaClientesGlobal);
+    }
+
+    function renderizarTabelaClientes(lista) {
+      const tbody = document.getElementById('tabelaClientesCorpo');
+      const cardsMobile = document.getElementById('cardsClientesMobile');
+
+      if (lista.length === 0) {
+        const msg = "Nenhum cliente cadastrado ou encontrado.";
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-500">${msg}</td></tr>`;
+        cardsMobile.innerHTML = `<div class="text-center py-6 text-gray-500 bg-cardBg rounded-xl border border-gold/20">${msg}</div>`;
+        return;
+      }
+
+      const linhas = [];
+      const cards = [];
+
+      lista.forEach(cliente => {
+        const valorTotalFormatted = `R$ ${cliente.totalGasto.toFixed(2).replace('.', ',')}`;
+        const dataFormatada = cliente.ultimaVisita !== '1970-01-01' ? cliente.ultimaVisita : '-';
+        const linkWhats = cliente.whatsappDigits ? `https://wa.me/55${cliente.whatsappDigits}` : '#';
+
+        linhas.push(`
+          <tr class="hover:bg-gray-800/40 transition">
+            <td class="py-3 px-4 font-bold text-white uppercase whitespace-nowrap">${cliente.nome}</td>
+            <td class="py-3 px-4 whitespace-nowrap">
+              ${cliente.whatsapp ? `<a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline text-xs inline-flex items-center gap-1">📱 ${cliente.whatsapp}</a>` : '-'}
+            </td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <span class="bg-purple-500/10 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">${cliente.totalCortes} cortes</span>
+            </td>
+            <td class="py-3 px-4 font-bold text-emerald-400 whitespace-nowrap">${valorTotalFormatted}</td>
+            <td class="py-3 px-4 text-xs text-gray-400 whitespace-nowrap">${dataFormatada}</td>
+            <td class="py-3 px-4 text-center whitespace-nowrap">
+              <button type="button" onclick="abrirModalHistorico('${cliente.id}')" class="bg-gold/20 hover:bg-gold/40 text-gold border border-gold/30 px-3 py-1 rounded text-xs transition font-semibold cursor-pointer">📜 Ver Histórico</button>
+            </td>
+          </tr>
+        `);
+
+        cards.push(`
+          <div class="bg-cardBg rounded-xl border border-gold/20 p-4 space-y-2">
+            <div class="flex justify-between items-start">
+              <h3 class="font-bold text-white uppercase text-base">${cliente.nome}</h3>
+              <span class="bg-purple-500/10 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full text-xs font-semibold">${cliente.totalCortes} cortes</span>
+            </div>
+            <div class="text-xs text-gray-400 space-y-1">
+              ${cliente.whatsapp ? `<p>📱 <a href="${linkWhats}" target="_blank" class="text-emerald-400 hover:underline">${cliente.whatsapp}</a></p>` : ''}
+              <p>💰 Total investido: <strong class="text-emerald-400">${valorTotalFormatted}</strong></p>
+              <p>📅 Última visita: ${dataFormatada}</p>
+            </div>
+            <div class="pt-2 border-t border-gray-800">
+              <button type="button" onclick="abrirModalHistorico('${cliente.id}')" class="w-full bg-gold/20 hover:bg-gold/40 text-gold border border-gold/30 py-1.5 rounded text-xs transition font-semibold cursor-pointer">📜 Ver Histórico Completo</button>
+            </div>
+          </div>
+        `);
+      });
+
+      tbody.innerHTML = linhas.join('');
+      cardsMobile.innerHTML = cards.join('');
+    }
+
+    function filtrarClientesTabela() {
+      const busca = document.getElementById('buscaClienteInput').value.trim().toLowerCase();
+      const buscaDigits = busca.replace(/\D/g, '');
+
+      const filtrados = listaClientesGlobal.filter(c => {
+        const bateNome = c.nome.toLowerCase().includes(busca);
+        const bateWhats = buscaDigits && c.whatsappDigits.includes(buscaDigits);
+        return bateNome || bateWhats;
+      });
+
+      renderizarTabelaClientes(filtrados);
+    }
+
+    // ================= MODAL DE HISTÓRICO DE CLIENTE =================
+
+    function abrirModalHistorico(clienteId) {
+      const cliente = listaClientesGlobal.find(c => c.id === clienteId);
+      if (!cliente) return;
+
+      document.getElementById('modalClienteNome').innerText = cliente.nome;
+      document.getElementById('modalClienteWhats').innerText = cliente.whatsapp ? `📱 WhatsApp: ${cliente.whatsapp}` : '';
+      document.getElementById('modalClienteTotalCortes').innerText = cliente.totalCortes;
+      document.getElementById('modalClienteTotalGasto').innerText = `R$ ${cliente.totalGasto.toFixed(2).replace('.', ',')}`;
+
+      const listaDiv = document.getElementById('modalHistoricoLista');
+
+      if (!cliente.historico || cliente.historico.length === 0) {
+        listaDiv.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">Nenhum histórico registrado.</p>`;
+      } else {
+        listaDiv.innerHTML = cliente.historico.map(h => {
+          let stColor = 'text-amber-400';
+          if (h.status === 'concluido') stColor = 'text-emerald-400';
+          if (h.status === 'cancelado') stColor = 'text-red-400';
+
+          return `
+            <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800 flex justify-between items-center text-xs">
+              <div>
+                <p class="font-bold text-gray-200">${h.servico} <span class="font-normal text-gray-400">por ${h.barbeiro}</span></p>
+                <p class="text-gray-500 text-[11px]">${h.data} às ${h.horario}</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-emerald-400">R$ ${h.valor.toFixed(2).replace('.', ',')}</p>
+                <p class="text-[10px] uppercase font-semibold ${stColor}">${h.status}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modalHistorico').classList.remove('hidden');
+    }
+
+    function fecharModalHistorico() {
+      document.getElementById('modalHistorico').classList.add('hidden');
+    }
+
+    // ================= AÇÕES DE STATUS E AGENDAMENTOS =================
+
+    async function alterarStatusPorIndice(index, novoStatus) {
+      const item = listaAgendamentosMemoria[index];
+      if (!item) return;
+
+      item.status = novoStatus;
+
+      try {
+        if (item.id) {
+          await fetch(`/api/agendamentos/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: novoStatus })
+          });
+        }
+        mostrarToast(`Status alterado para ${novoStatus}!`);
+      } catch (err) {
+        console.warn('Atualizado apenas localmente.');
+        mostrarToast('Status atualizado na tela!', 'sucesso');
+      }
+
+      atualizarResumo();
+      aplicarFiltros();
+    }
+
+    function confirmarCancelamento(index) {
+      if (confirm('Tem certeza que deseja cancelar este agendamento?')) {
+        alterarStatusPorIndice(index, 'Cancelado');
+      }
+    }
+
+    async function limparAgenda() {
+      if (!confirm('ATENÇÃO: Tem certeza que deseja apagar os agendamentos da data selecionada?')) return;
+
+      const data = document.getElementById('filtroData').value;
+      try {
+        await fetch(`/api/agendamentos?data=${data}`, { method: 'DELETE' });
+        mostrarToast('Agenda limpa com sucesso!');
+        carregarAgendamentos();
+      } catch (err) {
+        mostrarToast('Erro ao limpar agenda.', 'erro');
+      }
+    }
   </script>
-
 </body>
 </html>
