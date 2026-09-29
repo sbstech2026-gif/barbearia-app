@@ -27,6 +27,515 @@
         }
       }
     }
+
+// =====================================================================
+    // ============ NOVO AGENDAMENTO / GESTÃO DE CLIENTES ==================
+    // =====================================================================
+
+    const CHAVE_STORAGE_AGENDAMENTOS = 'agendamentos';
+    const CHAVE_STORAGE_EXCLUIDOS = 'agendamentos_excluidos';
+    let estadoEdicaoCliente = null; // null = novo agendamento | objeto = editando cliente
+
+    // ---------- Helpers de armazenamento ----------
+    function lerAgendamentosLocal() {
+      try {
+        const dados = JSON.parse(localStorage.getItem(CHAVE_STORAGE_AGENDAMENTOS) || '[]');
+        return Array.isArray(dados) ? dados : [];
+      } catch { return []; }
+    }
+
+    function gravarAgendamentosLocal(lista) {
+      localStorage.setItem(CHAVE_STORAGE_AGENDAMENTOS, JSON.stringify(lista));
+    }
+
+    function lerExcluidos() {
+      try { return new Set(JSON.parse(localStorage.getItem(CHAVE_STORAGE_EXCLUIDOS) || '[]')); }
+      catch { return new Set(); }
+    }
+
+    function gravarExcluidos(conjunto) {
+      localStorage.setItem(CHAVE_STORAGE_EXCLUIDOS, JSON.stringify([...conjunto]));
+    }
+
+    // ---------- Helpers gerais ----------
+    function gerarIdAgendamento() {
+      return 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function digitosWhats(valor) {
+      return String(valor || '').replace(/\D/g, '');
+    }
+
+    function formatarWhatsapp(valor) {
+      const d = digitosWhats(valor).slice(0, 11);
+      if (!d) return '';
+      if (d.length <= 2) return `(${d}`;
+      if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+      if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+      return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+    }
+
+    // Identificador único de um registro (usa id; se não houver, combinação de campos)
+    function chaveRegistro(ag) {
+      if (ag.id !== undefined && ag.id !== null && ag.id !== '') return 'id:' + ag.id;
+      return ['k', ag.data || '', ag.horario || '',
+        digitosWhats(ag.whatsapp || ag.clienteWhatsapp),
+        (ag.cliente || ag.clienteNome || ag.nome || '').toLowerCase().trim()].join('|');
+    }
+
+    // Mesma regra de agrupamento usada em processarETabelaClientes()
+    function chaveClienteDoAgendamento(ag) {
+      const nome = ag.cliente || ag.clienteNome || ag.nome || 'Cliente sem nome';
+      return digitosWhats(ag.whatsapp || ag.clienteWhatsapp) || nome.toLowerCase().trim();
+    }
+
+    function resolverChaveCliente(whatsapp) {
+      const bruto = String(whatsapp || '').trim();
+      if (listaClientesGlobal.some(c => c.id === bruto)) return bruto;
+      return digitosWhats(bruto) || bruto.toLowerCase();
+    }
+
+    async function buscarTodosAgendamentos() {
+      try {
+        const r = await fetch('/api/agendamentos');
+        const dados = await r.json();
+        return Array.isArray(dados) ? dados : [];
+      } catch {
+        return lerAgendamentosLocal();
+      }
+    }
+
+    // ---------- Integração: /api/agendamentos + localStorage ----------
+    // Mescla os agendamentos do servidor (se existir) com os do localStorage,
+    // para que Agenda, Resumo e Clientes enxerguem os cadastros manuais.
+    const _fetchOriginalSB = window.fetch.bind(window);
+
+    window.fetch = async function (input, init = {}) {
+      const urlTexto = typeof input === 'string' ? input : (input && input.url) || '';
+      const url = new URL(urlTexto, location.origin);
+      if (!url.pathname.startsWith('/api/agendamentos')) return _fetchOriginalSB(input, init);
+
+      const metodo = (init.method || (input && input.method) || 'GET').toUpperCase();
+      const idRota = decodeURIComponent(url.pathname.split('/')[3] || '');
+      const dataFiltro = url.searchParams.get('data');
+      const respostaJSON = (dados) => new Response(JSON.stringify(dados), {
+        status: 200, headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (metodo === 'GET') {
+        let remotos = [];
+        try {
+          const r = await _fetchOriginalSB(input, init);
+          if (r.ok) {
+            const j = await r.json();
+            if (Array.isArray(j)) remotos = j;
+          }
+        } catch { /* servidor offline: segue só com localStorage */ }
+
+        const todosLocais = lerAgendamentosLocal();
+        const chavesLocais = new Set(todosLocais.map(chaveRegistro));
+        const excluidos = lerExcluidos();
+
+        const remotosValidos = remotos.filter(a => {
+          const k = chaveRegistro(a);
+          return !excluidos.has(k) && !chavesLocais.has(k);
+        });
+        const locais = todosLocais.filter(a => !dataFiltro || a.data === dataFiltro);
+
+        return respostaJSON([...remotosValidos, ...locais]);
+      }
+
+      if (metodo === 'PATCH' && idRota) {
+        let corpo = {};
+        try { corpo = JSON.parse(init.body || '{}'); } catch {}
+        const lista = lerAgendamentosLocal();
+        const idx = lista.findIndex(a => String(a.id) === idRota);
+        if (idx >= 0) {
+          lista[idx] = { ...lista[idx], ...corpo, atualizadoEm: new Date().toISOString() };
+          gravarAgendamentosLocal(lista);
+        }
+        try { await _fetchOriginalSB(input, init); } catch {}
+        return respostaJSON({ ok: true });
+      }
+
+      if (metodo === 'DELETE') {
+        let lista = lerAgendamentosLocal();
+        if (idRota) lista = lista.filter(a => String(a.id) !== idRota);
+        else if (dataFiltro) lista = lista.filter(a => a.data !== dataFiltro);
+        gravarAgendamentosLocal(lista);
+        try { await _fetchOriginalSB(input, init); } catch {}
+        return respostaJSON({ ok: true });
+      }
+
+      return _fetchOriginalSB(input, init);
+    };
+
+    // ---------- Helpers do formulário ----------
+    function valorCampo(id) {
+      return document.getElementById(id).value;
+    }
+
+    function mostrarErroAgendamento(msg) {
+      const el = document.getElementById('agErro');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function esconderErroAgendamento() {
+      const el = document.getElementById('agErro');
+      el.textContent = '';
+      el.classList.add('hidden');
+    }
+
+    function definirTextosModal(titulo, subtitulo, textoBotao) {
+      const tituloEl = document.getElementById('tituloModalAgendamento');
+      tituloEl.textContent = titulo;
+      if (tituloEl.nextElementSibling) tituloEl.nextElementSibling.textContent = subtitulo;
+      const btn = document.querySelector('#formNovoAgendamento button[type="submit"]');
+      if (btn) btn.textContent = textoBotao;
+    }
+
+    function selecionarOuCriarOpcao(select, valor) {
+      if (!valor) return;
+      if (![...select.options].some(o => o.value === valor)) {
+        select.add(new Option(valor, valor));
+      }
+      select.value = valor;
+    }
+
+    function sincronizarOpcoesBarbeiros() {
+      const select = document.getElementById('agBarbeiro');
+      const existentes = new Set([...select.options].map(o => o.value));
+      [...lerAgendamentosLocal(), ...listaAgendamentosMemoria]
+        .map(a => a.barbeiro || a.barbeiroNome)
+        .filter(n => n && !existentes.has(n))
+        .forEach(n => { select.add(new Option(n, n)); existentes.add(n); });
+    }
+
+    function statusParaSelect(status) {
+      const select = document.getElementById('agStatus');
+      if ([...select.options].some(o => o.value === status)) return status;
+      const st = normalizarStatus(status);
+      if (st === 'concluido') return 'Concluído';
+      if (st === 'cancelado') return 'Cancelado';
+      return 'Confirmado';
+    }
+
+    function exibirModalAgendamento() {
+      const modal = document.getElementById('modalNovoAgendamento');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('overflow-hidden');
+      setTimeout(() => document.getElementById('agCliente').focus(), 50);
+    }
+
+    async function atualizarTelasAposAlteracao() {
+      await carregarAgendamentos();
+      await processarETabelaClientes();
+      const busca = document.getElementById('buscaClienteInput');
+      if (busca && busca.value.trim()) filtrarClientesTabela();
+    }
+
+    // =====================================================================
+    // 1) ABRIR / FECHAR MODAL
+    // =====================================================================
+    function abrirModalNovoAgendamento() {
+      const form = document.getElementById('formNovoAgendamento');
+      form.reset();
+      esconderErroAgendamento();
+      sincronizarOpcoesBarbeiros();
+      estadoEdicaoCliente = null;
+
+      definirTextosModal('Novo Agendamento', 'Cadastre um horário manualmente', 'Salvar Agendamento');
+      document.getElementById('agData').value = document.getElementById('filtroData').value || hojeISO();
+      document.getElementById('agStatus').value = 'Confirmado';
+
+      exibirModalAgendamento();
+    }
+
+    function fecharModalNovoAgendamento() {
+      const modal = document.getElementById('modalNovoAgendamento');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('overflow-hidden');
+      document.getElementById('formNovoAgendamento').reset();
+      esconderErroAgendamento();
+      estadoEdicaoCliente = null;
+    }
+
+    // =====================================================================
+    // 2) SALVAR (NOVO OU EDIÇÃO)
+    // =====================================================================
+    async function salvarAgendamentoManual(event) {
+      event.preventDefault();
+      esconderErroAgendamento();
+
+      const campos = {
+        cliente: valorCampo('agCliente').trim(),
+        whatsapp: formatarWhatsapp(valorCampo('agWhatsapp')),
+        barbeiro: valorCampo('agBarbeiro'),
+        data: valorCampo('agData'),
+        horario: valorCampo('agHorario'),
+        servico: valorCampo('agServico'),
+        preco: parseFloat(String(valorCampo('agValor')).replace(',', '.')),
+        status: valorCampo('agStatus') || 'Confirmado'
+      };
+
+      // Validações
+      if (campos.cliente.length < 2) return mostrarErroAgendamento('Informe o nome do cliente.');
+      const whatsDigitos = digitosWhats(campos.whatsapp);
+      if (whatsDigitos.length < 10 || whatsDigitos.length > 11) return mostrarErroAgendamento('Informe um WhatsApp válido com DDD.');
+      if (!campos.barbeiro) return mostrarErroAgendamento('Selecione o barbeiro.');
+      if (!campos.data) return mostrarErroAgendamento('Informe a data.');
+      if (!campos.horario) return mostrarErroAgendamento('Informe o horário.');
+      if (!campos.servico) return mostrarErroAgendamento('Selecione o serviço.');
+      if (isNaN(campos.preco) || campos.preco < 0) return mostrarErroAgendamento('Informe um valor válido.');
+
+      const listaLocal = lerAgendamentosLocal();
+      const idEmEdicao = estadoEdicaoCliente ? String(estadoEdicaoCliente.agendamentoId) : null;
+
+      // Conflito de horário (mesmo barbeiro, data e horário, não cancelado)
+      if (normalizarStatus(campos.status) !== 'cancelado') {
+        const conflito = [...listaAgendamentosMemoria, ...listaLocal].some(a =>
+          String(a.id) !== idEmEdicao &&
+          (a.barbeiro || a.barbeiroNome) === campos.barbeiro &&
+          a.data === campos.data &&
+          a.horario === campos.horario &&
+          normalizarStatus(a.status) !== 'cancelado'
+        );
+        if (conflito) return mostrarErroAgendamento(`${campos.barbeiro} já possui um agendamento em ${campos.data} às ${campos.horario}.`);
+      }
+
+      const agora = new Date().toISOString();
+
+      if (!estadoEdicaoCliente) {
+        // ----- NOVO -----
+        listaLocal.push({
+          id: gerarIdAgendamento(),
+          ...campos,
+          valor: campos.preco,
+          origem: 'painel',
+          criadoEm: agora
+        });
+        gravarAgendamentosLocal(listaLocal);
+        mostrarToast('✅ Agendamento salvo com sucesso!');
+      } else {
+        // ----- EDIÇÃO -----
+        const { registros, agendamentoId } = estadoEdicaoCliente;
+        const excluidos = lerExcluidos();
+
+        registros.forEach(reg => {
+          const atualizado = { ...reg, cliente: campos.cliente, whatsapp: campos.whatsapp, atualizadoEm: agora };
+          if ('clienteNome' in reg) atualizado.clienteNome = campos.cliente;
+          if ('nome' in reg) atualizado.nome = campos.cliente;
+          if ('clienteWhatsapp' in reg) atualizado.clienteWhatsapp = campos.whatsapp;
+
+          if (String(reg.id) === String(agendamentoId)) {
+            Object.assign(atualizado, campos, { valor: campos.preco });
+          }
+
+          // Registros vindos do servidor sem id: oculta o original e mantém a cópia local
+          if (atualizado._chaveOriginal) {
+            excluidos.add(atualizado._chaveOriginal);
+            delete atualizado._chaveOriginal;
+          }
+
+          const idx = listaLocal.findIndex(a => String(a.id) === String(atualizado.id));
+          if (idx >= 0) listaLocal[idx] = atualizado;
+          else listaLocal.push(atualizado);
+        });
+
+        gravarAgendamentosLocal(listaLocal);
+        gravarExcluidos(excluidos);
+        mostrarToast('✏️ Cliente atualizado com sucesso!');
+      }
+
+      fecharModalNovoAgendamento();
+      await atualizarTelasAposAlteracao();
+    }
+
+    // =====================================================================
+    // 3) DELETAR CLIENTE
+    // =====================================================================
+    async function deletarCliente(whatsapp) {
+      const chave = resolverChaveCliente(whatsapp);
+      const cliente = listaClientesGlobal.find(c => c.id === chave);
+      const nome = cliente ? cliente.nome : 'este cliente';
+
+      if (!confirm(`Excluir ${nome} e TODOS os seus agendamentos?\n\nEssa ação não pode ser desfeita.`)) return;
+
+      const todos = await buscarTodosAgendamentos();
+      const registros = todos.filter(a => chaveClienteDoAgendamento(a) === chave);
+
+      // Remove do localStorage
+      gravarAgendamentosLocal(lerAgendamentosLocal().filter(a => chaveClienteDoAgendamento(a) !== chave));
+
+      // Oculta registros que vieram do servidor
+      const excluidos = lerExcluidos();
+      registros.forEach(r => excluidos.add(chaveRegistro(r)));
+      gravarExcluidos(excluidos);
+
+      // Tenta excluir também no servidor (se existir)
+      await Promise.allSettled(
+        registros
+          .filter(r => r.id && !String(r.id).startsWith('local_'))
+          .map(r => _fetchOriginalSB(`/api/agendamentos/${encodeURIComponent(r.id)}`, { method: 'DELETE' }))
+      );
+
+      fecharModalHistorico();
+      mostrarToast(`🗑️ ${nome} foi removido.`);
+      await atualizarTelasAposAlteracao();
+    }
+
+    // =====================================================================
+    // 4) EDITAR CLIENTE
+    // =====================================================================
+    async function editarCliente(whatsapp) {
+      const chave = resolverChaveCliente(whatsapp);
+      const todos = await buscarTodosAgendamentos();
+
+      const registros = todos
+        .filter(a => chaveClienteDoAgendamento(a) === chave)
+        .map(a => ({ ...a }));
+
+      if (registros.length === 0) {
+        mostrarToast('Cliente não encontrado.', 'erro');
+        return;
+      }
+
+      // Garante id para todos os registros
+      registros.forEach(r => {
+        if (r.id === undefined || r.id === null || r.id === '') {
+          r._chaveOriginal = chaveRegistro(r);
+          r.id = gerarIdAgendamento();
+        }
+      });
+
+      // Agendamento mais recente é o editado por completo
+      registros.sort((a, b) =>
+        `${b.data || ''} ${b.horario || ''}`.localeCompare(`${a.data || ''} ${a.horario || ''}`)
+      );
+      const principal = registros[0];
+
+      const form = document.getElementById('formNovoAgendamento');
+      form.reset();
+      esconderErroAgendamento();
+      sincronizarOpcoesBarbeiros();
+
+      estadoEdicaoCliente = { chave, registros, agendamentoId: principal.id };
+
+      document.getElementById('agCliente').value = principal.cliente || principal.clienteNome || principal.nome || '';
+      document.getElementById('agWhatsapp').value = formatarWhatsapp(principal.whatsapp || principal.clienteWhatsapp || '');
+      selecionarOuCriarOpcao(document.getElementById('agBarbeiro'), principal.barbeiro || principal.barbeiroNome || '');
+      document.getElementById('agData').value = principal.data || '';
+      document.getElementById('agHorario').value = principal.horario || '';
+      selecionarOuCriarOpcao(document.getElementById('agServico'), principal.servico || principal.servicoNome || '');
+      document.getElementById('agValor').value = parseFloat(principal.preco ?? principal.valor ?? 0) || 0;
+      document.getElementById('agStatus').value = statusParaSelect(principal.status);
+
+      definirTextosModal(
+        'Editar Cliente',
+        `Nome/WhatsApp serão aplicados a ${registros.length} registro(s). Os demais campos alteram o atendimento de ${principal.data || '-'} às ${principal.horario || '--:--'}.`,
+        'Salvar Alterações'
+      );
+
+      fecharModalHistorico();
+      exibirModalAgendamento();
+    }
+
+    // =====================================================================
+    // BOTÕES DE EDITAR / EXCLUIR NA TABELA E CARDS DE CLIENTES
+    // =====================================================================
+    function criarBotaoAcaoCliente(texto, classes, handler) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = texto;
+      btn.className = `${classes} px-3 py-1 rounded text-xs transition font-semibold cursor-pointer whitespace-nowrap`;
+      btn.addEventListener('click', handler);
+      return btn;
+    }
+
+    const _renderizarTabelaClientesOriginal = renderizarTabelaClientes;
+    renderizarTabelaClientes = function (lista) {
+      _renderizarTabelaClientesOriginal(lista);
+      if (!Array.isArray(lista) || lista.length === 0) return;
+
+      const linhas = document.querySelectorAll('#tabelaClientesCorpo > tr');
+      const cards = document.querySelectorAll('#cardsClientesMobile > div');
+      const clsEditar = 'bg-sky-950/40 hover:bg-sky-900/60 text-sky-300 border border-sky-700/50';
+      const clsExcluir = 'bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50';
+
+      lista.forEach((cliente, i) => {
+        // Desktop
+        const td = linhas[i] && linhas[i].lastElementChild;
+        if (td) {
+          const wrap = document.createElement('div');
+          wrap.className = 'flex items-center justify-center gap-1.5';
+          wrap.append(...td.childNodes);
+          wrap.append(
+            criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id)),
+            criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id))
+          );
+          td.appendChild(wrap);
+        }
+
+        // Mobile
+        const rodape = cards[i] && cards[i].lastElementChild;
+        if (rodape) {
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-2 gap-2 mt-2';
+          const bEditar = criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id));
+          const bExcluir = criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id));
+          bEditar.classList.add('w-full', 'py-1.5');
+          bExcluir.classList.add('w-full', 'py-1.5');
+          grid.append(bEditar, bExcluir);
+          rodape.appendChild(grid);
+        }
+      });
+    };
+
+    // =====================================================================
+    // EVENTOS DO MODAL (máscara, valor automático, ESC, clique fora)
+    // =====================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('modalNovoAgendamento');
+      const inputWhats = document.getElementById('agWhatsapp');
+      const selectServico = document.getElementById('agServico');
+
+      inputWhats.addEventListener('input', () => {
+        inputWhats.value = formatarWhatsapp(inputWhats.value);
+      });
+
+      selectServico.addEventListener('change', () => {
+        const opcao = selectServico.selectedOptions[0];
+        if (opcao && opcao.dataset.valor) {
+          document.getElementById('agValor').value = opcao.dataset.valor;
+        }
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) fecharModalNovoAgendamento();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) fecharModalNovoAgendamento();
+      });
+
+      // Botão "Novo Cliente" no cabeçalho da aba Clientes
+      const headerClientes = document.querySelector('#aba-clientes > div');
+      if (headerClientes && !document.getElementById('btnNovoClienteAba')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'btnNovoClienteAba';
+        btn.textContent = '➕ Novo Cliente';
+        btn.className = 'bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition cursor-pointer';
+        btn.addEventListener('click', abrirModalNovoAgendamento);
+        headerClientes.appendChild(btn);
+      }
+    });
+
   </script>
   <style>
     .nav-tab {
