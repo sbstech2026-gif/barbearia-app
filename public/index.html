@@ -3,531 +3,359 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SnapBarber - Agendamento</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
+  <title>SmartBarber - Agendamento Online</title>
+
+  <!-- PWA & Favicon -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartBarber">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: '#D4AF37',
+            goldDark: '#AA820A',
+            darkBg: '#121212',
+            cardBg: '#1E1E24'
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background-color: #121212;
-      color: #e0e0e0;
-      display: flex;
-      justify-content: center;
-      padding: 20px 10px;
-      min-height: 100vh;
-    }
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      background: #1e1e1e;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border: 1px solid #2a2a2a;
-      position: relative;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #333;
-      margin-bottom: 20px;
-    }
-    .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .header-logo img {
-      height: 38px;
-      width: auto;
-      border-radius: 8px;
-      object-fit: cover;
-    }
-    .header-logo span {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #d4af37;
-    }
-    .btn-account {
-      background: transparent;
-      border: 1px solid #d4af37;
-      color: #d4af37;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-    .btn-account:hover {
-      background: #d4af37;
-      color: #121212;
-    }
-    .card {
-      background: #252525;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid #333;
-    }
-    .card-title {
-      color: #d4af37;
-      font-size: 1rem;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-    .banner-img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 12px;
-    }
-    .barber-info {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .barber-info h2 {
-      color: #d4af37;
-      font-size: 1.3rem;
-    }
-    .barber-info p {
-      color: #aaa;
-      font-size: 0.85rem;
-    }
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: #d4af37;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    select, input {
-      width: 100%;
-      padding: 12px;
-      background: #181818;
-      border: 1px solid #3d3d3d;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 0.95rem;
-    }
-    select:focus, input:focus {
-      outline: none;
-      border-color: #d4af37;
-    }
-    .grid-slots {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
     .slot-btn {
-      padding: 10px 4px;
-      background: #181818;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 0.85rem;
-      cursor: pointer;
-      text-align: center;
+      transition: all 0.2s ease;
     }
     .slot-btn.selected {
-      background: #d4af37;
-      color: #000;
+      background-color: #D4AF37 !important;
+      color: #121212 !important;
       font-weight: bold;
-      border-color: #d4af37;
+      border-color: #D4AF37 !important;
     }
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background: #d4af37;
-      border: none;
-      border-radius: 8px;
-      color: #000;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    .btn-submit:hover {
-      background: #e5c158;
-    }
-    .pts-badge {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #d4af37;
-      margin: 8px 0;
-    }
-    .hist-item {
-      padding: 10px;
-      background: #181818;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      border-left: 3px solid #d4af37;
-      font-size: 0.85rem;
-    }
-
-    /* MODAL DE LOGIN/IDENTIFICAÇÃO */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.75);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-      padding: 15px;
-    }
-    .modal-card {
-      background: #222;
-      border: 1px solid #333;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 380px;
-      padding: 24px;
-      position: relative;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
-    .btn-close-modal {
-      position: absolute;
-      top: 14px;
-      right: 16px;
-      background: transparent;
-      border: none;
-      color: #aaa;
-      font-size: 1.4rem;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .btn-close-modal:hover {
-      color: #fff;
+    .slot-btn.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
     }
   </style>
 </head>
-<body>
+<body class="bg-darkBg text-gray-100 min-h-screen font-sans flex justify-center items-center p-3 sm:p-6">
 
-<div class="app-container">
-  
-  <!-- CABEÇALHO COM LOGO -->
-  <div class="header">
-    <div class="header-logo">
-      <img src="logo-barbearia.jpeg" alt="Logo SnapBarber" onerror="this.style.display='none'">
-      <span>SnapBarber</span>
-    </div>
-    <button class="btn-account" onclick="abrirMinhaConta()">
-      👤 Minha Conta
-    </button>
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 right-5 z-50 hidden bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm transition-all duration-300">
+    Mensagem aqui!
   </div>
 
-  <!-- TELA DE AGENDAMENTO PRINCIPAL -->
-  <div id="telaAgendamento">
-    <img src="banner-barbearia.jpeg" alt="Barbearia" class="banner-img" onerror="this.style.display='none'">
+  <main class="w-full max-w-md bg-cardBg rounded-2xl border border-gold/20 p-5 sm:p-6 shadow-2xl relative">
     
-    <div class="barber-info">
-      <h2>✂️ BARBEARIA STYLE</h2>
-      <p>Seu estilo. Seu momento.</p>
-    </div>
-
-    <div class="form-group">
-      <label>💈 1. ESCOLHA O SERVIÇO</label>
-      <select id="selectServico">
-        <option value="">Carregando serviços...</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>👤 2. ESCOLHA O PROFISSIONAL</label>
-      <select id="selectProfissional">
-        <option value="">Carregando profissionais...</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>📅 3. SELECIONE A DATA</label>
-      <input type="date" id="inputData">
-    </div>
-
-    <div class="form-group">
-      <label>⏰ 4. SELECIONE O HORÁRIO</label>
-      <div class="grid-slots" id="gridHorarios">
-        <!-- Horários via JS -->
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-top: 15px;">
-      <label>📱 SEU WHATSAPP (com DDD)</label>
-      <input type="tel" id="inputWhats" placeholder="(00) 90000-0000">
-    </div>
-
-    <div class="form-group">
-      <label>👤 SEU NOME</label>
-      <input type="text" id="inputNome" placeholder="Ex: João Silva">
-    </div>
-
-    <button class="btn-submit" onclick="confirmarAgendamento()">CONFIRMAR AGENDAMENTO</button>
-  </div>
-
-  <!-- TELA MINHA CONTA -->
-  <div id="telaMinhaConta" style="display: none;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 id="saudacaoCliente">Olá, Cliente</h3>
-      <button onclick="fazerLogout()" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:0.85rem;">Sair da Conta</button>
-    </div>
-
-    <!-- PRÓXIMO AGENDAMENTO -->
-    <div class="card">
-      <div class="card-title">Próximo Agendamento</div>
-      <div id="containerProximoAgendamento">
-        <p style="font-size:0.85rem; color:#aaa;">Nenhum agendamento ativo no momento.</p>
-        <button class="btn-submit" style="margin-top:10px;" onclick="voltarParaAgendamento()">Agendar Agora</button>
-      </div>
-    </div>
-
-    <!-- CLUBE DE FIDELIDADE -->
-    <div class="card">
-      <div class="card-title">Clube de Fidelidade</div>
-      <p style="font-size: 0.8rem; color: #aaa;">Pontos Acumulados</p>
-      <div class="pts-badge" id="ptsFidelidade">0 pts</div>
-      <p style="font-size: 0.8rem; color: #d4af37;" id="txtMetaFidelidade">Faltam 100 pontos para ganhar 1 Corte Grátis!</p>
-    </div>
-
-    <!-- HISTÓRICO DE CORTES -->
-    <div class="card">
-      <div class="card-title">Histórico de Cortes</div>
-      <div id="containerHistoricoReal">
-        <p style="font-size: 0.85rem; color: #aaa;">Nenhum corte realizado até o momento.</p>
-      </div>
-    </div>
-
-    <button class="btn-submit" style="background:#333; color:#fff;" onclick="voltarParaAgendamento()">Voltar para Agendamento</button>
-  </div>
-
-</div>
-
-<!-- MODAL DE IDENTIFICAÇÃO DO CLIENTE -->
-<div class="modal-overlay" id="modalLogin" style="display: none;" onclick="fecharModalLoginSeClicarFora(event)">
-  <div class="modal-card">
-    <button class="btn-close-modal" onclick="fecharModalLogin()">✕</button>
-    <h3 style="color:#d4af37; margin-bottom: 6px;">Bem-vindo ao SnapBarber</h3>
-    <p style="font-size: 0.85rem; color:#aaa; margin-bottom: 20px;">Digite seu telefone para acessar seus agendamentos e histórico.</p>
-
-    <div class="form-group">
-      <label>Seu Nome</label>
-      <input type="text" id="modalNome" placeholder="Ex: João Silva">
-    </div>
-
-    <div class="form-group">
-      <label>Seu Telefone (WhatsApp)</label>
-      <input type="tel" id="modalWhats" placeholder="(00) 90000-0000">
-    </div>
-
-    <button class="btn-submit" onclick="submeterLoginModal()">Entrar / Cadastrar</button>
-  </div>
-</div>
-
-<script>
-  let horarioselecionado = '';
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const hoje = new Date().toISOString().split('T')[0];
-    document.getElementById('inputData').value = hoje;
-    
-    carregarServicosEProfissionais();
-    renderizarHorarios();
-  });
-
-  function carregarServicosEProfissionais() {
-    const servicos = JSON.parse(localStorage.getItem('servicos') || '[]');
-    const profissionais = JSON.parse(localStorage.getItem('profissionais') || '[]');
-
-    const selectS = document.getElementById('selectServico');
-    const selectP = document.getElementById('selectProfissional');
-
-    // Preenche Serviços cadastrados no Painel
-    if (servicos && servicos.length > 0) {
-      selectS.innerHTML = servicos.map(s => {
-        const nome = s.nome || s.titulo || s.servico || 'Serviço';
-        const preco = s.preco || s.valor || '0.00';
-        return `<option value="${nome}">${nome} - R$ ${preco}</option>`;
-      }).join('');
-    } else {
-      selectS.innerHTML = '<option value="">Nenhum serviço cadastrado</option>';
-    }
-
-    // Preenche Profissionais cadastrados no Painel
-    if (profissionais && profissionais.length > 0) {
-      selectP.innerHTML = profissionais.map(p => {
-        const nome = typeof p === 'string' ? p : (p.nome || p.profissional || 'Profissional');
-        return `<option value="${nome}">${nome}</option>`;
-      }).join('');
-    } else {
-      selectP.innerHTML = '<option value="">Nenhum profissional cadastrado</option>';
-    }
-  }
-
-  function renderizarHorarios() {
-    const horarios = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-    const grid = document.getElementById('gridHorarios');
-    
-    grid.innerHTML = horarios.map(h => `
-      <div class="slot-btn ${horarioselecionado === h ? 'selected' : ''}" onclick="selecionarHorario('${h}')">
-        ${h}
-      </div>
-    `).join('');
-  }
-
-  function selecionarHorario(h) {
-    horarioselecionado = h;
-    renderizarHorarios();
-  }
-
-  function confirmarAgendamento() {
-    const nome = document.getElementById('inputNome').value.trim();
-    const whats = document.getElementById('inputWhats').value.trim();
-    const servico = document.getElementById('selectServico').value;
-    const profissional = document.getElementById('selectProfissional').value;
-    const data = document.getElementById('inputData').value;
-
-    if (!servico) {
-      alert('Selecione um serviço válido (ou cadastre no painel administrativo)!');
-      return;
-    }
-
-    if (!nome || !whats || !horarioselecionado) {
-      alert('Por favor, preencha seu nome, WhatsApp e selecione um horário!');
-      return;
-    }
-
-    const novoAgendamento = {
-      id: Date.now(),
-      cliente: nome,
-      whatsapp: whats,
-      servico: servico,
-      profissional: profissional || 'Geral',
-      data: data,
-      horario: horarioselecionado,
-      status: 'Pendente'
-    };
-
-    const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-    agendamentos.push(novoAgendamento);
-    localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
-
-    localStorage.setItem('usuarioLogado', JSON.stringify({ nome: nome, whatsapp: whats }));
-
-    alert('Agendamento realizado com sucesso!');
-    exibirTelaMinhaConta(whats, nome);
-  }
-
-  /* MODAL LOGIN */
-  function abrirMinhaConta() {
-    const user = JSON.parse(localStorage.getItem('usuarioLogado') || 'null');
-    if (user && user.whatsapp) {
-      exibirTelaMinhaConta(user.whatsapp, user.nome);
-    } else {
-      document.getElementById('modalLogin').style.display = 'flex';
-    }
-  }
-
-  function fecharModalLogin() {
-    document.getElementById('modalLogin').style.display = 'none';
-  }
-
-  function fecharModalLoginSeClicarFora(e) {
-    if (e.target.id === 'modalLogin') {
-      fecharModalLogin();
-    }
-  }
-
-  function submeterLoginModal() {
-    const nome = document.getElementById('modalNome').value.trim();
-    const whats = document.getElementById('modalWhats').value.trim();
-
-    if (!whats) {
-      alert('Por favor, informe seu telefone!');
-      return;
-    }
-
-    const nomeFinal = nome || 'Cliente';
-    localStorage.setItem('usuarioLogado', JSON.stringify({ nome: nomeFinal, whatsapp: whats }));
-    fecharModalLogin();
-    exibirTelaMinhaConta(whats, nomeFinal);
-  }
-
-  function exibirTelaMinhaConta(whatsapp, nome) {
-    document.getElementById('telaAgendamento').style.display = 'none';
-    document.getElementById('telaMinhaConta').style.display = 'block';
-
-    document.getElementById('saudacaoCliente').innerText = `Olá, ${nome.toUpperCase()}`;
-
-    const agendamentos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
-    const meusAgendamentos = agendamentos.filter(a => a.whatsapp === whatsapp || a.cliente.toLowerCase() === nome.toLowerCase());
-
-    const proximo = meusAgendamentos.find(a => a.status !== 'Concluído' && a.status !== 'Cancelado');
-    const containerProximo = document.getElementById('containerProximoAgendamento');
-
-    if (proximo) {
-      containerProximo.innerHTML = `
-        <div style="background:#181818; padding:12px; border-radius:8px;">
-          <strong style="color:#d4af37;">${proximo.servico}</strong><br>
-          <span style="font-size:0.85rem; color:#fff;">📅 ${proximo.data} às ${proximo.horario}</span><br>
-          <span style="font-size:0.8rem; color:#aaa;">Profissional: ${proximo.profissional}</span>
+    <!-- Header Barbearia -->
+    <header class="flex items-center justify-between pb-4 mb-5 border-b border-gray-800">
+      <div class="flex items-center gap-3">
+        <img src="logo-barbearia.jpeg" alt="SmartBarber" class="w-12 h-12 rounded-xl object-cover border border-gold/40 shadow-md" onerror="this.onerror=null; this.src='banner-barbearia.jpeg';">
+        <div>
+          <span class="text-[10px] uppercase tracking-widest text-gold font-bold block">SmartBarber</span>
+          <h1 class="text-xl font-bold text-white leading-tight">Barbearia Style</h1>
+          <p class="text-xs text-gray-400">Seu estilo. Seu momento.</p>
         </div>
-      `;
-    } else {
-      containerProximo.innerHTML = `
-        <p style="font-size:0.85rem; color:#aaa;">Nenhum agendamento ativo no momento.</p>
-        <button class="btn-submit" style="margin-top:10px;" onclick="voltarParaAgendamento()">Agendar Agora</button>
-      `;
-    }
+      </div>
+      <a href="painel.html" class="text-xs bg-gray-800 hover:bg-gray-700 text-gold border border-gold/30 px-3 py-1.5 rounded-lg transition font-semibold">
+        👤 Painel
+      </a>
+    </header>
 
-    const historicoReal = meusAgendamentos.filter(a => a.status === 'Concluído');
-    const containerHist = document.getElementById('containerHistoricoReal');
+    <!-- Banner Promocional -->
+    <div class="mb-5 rounded-xl overflow-hidden border border-gold/30 shadow-lg">
+      <img src="banner-barbearia.jpeg" alt="Banner Barbearia" class="w-full h-32 object-cover" onerror="this.style.display='none';">
+    </div>
 
-    if (historicoReal.length === 0) {
-      containerHist.innerHTML = `<p style="font-size:0.85rem; color:#aaa;">Nenhum corte realizado até o momento.</p>`;
-    } else {
-      containerHist.innerHTML = historicoReal.map(item => `
-        <div class="hist-item">
-          <strong>${item.servico}</strong><br>
-          <span style="color:#aaa;">${item.data} às ${item.horario} com ${item.profissional}</span>
+    <!-- Form de Agendamento -->
+    <form id="formAgendamento" onsubmit="confirmarAgendamento(event)" class="space-y-4">
+
+      <!-- 1. SELEÇÃO DE SERVIÇO -->
+      <div>
+        <label for="selectServico" class="block text-xs font-bold text-gold uppercase tracking-wider mb-1.5">
+          💈 1. Escolha o Serviço
+        </label>
+        <select id="selectServico" required onchange="aoMudarServico()" class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-gold transition">
+          <option value="">Carregando serviços...</option>
+        </select>
+      </div>
+
+      <!-- 2. SELEÇÃO DE PROFISSIONAL -->
+      <div>
+        <label for="selectProfissional" class="block text-xs font-bold text-gold uppercase tracking-wider mb-1.5">
+          👤 2. Escolha o Profissional
+        </label>
+        <select id="selectProfissional" required class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-gold transition">
+          <option value="">Carregando profissionais...</option>
+        </select>
+      </div>
+
+      <!-- 3. SELEÇÃO DE DATA -->
+      <div>
+        <label for="inputData" class="block text-xs font-bold text-gold uppercase tracking-wider mb-1.5">
+          📅 3. Selecione a Data
+        </label>
+        <input type="date" id="inputData" required onchange="carregarHorariosDisponiveis()" class="w-full bg-gray-900 border border-gray-700 text-gold rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-gold transition">
+      </div>
+
+      <!-- 4. SELEÇÃO DE HORÁRIO -->
+      <div>
+        <label class="block text-xs font-bold text-gold uppercase tracking-wider mb-1.5">
+          ⏰ 4. Selecione o Horário
+        </label>
+        <div id="gridHorarios" class="grid grid-cols-4 gap-2">
+          <!-- Horários gerados via JS -->
         </div>
-      `).join('');
+        <input type="hidden" id="inputHorario" required>
+      </div>
+
+      <!-- 5. DADOS DO CLIENTE -->
+      <div class="pt-2 border-t border-gray-800 space-y-3">
+        <div>
+          <label for="inputNome" class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+            👤 Seu Nome Completo
+          </label>
+          <input type="text" id="inputNome" placeholder="Ex: João Silva" required class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-600">
+        </div>
+
+        <div>
+          <label for="inputWhatsapp" class="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-1">
+            📱 Seu WhatsApp (com DDD)
+          </label>
+          <input type="tel" id="inputWhatsapp" placeholder="(00) 90000-0000" maxlength="15" required oninput="aplicarMascaraWhatsapp(this)" class="w-full bg-gray-900 border border-gray-700 text-gray-100 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-600">
+        </div>
+      </div>
+
+      <!-- RESUMO & BOTÃO -->
+      <div class="pt-3">
+        <div class="bg-gray-900/80 p-3 rounded-xl border border-gray-800 mb-4 flex justify-between items-center text-xs">
+          <span class="text-gray-400">Total a pagar no local:</span>
+          <span id="labelValorTotal" class="text-lg font-bold text-gold">R$ 0,00</span>
+        </div>
+
+        <button type="submit" id="btnConfirmar" class="w-full bg-gold hover:bg-amber-500 text-gray-950 font-bold py-3.5 px-4 rounded-xl shadow-lg transition duration-200 uppercase tracking-wider text-sm">
+          ✅ Confirmar Agendamento
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <script>
+    const HORARIOS_PADRAO = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    let servicosCache = [];
+    let profissionaisCache = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Ajusta data mínima para hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      const inputData = document.getElementById('inputData');
+      inputData.min = hoje;
+      inputData.value = hoje;
+
+      // Carrega dados dinâmicos das tabelas
+      inicializarDados();
+    });
+
+    async function inicializarDados() {
+      await Promise.all([carregarServicos(), carregarProfissionais()]);
+      carregarHorariosDisponiveis();
     }
 
-    const pontos = historicoReal.length * 10;
-    const faltam = Math.max(0, 100 - pontos);
+    // 1. Carrega serviços salvos da API ou LocalStorage
+    async function carregarServicos() {
+      const select = document.getElementById('selectServico');
+      
+      try {
+        const res = await fetch('/api/servicos');
+        if (res.ok) {
+          servicosCache = await res.json();
+        } else {
+          throw new Error();
+        }
+      } catch (err) {
+        servicosCache = JSON.parse(localStorage.getItem('servicos') || '[]');
+      }
 
-    document.getElementById('ptsFidelidade').innerText = `${pontos} pts`;
-    document.getElementById('txtMetaFidelidade').innerText = faltam > 0 
-      ? `Faltam ${faltam} pontos para ganhar 1 Corte Grátis!` 
-      : `🎉 Parabéns! Você já pode resgatar 1 Corte Grátis!`;
-  }
+      if (!Array.isArray(servicosCache) || servicosCache.length === 0) {
+        select.innerHTML = '<option value="">Nenhum serviço cadastrado</option>';
+        document.getElementById('labelValorTotal').innerText = 'R$ 0,00';
+        return;
+      }
 
-  function voltarParaAgendamento() {
-    document.getElementById('telaMinhaConta').style.display = 'none';
-    document.getElementById('telaAgendamento').style.display = 'block';
-  }
+      select.innerHTML = servicosCache.map(s => {
+        const valor = parseFloat(s.preco || s.valor || 0);
+        const valorFmt = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        return `<option value="${s.id || s.nome}" data-nome="${s.nome}" data-preco="${valor}">${s.nome} - ${valorFmt}</option>`;
+      }).join('');
 
-  function fazerLogout() {
-    localStorage.removeItem('usuarioLogado');
-    voltarParaAgendamento();
-  }
-</script>
+      aoMudarServico();
+    }
 
+    // 2. Carrega profissionais salvos da API ou LocalStorage
+    async function carregarProfissionais() {
+      const select = document.getElementById('selectProfissional');
+
+      try {
+        const res = await fetch('/api/profissionais');
+        if (res.ok) {
+          profissionaisCache = await res.json();
+        } else {
+          throw new Error();
+        }
+      } catch (err) {
+        profissionaisCache = JSON.parse(localStorage.getItem('profissionais') || '[]');
+      }
+
+      if (!Array.isArray(profissionaisCache) || profissionaisCache.length === 0) {
+        select.innerHTML = '<option value="">Nenhum profissional disponível</option>';
+        return;
+      }
+
+      select.innerHTML = profissionaisCache.map(p => {
+        const especialidade = p.especialidade ? ` (${p.especialidade})` : '';
+        return `<option value="${p.id || p.nome}" data-nome="${p.nome}">${p.nome}${especialidade}</option>`;
+      }).join('');
+    }
+
+    // Atualiza o valor exibido no resumo
+    function aoMudarServico() {
+      const select = document.getElementById('selectServico');
+      const option = select.options[select.selectedIndex];
+      if (!option) return;
+
+      const preco = parseFloat(option.getAttribute('data-preco') || 0);
+      document.getElementById('labelValorTotal').innerText = `R$ ${preco.toFixed(2).replace('.', ',')}`;
+    }
+
+    // Renderiza grid de horários
+    async function carregarHorariosDisponiveis() {
+      const grid = document.getElementById('gridHorarios');
+      const dataSel = document.getElementById('inputData').value;
+      document.getElementById('inputHorario').value = '';
+
+      if (!dataSel) {
+        grid.innerHTML = '<p class="col-span-4 text-xs text-center text-gray-500 py-2">Selecione uma data</p>';
+        return;
+      }
+
+      let agendamentosDoDia = [];
+      try {
+        const res = await fetch(`/api/agendamentos?data=${dataSel}`);
+        if (res.ok) agendamentosDoDia = await res.json();
+      } catch (e) {
+        agendamentosDoDia = [];
+      }
+
+      const ocupados = agendamentosDoDia
+        .filter(a => (a.status || '').toLowerCase() !== 'cancelado')
+        .map(a => a.horario);
+
+      grid.innerHTML = HORARIOS_PADRAO.map(h => {
+        const isOcupado = ocupados.includes(h);
+        return `
+          <button type="button" 
+                  onclick="selecionarHorario(this, '${h}')"
+                  class="slot-btn text-xs py-2 px-1 rounded-lg border border-gray-700 bg-gray-900 text-gray-300 hover:border-gold hover:text-gold ${isOcupado ? 'disabled' : ''}">
+            ${h}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selecionarHorario(btn, horario) {
+      document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('inputHorario').value = horario;
+    }
+
+    // Máscara para WhatsApp: (XX) XXXXX-XXXX
+    function aplicarMascaraWhatsapp(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+
+      if (v.length > 6) {
+        input.value = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
+      } else if (v.length > 2) {
+        input.value = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+      } else if (v.length > 0) {
+        input.value = `(${v.slice(0, 2)}`;
+      } else {
+        input.value = '';
+      }
+    }
+
+    // Envio do formulário
+    async function confirmarAgendamento(e) {
+      e.preventDefault();
+
+      const horario = document.getElementById('inputHorario').value;
+      if (!horario) {
+        mostrarToast('Por favor, selecione um horário!', 'erro');
+        return;
+      }
+
+      const selectServico = document.getElementById('selectServico');
+      const optionServico = selectServico.options[selectServico.selectedIndex];
+
+      const selectProfissional = document.getElementById('selectProfissional');
+      const optionProfissional = selectProfissional.options[selectProfissional.selectedIndex];
+
+      const novoAgendamento = {
+        cliente: document.getElementById('inputNome').value.trim(),
+        whatsapp: document.getElementById('inputWhatsapp').value.trim(),
+        servico: optionServico ? optionServico.getAttribute('data-nome') : selectServico.value,
+        preco: optionServico ? parseFloat(optionServico.getAttribute('data-preco') || 0) : 0,
+        barbeiro: optionProfissional ? optionProfissional.getAttribute('data-nome') : selectProfissional.value,
+        data: document.getElementById('inputData').value,
+        horario: horario,
+        status: 'Agendado'
+      };
+
+      const btn = document.getElementById('btnConfirmar');
+      btn.disabled = true;
+      btn.innerText = 'Agendando...';
+
+      try {
+        const response = await fetch('/api/agendamentos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(novoAgendamento)
+        });
+
+        if (!response.ok) throw new Error('Erro na API');
+
+        mostrarToast('Agendamento realizado com sucesso!');
+        setTimeout(() => window.location.href = 'painel.html', 1500);
+
+      } catch (err) {
+        // Fallback para armazenar localmente caso não haja servidor backend
+        const salvos = JSON.parse(localStorage.getItem('agendamentos') || '[]');
+        salvos.push(novoAgendamento);
+        localStorage.setItem('agendamentos', JSON.stringify(salvos));
+
+        mostrarToast('Agendamento realizado com sucesso (Local)!');
+        setTimeout(() => window.location.href = 'painel.html', 1500);
+      }
+    }
+
+    function mostrarToast(msg, tipo = 'sucesso') {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = tipo === 'erro'
+        ? 'fixed top-5 right-5 z-50 bg-red-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm'
+        : 'fixed top-5 right-5 z-50 bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-lg text-sm';
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+  </script>
 </body>
 </html>
