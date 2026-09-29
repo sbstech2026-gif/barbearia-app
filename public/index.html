@@ -305,7 +305,7 @@
       <p style="font-size: 0.8rem; color: #d4af37;" id="txtMetaFidelidade">Faltam 100 pontos para ganhar 1 Corte Grátis!</p>
     </div>
 
-    <!-- HISTÓRICO DE CORTES (REAL) -->
+    <!-- HISTÓRICO DE CORTES -->
     <div class="card">
       <div class="card-title">Histórico de Cortes</div>
       <div id="containerHistoricoReal">
@@ -351,48 +351,32 @@
   });
 
   function carregarServicosEProfissionais() {
-    // Procura por múltiplas chaves possíveis no localStorage para garantir compatibilidade com o painel
-    const servicosStr = localStorage.getItem('servicos') || localStorage.getItem('snapbarber_servicos') || localStorage.getItem('barber_servicos');
-    const profissionaisStr = localStorage.getItem('profissionais') || localStorage.getItem('snapbarber_profissionais') || localStorage.getItem('barber_profissionais');
-
-    let servicos = servicosStr ? JSON.parse(servicosStr) : [];
-    let profissionais = profissionaisStr ? JSON.parse(profissionaisStr) : [];
-
-    // Se estiver vazio, define serviços e profissionais padrão dinâmicos e salva no localStorage
-    if (servicos.length === 0) {
-      servicos = [
-        { nome: 'Corte Cabelo', preco: '45,00' },
-        { nome: 'Barba Completa', preco: '35,00' },
-        { nome: 'Cabelo + Barba', preco: '70,00' },
-        { nome: 'Acabamento / Pé', preco: '20,00' }
-      ];
-      localStorage.setItem('servicos', JSON.stringify(servicos));
-    }
-
-    if (profissionais.length === 0) {
-      profissionais = [
-        { nome: 'Carlos (Master)' },
-        { nome: 'Mateus (Barbeiro)' },
-        { nome: 'Lucas (Estilista)' }
-      ];
-      localStorage.setItem('profissionais', JSON.stringify(profissionais));
-    }
+    const servicos = JSON.parse(localStorage.getItem('servicos') || '[]');
+    const profissionais = JSON.parse(localStorage.getItem('profissionais') || '[]');
 
     const selectS = document.getElementById('selectServico');
     const selectP = document.getElementById('selectProfissional');
 
-    // Preenche os serviços suportando objetos com propriedades 'nome'/'titulo'/'price'/'preco'
-    selectS.innerHTML = servicos.map(s => {
-      const nomeServico = s.nome || s.titulo || s.descricao || 'Serviço';
-      const precoServico = s.preco || s.valor || s.price || '0,00';
-      return `<option value="${nomeServico}">${nomeServico} - R$ ${precoServico}</option>`;
-    }).join('');
+    // Preenche Serviços cadastrados no Painel
+    if (servicos && servicos.length > 0) {
+      selectS.innerHTML = servicos.map(s => {
+        const nome = s.nome || s.titulo || s.servico || 'Serviço';
+        const preco = s.preco || s.valor || '0.00';
+        return `<option value="${nome}">${nome} - R$ ${preco}</option>`;
+      }).join('');
+    } else {
+      selectS.innerHTML = '<option value="">Nenhum serviço cadastrado</option>';
+    }
 
-    // Preenche os profissionais
-    selectP.innerHTML = profissionais.map(p => {
-      const nomeProf = typeof p === 'string' ? p : (p.nome || p.name || 'Profissional');
-      return `<option value="${nomeProf}">${nomeProf}</option>`;
-    }).join('');
+    // Preenche Profissionais cadastrados no Painel
+    if (profissionais && profissionais.length > 0) {
+      selectP.innerHTML = profissionais.map(p => {
+        const nome = typeof p === 'string' ? p : (p.nome || p.profissional || 'Profissional');
+        return `<option value="${nome}">${nome}</option>`;
+      }).join('');
+    } else {
+      selectP.innerHTML = '<option value="">Nenhum profissional cadastrado</option>';
+    }
   }
 
   function renderizarHorarios() {
@@ -418,6 +402,11 @@
     const profissional = document.getElementById('selectProfissional').value;
     const data = document.getElementById('inputData').value;
 
+    if (!servico) {
+      alert('Selecione um serviço válido (ou cadastre no painel administrativo)!');
+      return;
+    }
+
     if (!nome || !whats || !horarioselecionado) {
       alert('Por favor, preencha seu nome, WhatsApp e selecione um horário!');
       return;
@@ -428,7 +417,7 @@
       cliente: nome,
       whatsapp: whats,
       servico: servico,
-      profissional: profissional,
+      profissional: profissional || 'Geral',
       data: data,
       horario: horarioselecionado,
       status: 'Pendente'
@@ -444,7 +433,7 @@
     exibirTelaMinhaConta(whats, nome);
   }
 
-  /* LÓGICA DO MODAL DE LOGIN */
+  /* MODAL LOGIN */
   function abrirMinhaConta() {
     const user = JSON.parse(localStorage.getItem('usuarioLogado') || 'null');
     if (user && user.whatsapp) {
