@@ -41,6 +41,51 @@
     }
     .nav-tab:hover { color: #D4AF37; background: rgba(212,175,55,0.08); }
     .nav-tab-active { background: #D4AF37; color: #121212; pointer-events: none; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(2px);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #1E1E24;
+      border: 1px solid rgba(212,175,55,0.25);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #D4AF37;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .form-input {
+      width: 100%;
+      background: #121212;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-input:focus { border-color: #D4AF37; }
+    .form-input option { background: #121212; }
   </style>
 </head>
 <body class="bg-darkBg text-gray-100 min-h-screen font-sans">
@@ -57,4 +102,314 @@
         <div>
           <p class="text-xs uppercase tracking-widest text-gold font-semibold">SmartBarber</p>
           <h1 class="text-2xl font-bold text-gold">Agenda & Gestão</h1>
-          <p class="text-xs
+          <p class="text-xs text-gray-400">Painel administrativo do barbeiro</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="abrirModalNovoAgendamento()" class="bg-gold hover:bg-goldDark text-darkBg font-bold text-sm px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2">
+          <span class="text-lg leading-none">+</span> Novo Agendamento
+        </button>
+      </div>
+    </div>
+
+    <!-- Navegação por abas -->
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <div class="nav-tab nav-tab-active">Agenda</div>
+      <div class="nav-tab">Clientes</div>
+      <div class="nav-tab">Serviços</div>
+      <div class="nav-tab">Financeiro</div>
+      <div class="nav-tab">Configurações</div>
+    </div>
+
+    <!-- Conteúdo da agenda (placeholder) -->
+    <div id="agendaContainer" class="bg-cardBg rounded-2xl border border-gold/10 p-6 min-h-[300px]">
+      <p class="text-gray-400 text-sm">Carregando agendamentos...</p>
+    </div>
+
+  </div>
+
+  <!-- ===================== MODAL: NOVO AGENDAMENTO ===================== -->
+  <div id="modalNovoAgendamento" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gold/10">
+        <h2 class="text-lg font-bold text-gold">Novo Agendamento</h2>
+        <button onclick="fecharModalNovoAgendamento()" class="text-gray-400 hover:text-gold text-2xl leading-none transition">&times;</button>
+      </div>
+
+      <form id="formNovoAgendamento" class="px-6 py-5 space-y-4" onsubmit="salvarAgendamentoManual(event)">
+
+        <div>
+          <label class="form-label">Nome do Cliente</label>
+          <input type="text" id="agNomeCliente" class="form-input" placeholder="Ex: João Silva" required>
+        </div>
+
+        <div>
+          <label class="form-label">Telefone / WhatsApp</label>
+          <input type="tel" id="agTelefoneCliente" class="form-input" placeholder="(11) 99999-9999" required>
+        </div>
+
+        <div>
+          <label class="form-label">Serviço</label>
+          <select id="agServico" class="form-input" required>
+            <option value="">Selecione um serviço</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Barbeiro</label>
+          <select id="agBarbeiro" class="form-input" required>
+            <option value="">Selecione um barbeiro</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Data</label>
+            <input type="date" id="agData" class="form-input" required>
+          </div>
+          <div>
+            <label class="form-label">Horário</label>
+            <input type="time" id="agHorario" class="form-input" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Observações (opcional)</label>
+          <textarea id="agObservacoes" class="form-input" rows="2" placeholder="Alguma observação sobre o atendimento..."></textarea>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="fecharModalNovoAgendamento()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold text-sm py-3 rounded-xl transition">
+            Cancelar
+          </button>
+          <button type="submit" class="flex-1 bg-gold hover:bg-goldDark text-darkBg font-bold text-sm py-3 rounded-xl transition">
+            Salvar Agendamento
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+  <!-- =================== FIM MODAL: NOVO AGENDAMENTO =================== -->
+
+  <script>
+    // ==========================================================
+    // CONFIGURAÇÕES / DADOS SIMULADOS (troque pela sua API real)
+    // ==========================================================
+    const SERVICOS_DISPONIVEIS = [
+      { id: 1, nome: 'Corte de Cabelo', preco: 40 },
+      { id: 2, nome: 'Barba', preco: 30 },
+      { id: 3, nome: 'Corte + Barba', preco: 60 },
+      { id: 4, nome: 'Sobrancelha', preco: 15 }
+    ];
+
+    const BARBEIROS_DISPONIVEIS = [
+      { id: 1, nome: 'Carlos' },
+      { id: 2, nome: 'Rafael' },
+      { id: 3, nome: 'Bruno' }
+    ];
+
+    let agendamentos = []; // lista em memória - troque por fetch/localStorage/API
+
+    // ==========================================================
+    // TOAST DE NOTIFICAÇÃO
+    // ==========================================================
+    function mostrarToast(mensagem, tipo = 'sucesso') {
+      const toast = document.getElementById('toast');
+      toast.textContent = mensagem;
+      toast.classList.remove('hidden', 'bg-emerald-600', 'bg-red-600');
+      toast.classList.add(tipo === 'sucesso' ? 'bg-emerald-600' : 'bg-red-600');
+      toast.classList.remove('hidden');
+
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    // ==========================================================
+    // PREENCHER SELECTS DO MODAL (serviços e barbeiros)
+    // ==========================================================
+    function preencherSelectsModal() {
+      const selectServico = document.getElementById('agServico');
+      const selectBarbeiro = document.getElementById('agBarbeiro');
+
+      selectServico.innerHTML = '<option value="">Selecione um serviço</option>' +
+        SERVICOS_DISPONIVEIS.map(s =>
+          `<option value="${s.id}">${s.nome} - R$ ${s.preco.toFixed(2)}</option>`
+        ).join('');
+
+      selectBarbeiro.innerHTML = '<option value="">Selecione um barbeiro</option>' +
+        BARBEIROS_DISPONIVEIS.map(b =>
+          `<option value="${b.id}">${b.nome}</option>`
+        ).join('');
+    }
+
+    // ==========================================================
+    // ABRIR MODAL DE NOVO AGENDAMENTO
+    // ==========================================================
+    function abrirModalNovoAgendamento() {
+      const modal = document.getElementById('modalNovoAgendamento');
+      const form = document.getElementById('formNovoAgendamento');
+
+      // Reseta o formulário sempre que abrir
+      form.reset();
+
+      // Preenche os selects dinamicamente
+      preencherSelectsModal();
+
+      // Define a data mínima como hoje e já sugere a data atual
+      const hoje = new Date().toISOString().split('T')[0];
+      const inputData = document.getElementById('agData');
+      inputData.min = hoje;
+      inputData.value = hoje;
+
+      // Exibe o modal
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // trava scroll do fundo
+
+      // Foco no primeiro campo
+      setTimeout(() => {
+        document.getElementById('agNomeCliente').focus();
+      }, 100);
+    }
+
+    // ==========================================================
+    // FECHAR MODAL DE NOVO AGENDAMENTO
+    // ==========================================================
+    function fecharModalNovoAgendamento() {
+      const modal = document.getElementById('modalNovoAgendamento');
+      modal.classList.add('hidden');
+      document.body.style.overflow = ''; // libera scroll do fundo
+      document.getElementById('formNovoAgendamento').reset();
+    }
+
+    // Fecha o modal ao clicar fora da caixa (no overlay)
+    document.getElementById('modalNovoAgendamento').addEventListener('click', function (e) {
+      if (e.target === this) {
+        fecharModalNovoAgendamento();
+      }
+    });
+
+    // Fecha o modal ao pressionar ESC
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('modalNovoAgendamento');
+        if (!modal.classList.contains('hidden')) {
+          fecharModalNovoAgendamento();
+        }
+      }
+    });
+
+    // ==========================================================
+    // SALVAR AGENDAMENTO MANUAL (envio do formulário)
+    // ==========================================================
+    function salvarAgendamentoManual(event) {
+      event.preventDefault();
+
+      // Captura os valores do formulário
+      const nomeCliente = document.getElementById('agNomeCliente').value.trim();
+      const telefoneCliente = document.getElementById('agTelefoneCliente').value.trim();
+      const servicoId = document.getElementById('agServico').value;
+      const barbeiroId = document.getElementById('agBarbeiro').value;
+      const data = document.getElementById('agData').value;
+      const horario = document.getElementById('agHorario').value;
+      const observacoes = document.getElementById('agObservacoes').value.trim();
+
+      // Validação básica
+      if (!nomeCliente || !telefoneCliente || !servicoId || !barbeiroId || !data || !horario) {
+        mostrarToast('Preencha todos os campos obrigatórios!', 'erro');
+        return;
+      }
+
+      // Busca os objetos completos de serviço e barbeiro selecionados
+      const servico = SERVICOS_DISPONIVEIS.find(s => s.id === parseInt(servicoId));
+      const barbeiro = BARBEIROS_DISPONIVEIS.find(b => b.id === parseInt(barbeiroId));
+
+      // Monta o objeto do novo agendamento
+      const novoAgendamento = {
+        id: Date.now(), // id único simples baseado em timestamp
+        nomeCliente,
+        telefoneCliente,
+        servico: servico ? servico.nome : '',
+        precoServico: servico ? servico.preco : 0,
+        barbeiro: barbeiro ? barbeiro.nome : '',
+        data,
+        horario,
+        observacoes,
+        status: 'confirmado',
+        criadoManualmente: true,
+        criadoEm: new Date().toISOString()
+      };
+
+      // Adiciona à lista em memória
+      agendamentos.push(novoAgendamento);
+
+      // ---- Aqui você integraria com seu backend real, exemplo: ----
+      // fetch('/api/agendamentos', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(novoAgendamento)
+      // })
+      // .then(res => res.json())
+      // .then(() => {
+      //   mostrarToast('Agendamento criado com sucesso!');
+      //   fecharModalNovoAgendamento();
+      //   renderizarAgenda();
+      // })
+      // .catch(() => mostrarToast('Erro ao salvar agendamento.', 'erro'));
+
+      // Simulação local (sem backend):
+      mostrarToast(`Agendamento de ${nomeCliente} criado com sucesso!`);
+      fecharModalNovoAgendamento();
+      renderizarAgenda();
+    }
+
+    // ==========================================================
+    // RENDERIZAR LISTA DE AGENDAMENTOS NA TELA
+    // ==========================================================
+    function renderizarAgenda() {
+      const container = document.getElementById('agendaContainer');
+
+      if (agendamentos.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm">Nenhum agendamento cadastrado ainda.</p>';
+        return;
+      }
+
+      // Ordena por data e horário
+      const ordenados = [...agendamentos].sort((a, b) => {
+        return new Date(`${a.data}T${a.horario}`) - new Date(`${b.data}T${b.horario}`);
+      });
+
+      container.innerHTML = ordenados.map(ag => `
+        <div class="flex items-center justify-between bg-darkBg border border-gold/10 rounded-xl p-4 mb-3">
+          <div>
+            <p class="font-bold text-gold">${ag.nomeCliente}</p>
+            <p class="text-xs text-gray-400">${ag.telefoneCliente}</p>
+            <p class="text-sm text-gray-300 mt-1">${ag.servico} • Barbeiro: ${ag.barbeiro}</p>
+            ${ag.observacoes ? `<p class="text-xs text-gray-500 mt-1 italic">"${ag.observacoes}"</p>` : ''}
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-white">${formatarData(ag.data)}</p>
+            <p class="text-lg font-bold text-gold">${ag.horario}</p>
+            <p class="text-xs text-emerald-400 font-semibold mt-1">R$ ${ag.precoServico.toFixed(2)}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function formatarData(dataISO) {
+      const [ano, mes, dia] = dataISO.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    // ==========================================================
+    // INICIALIZAÇÃO
+    // ==========================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      renderizarAgenda();
+    });
+  </script>
+
+</body>
+</html>
