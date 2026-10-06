@@ -456,85 +456,11 @@
       btn.addEventListener('click', handler);
       return btn;
     }
-
-    const _renderizarTabelaClientesOriginal = renderizarTabelaClientes;
-    renderizarTabelaClientes = function (lista) {
-      _renderizarTabelaClientesOriginal(lista);
-      if (!Array.isArray(lista) || lista.length === 0) return;
-
-      const linhas = document.querySelectorAll('#tabelaClientesCorpo > tr');
-      const cards = document.querySelectorAll('#cardsClientesMobile > div');
-      const clsEditar = 'bg-sky-950/40 hover:bg-sky-900/60 text-sky-300 border border-sky-700/50';
-      const clsExcluir = 'bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50';
-
-      lista.forEach((cliente, i) => {
-        // Desktop
-        const td = linhas[i] && linhas[i].lastElementChild;
-        if (td) {
-          const wrap = document.createElement('div');
-          wrap.className = 'flex items-center justify-center gap-1.5';
-          wrap.append(...td.childNodes);
-          wrap.append(
-            criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id)),
-            criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id))
-          );
-          td.appendChild(wrap);
-        }
-
-        // Mobile
-        const rodape = cards[i] && cards[i].lastElementChild;
-        if (rodape) {
-          const grid = document.createElement('div');
-          grid.className = 'grid grid-cols-2 gap-2 mt-2';
-          const bEditar = criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id));
-          const bExcluir = criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id));
-          bEditar.classList.add('w-full', 'py-1.5');
-          bExcluir.classList.add('w-full', 'py-1.5');
-          grid.append(bEditar, bExcluir);
-          rodape.appendChild(grid);
-        }
-      });
-    };
-
-    // =====================================================================
-    // EVENTOS DO MODAL (máscara, valor automático, ESC, clique fora)
-    // =====================================================================
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('modalNovoAgendamento');
-      const inputWhats = document.getElementById('agWhatsapp');
-      const selectServico = document.getElementById('agServico');
-
-      inputWhats.addEventListener('input', () => {
-        inputWhats.value = formatarWhatsapp(inputWhats.value);
-      });
-
-      selectServico.addEventListener('change', () => {
-        const opcao = selectServico.selectedOptions[0];
-        if (opcao && opcao.dataset.valor) {
-          document.getElementById('agValor').value = opcao.dataset.valor;
-        }
-      });
-
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) fecharModalNovoAgendamento();
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) fecharModalNovoAgendamento();
-      });
-
-      // Botão "Novo Cliente" no cabeçalho da aba Clientes
-      const headerClientes = document.querySelector('#aba-clientes > div');
-      if (headerClientes && !document.getElementById('btnNovoClienteAba')) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'btnNovoClienteAba';
-        btn.textContent = '➕ Novo Cliente';
-        btn.className = 'bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition cursor-pointer';
-        btn.addEventListener('click', abrirModalNovoAgendamento);
-        headerClientes.appendChild(btn);
-      }
-    });
+    // (O restante desta seção foi movido pra depois de renderizarTabelaClientes
+    //  ser definida, mais abaixo no arquivo — ver "BOTÕES DE EDITAR/EXCLUIR (continuação)".
+    //  Isso corrige um ReferenceError: renderizarTabelaClientes era lida aqui antes
+    //  de existir, o que interrompia o carregamento deste script e impedia os
+    //  botões de Editar/Excluir e o botão "Novo Cliente" de aparecerem.)
 
   </script>
   <style>
@@ -1157,6 +1083,92 @@
       tbody.innerHTML = linhas.join('');
       cardsMobile.innerHTML = cards.join('');
     }
+
+    // =====================================================================
+    // BOTÕES DE EDITAR / EXCLUIR (continuação — movido do <head> porque
+    // dependia de renderizarTabelaClientes, definida logo acima)
+    // =====================================================================
+    const _renderizarTabelaClientesOriginal = renderizarTabelaClientes;
+    renderizarTabelaClientes = function (lista) {
+      _renderizarTabelaClientesOriginal(lista);
+      if (!Array.isArray(lista) || lista.length === 0) return;
+
+      const linhas = document.querySelectorAll('#tabelaClientesCorpo > tr');
+      const cards = document.querySelectorAll('#cardsClientesMobile > div');
+      const clsEditar = 'bg-sky-950/40 hover:bg-sky-900/60 text-sky-300 border border-sky-700/50';
+      const clsExcluir = 'bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-700/50';
+
+      lista.forEach((cliente, i) => {
+        // Desktop
+        const td = linhas[i] && linhas[i].lastElementChild;
+        if (td) {
+          const wrap = document.createElement('div');
+          wrap.className = 'flex items-center justify-center gap-1.5';
+          wrap.append(...td.childNodes);
+          wrap.append(
+            criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id)),
+            criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id))
+          );
+          td.appendChild(wrap);
+        }
+
+        // Mobile
+        const rodape = cards[i] && cards[i].lastElementChild;
+        if (rodape) {
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-2 gap-2 mt-2';
+          const bEditar = criarBotaoAcaoCliente('✏️ Editar', clsEditar, () => editarCliente(cliente.id));
+          const bExcluir = criarBotaoAcaoCliente('🗑️ Excluir', clsExcluir, () => deletarCliente(cliente.id));
+          bEditar.classList.add('w-full', 'py-1.5');
+          bExcluir.classList.add('w-full', 'py-1.5');
+          grid.append(bEditar, bExcluir);
+          rodape.appendChild(grid);
+        }
+      });
+    };
+
+    // Re-renderiza agora que o patch já está ativo, pra pegar os botões na primeira exibição
+    renderizarTabelaClientes(listaClientesGlobal);
+
+    // =====================================================================
+    // EVENTOS DO MODAL (máscara, valor automático, ESC, clique fora)
+    // =====================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('modalNovoAgendamento');
+      const inputWhats = document.getElementById('agWhatsapp');
+      const selectServico = document.getElementById('agServico');
+
+      inputWhats.addEventListener('input', () => {
+        inputWhats.value = formatarWhatsapp(inputWhats.value);
+      });
+
+      selectServico.addEventListener('change', () => {
+        const opcao = selectServico.selectedOptions[0];
+        if (opcao && opcao.dataset.valor) {
+          document.getElementById('agValor').value = opcao.dataset.valor;
+        }
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) fecharModalNovoAgendamento();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) fecharModalNovoAgendamento();
+      });
+
+      // Botão "Novo Cliente" no cabeçalho da aba Clientes
+      const headerClientes = document.querySelector('#aba-clientes > div');
+      if (headerClientes && !document.getElementById('btnNovoClienteAba')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'btnNovoClienteAba';
+        btn.textContent = '➕ Novo Cliente';
+        btn.className = 'bg-gold hover:bg-amber-500 text-gray-950 font-bold px-4 py-2 rounded-lg text-sm transition cursor-pointer';
+        btn.addEventListener('click', abrirModalNovoAgendamento);
+        headerClientes.appendChild(btn);
+      }
+    });
 
     function filtrarClientesTabela() {
       const busca = document.getElementById('buscaClienteInput').value.trim().toLowerCase();
