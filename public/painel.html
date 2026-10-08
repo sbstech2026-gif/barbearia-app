@@ -203,13 +203,37 @@
       select.value = valor;
     }
 
-    function sincronizarOpcoesBarbeiros() {
-      const select = document.getElementById('agBarbeiro');
-      const existentes = new Set([...select.options].map(o => o.value));
-      [...lerAgendamentosLocal(), ...listaAgendamentosMemoria]
-        .map(a => a.barbeiro || a.barbeiroNome)
-        .filter(n => n && !existentes.has(n))
-        .forEach(n => { select.add(new Option(n, n)); existentes.add(n); });
+    // Busca os profissionais e serviços REALMENTE cadastrados (telas Profissionais/Serviços)
+    // e preenche os selects do modal com eles — em vez de uma lista fixa no HTML.
+    async function popularOpcoesBarbeiroEServico(valorBarbeiroAtual, valorServicoAtual) {
+      const selectBarbeiro = document.getElementById('agBarbeiro');
+      const selectServico = document.getElementById('agServico');
+
+      let profissionais = [];
+      let servicos = [];
+      try {
+        const [rBarb, rServ] = await Promise.all([
+          fetch('/api/profissionais'),
+          fetch('/api/servicos')
+        ]);
+        if (rBarb.ok) profissionais = await rBarb.json();
+        if (rServ.ok) servicos = await rServ.json();
+      } catch (err) {
+        console.warn('Não foi possível carregar profissionais/serviços da API.', err);
+      }
+
+      selectBarbeiro.innerHTML = '<option value="">Selecione...</option>' +
+        (Array.isArray(profissionais) ? profissionais : [])
+          .map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+
+      selectServico.innerHTML = '<option value="">Selecione...</option>' +
+        (Array.isArray(servicos) ? servicos : [])
+          .map(s => `<option value="${s.nome}" data-valor="${parseFloat(s.preco) || 0}">${s.nome} - R$ ${(parseFloat(s.preco) || 0).toFixed(2).replace('.', ',')}</option>`).join('');
+
+      // Se o cliente já tinha um barbeiro/serviço que não existe mais no cadastro
+      // (ex.: foi renomeado ou excluído depois), mantém o valor antigo visível em vez de sumir.
+      if (valorBarbeiroAtual) selecionarOuCriarOpcao(selectBarbeiro, valorBarbeiroAtual);
+      if (valorServicoAtual) selecionarOuCriarOpcao(selectServico, valorServicoAtual);
     }
 
     function statusParaSelect(status) {
@@ -240,14 +264,14 @@
     // =====================================================================
     // 1) ABRIR / FECHAR MODAL
     // =====================================================================
-    function abrirModalNovoAgendamento() {
+    async function abrirModalNovoAgendamento() {
       const form = document.getElementById('formNovoAgendamento');
       form.reset();
       esconderErroAgendamento();
-      sincronizarOpcoesBarbeiros();
+      await popularOpcoesBarbeiroEServico();
       estadoEdicaoCliente = null;
 
-      definirTextosModal('Novo Agendamento', 'Cadastre um horário manualmente', 'Salvar Agendamento');
+      definirTextosModal('Novo Cliente', 'Cadastre o cliente junto com o primeiro horário dele', 'Salvar Cliente');
       document.getElementById('agData').value = document.getElementById('filtroData').value || hojeISO();
       document.getElementById('agStatus').value = 'Confirmado';
 
@@ -422,17 +446,20 @@
       const form = document.getElementById('formNovoAgendamento');
       form.reset();
       esconderErroAgendamento();
-      sincronizarOpcoesBarbeiros();
 
       estadoEdicaoCliente = { chave, registros, agendamentoId: principal.id };
 
       document.getElementById('agCliente').value = principal.cliente || principal.clienteNome || principal.nome || '';
       document.getElementById('agWhatsapp').value = formatarWhatsapp(principal.whatsapp || principal.clienteWhatsapp || '');
-      selecionarOuCriarOpcao(document.getElementById('agBarbeiro'), principal.barbeiro || principal.barbeiroNome || '');
       document.getElementById('agData').value = principal.data || '';
       document.getElementById('agHorario').value = principal.horario || '';
-      selecionarOuCriarOpcao(document.getElementById('agServico'), principal.servico || principal.servicoNome || '');
       document.getElementById('agValor').value = parseFloat(principal.preco ?? principal.valor ?? 0) || 0;
+
+      // Preenche Barbeiro/Serviço com o cadastro real da API, já selecionando os valores atuais do cliente
+      await popularOpcoesBarbeiroEServico(
+        principal.barbeiro || principal.barbeiroNome || '',
+        principal.servico || principal.servicoNome || ''
+      );
       document.getElementById('agStatus').value = statusParaSelect(principal.status);
 
       definirTextosModal(
